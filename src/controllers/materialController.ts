@@ -9,6 +9,77 @@ export default class materialController implements IController {
 	public endPoint = '/material';
 	private material = materialModel;
 	private food = foodModel;
+	/**
+	 * @swagger
+	 * /material/add:
+	 *   post:
+	 *     summary: Add new materials
+	 *     tags: [Material]
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               itemsToInsert:
+	 *                 type: array
+	 *                 items:
+	 *                   $ref: '#/definitions/Material'
+	 *                 description: List of materials to add
+	 *     responses:
+	 *       200:
+	 *         description: Materials added successfully
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 *
+	 * /material/stock:
+	 *   get:
+	 *     summary: Get all materials in stock
+	 *     tags: [Material]
+	 *     responses:
+	 *       200:
+	 *         description: List of materials in stock
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 *
+	 * /material/all:
+	 *   get:
+	 *     summary: Get all materials from recipes
+	 *     tags: [Material]
+	 *     responses:
+	 *       200:
+	 *         description: List of all materials from recipes
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 */
+
+	/**
+	 * @swagger
+	 * definitions:
+	 *   Material:
+	 *     type: object
+	 *     required:
+	 *       - name
+	 *       - quantity
+	 *       - message
+	 *     properties:
+	 *       name:
+	 *         type: string
+	 *         default: Kenyér
+	 *       quantity:
+	 *         type: number
+	 *         default: 2
+	 *       message:
+	 *         type: string
+	 *         default: Vásárlás
+	 */
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.addMaterial);
 		this.router.get('/stock', authenticateAdminToken, this.getAllMaterial);

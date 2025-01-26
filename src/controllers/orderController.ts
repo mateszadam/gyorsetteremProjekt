@@ -20,6 +20,115 @@ export default class orderController implements IController {
 	public endPoint = '/order';
 	private order = orderModel;
 
+	/**
+	 * @swagger
+	 * tags:
+	 *   name: Orders
+	 *   description: Order management
+	 */
+
+	/**
+	 * @swagger
+	 * /order/new:
+	 *   post:
+	 *     summary: Create a new order
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/Order'
+	 *     responses:
+	 *       201:
+	 *         description: Order created successfully
+	 *       400:
+	 *         description: Bad request
+	 */
+
+	/**
+	 * @swagger
+	 * /order/ongoing:
+	 *   get:
+	 *     summary: Get all ongoing orders
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     responses:
+	 *       200:
+	 *         description: List of ongoing orders
+	 *       400:
+	 *         description: Bad request
+	 */
+
+	/**
+	 * @swagger
+	 * /order/ongoing/{name}:
+	 *   get:
+	 *     summary: Get ongoing orders by name
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: name
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         description: Name of the order
+	 *     responses:
+	 *       200:
+	 *         description: List of ongoing orders by name
+	 *       400:
+	 *         description: Bad request
+	 */
+
+	/**
+	 * @swagger
+	 * /order/finish/{id}:
+	 *   get:
+	 *     summary: Mark an order as finished
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         description: Order ID
+	 *     responses:
+	 *       200:
+	 *         description: Order marked as finished
+	 *       400:
+	 *         description: Bad request
+	 */
+
+	/**
+	 * @swagger
+	 * /order/{name}:
+	 *   get:
+	 *     summary: Get orders by name
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: name
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         description: Name of the order
+	 *     responses:
+	 *       200:
+	 *         description: List of orders by name
+	 *       400:
+	 *         description: Bad request
+	 */
+
 	constructor() {
 		this.router.post('/new', authenticateToken, this.newOrder);
 		this.router.get(

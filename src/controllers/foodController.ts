@@ -13,6 +13,91 @@ export default class foodController implements IController {
 	public endPoint = '/food';
 	private food = foodModel;
 
+	/**
+	 * @swagger
+	 * /food/add:
+	 *   post:
+	 *     summary: Add new food items
+	 *     tags: [Food]
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               food:
+	 *                 type: array
+	 *                 items:
+	 *                   type: object
+	 *                   properties:
+	 *                     name:
+	 *                       type: string
+	 *                     price:
+	 *                       type: number
+	 *                     ingredients:
+	 *                       type: object
+	 *                       properties:
+	 *                         name:
+	 *                           type: string
+	 *                           default: kenyér
+	 *                         quantity:
+	 *                           type: number
+	 *                           default: 2
+	 *                   required:
+	 *                     - name
+	 *                     - price
+	 *     responses:
+	 *       200:
+	 *         description: Food items added successfully
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 *
+	 * /food/all:
+	 *   get:
+	 *     summary: Get all food items
+	 *     tags: [Food]
+	 *     responses:
+	 *       200:
+	 *         description: List of all food items
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 *
+	 * /food/allToOrder:
+	 *   get:
+	 *     summary: Get food items for order
+	 *     tags: [Food]
+	 *     responses:
+	 *       200:
+	 *         description: List of food items for order
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 * /food/{name}:
+	 *   get:
+	 *     summary: Get food item by name
+	 *     tags: [Food]
+	 *     parameters:
+	 *       - in: path
+	 *         name: name
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *         description: Name of the food item
+	 *     responses:
+	 *       200:
+	 *         description: Food item details
+	 *       400:
+	 *         description: Bad request
+	 *       401:
+	 *         description: Not authorized
+	 */
+
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.addFood);
 		this.router.get('/all', authenticateToken, this.getFood);
