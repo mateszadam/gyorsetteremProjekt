@@ -14,6 +14,74 @@ export default class userController implements IController {
 
 	bcrypt = require('bcrypt');
 	constructor() {
+		/**
+		 * @openapi
+		 * /user/all:
+		 *   get:
+		 *     tags:
+		 *       - User handling
+		 *     summary: Get all users
+		 *     responses:
+		 *       201:
+		 *         description: User registered successfully
+		 *       400:
+		 *         description: Bad request
+		 *
+		 * /user/register:
+		 *   post:
+		 *     tags:
+		 *       - User handling
+		 *     summary: Register a new user
+		 *     requestBody:
+		 *       required: true
+		 *       content:
+		 *         application/json:
+		 *           schema:
+		 *             type: object
+		 *             required:
+		 *               - name
+		 *               - password
+		 *             properties:
+		 *               name:
+		 *                 type: string
+		 *                 default: user
+		 *               password:
+		 *                 type: string
+		 *                 default: user
+		 *     responses:
+		 *       201:
+		 *         description: User registered successfully
+		 *       400:
+		 *         description: Bad request
+		 *
+		 * /user/login:
+		 *   post:
+		 *     tags:
+		 *       - User handling
+		 *     summary: Login a user
+		 *     requestBody:
+		 *       required: true
+		 *       content:
+		 *         application/json:
+		 *           schema:
+		 *             type: object
+		 *             required:
+		 *               - name
+		 *               - password
+		 *             properties:
+		 *               name:
+		 *                 type: string
+		 *                 default: admin
+		 *               password:
+		 *                 type: string
+		 *                 default: admin
+		 *     responses:
+		 *       200:
+		 *         description: User logged in successfully
+		 *       401:
+		 *         description: Unauthorized
+		 */
+
 		this.router.get('/all', authenticateAdminToken, this.getAll);
 		this.router.post('/register', this.registerUser);
 		this.router.post('/login', this.loginUser);
