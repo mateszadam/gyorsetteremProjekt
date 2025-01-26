@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { IController } from './models/models';
+import { Router, Request, Response } from 'express';
 import {
 	foodModel,
 	materialModel,
@@ -9,9 +10,16 @@ import {
 } from './models/mongooseSchema';
 import morgan from 'morgan';
 import cors from 'cors';
+import userController from './controllers/userController';
+import orderController from './controllers/orderController';
+import materialController from './controllers/materialController';
+import foodController from './controllers/foodController';
+import { log } from 'console';
 
 export default class App {
 	public app: express.Application;
+	private swaggerjsdoc = require('swagger-jsdoc');
+	private swagger = require('swagger-ui-express');
 
 	constructor(controllers: IController[]) {
 		this.app = express();
@@ -19,12 +27,54 @@ export default class App {
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
+		log('fut');
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
 	}
 
 	public listen(): void {
+		const optionsForSwagger = {
+			definition: {
+				openapi: '3.0.0',
+				info: {
+					title: 'Gyors éttermi rendszer API dokumentáció',
+					description:
+						'A /user/login tól kapott tokent kell be másolni az autentikációhoz',
+					version: '0.0.2',
+				},
+				servers: [
+					{
+						url: 'https://mateszadam.koyeb.app/',
+					},
+					{
+						url: 'http://localhost:5005/',
+					},
+				],
+				components: {
+					securitySchemes: {
+						bearerAuth: {
+							type: 'http',
+							scheme: 'bearer',
+							bearerFormat: 'JWT',
+						},
+					},
+				},
+				security: [
+					{
+						bearerAuth: [],
+					},
+				],
+			},
+			apis: [
+				'./src/documentation/swagger.ts',
+				'./src/App.ts',
+				'./src/controllers/*.ts',
+			],
+		};
+
+		const spacs = this.swaggerjsdoc(optionsForSwagger);
+		this.app.use('/', this.swagger.serve, this.swagger.setup(spacs));
 		this.app.listen(5005, () => {
 			console.log('App listening on the port 5005');
 		});
@@ -54,4 +104,9 @@ export default class App {
 	}
 }
 
-new App([]);
+new App([
+	new userController(),
+	new orderController(),
+	new materialController(),
+	new foodController(),
+]);
