@@ -141,6 +141,7 @@ export default class orderController implements IController {
 		this.router.get('/finish/:id', authenticateAdminToken, this.finishOrder);
 
 		this.router.get('/:name', authenticateToken, this.getByName);
+		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
 	}
 
 	private newOrder = async (req: Request, res: Response) => {
@@ -232,6 +233,29 @@ export default class orderController implements IController {
 						$set: { isFinished: true },
 					}
 				);
+				if (order) {
+					res.json(order);
+				} else {
+					defaultAnswers.badRequest(res);
+				}
+			} else {
+				defaultAnswers.badRequest(res);
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private getAllOrder = async (req: Request, res: Response) => {
+		try {
+			const from: string = req.params.from;
+			let to: string = req.params.to;
+			if (!to) {
+				to = new Date().toLocaleDateString('en-CA');
+			}
+			if (from) {
+				const order = await this.order.find({
+					finishedTime: { $gte: new Date(from), $lt: new Date(to) },
+				});
 				if (order) {
 					res.json(order);
 				} else {

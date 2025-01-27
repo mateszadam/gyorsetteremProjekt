@@ -99,7 +99,15 @@ export default class userController implements IController {
 	private registerUser = async (req: Request, res: Response) => {
 		try {
 			let userInput: User = req.body;
-			if (userInput.name && userInput.password) {
+			const passwordRegex =
+				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+			if (
+				userInput.name &&
+				userInput.password &&
+				userInput.email &&
+				passwordRegex.test(userInput.password) &&
+				userInput.name.length > 4
+			) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 				const userData: User = {
 					...userInput,
@@ -119,8 +127,6 @@ export default class userController implements IController {
 		}
 	};
 	private loginUser = async (req: Request, res: Response) => {
-		console.log('fut3');
-
 		try {
 			let userInput: User = req.body;
 			const databaseUser: User | null = await this.user.findOne({

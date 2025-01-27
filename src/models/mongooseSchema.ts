@@ -17,6 +17,10 @@ const userSchema = new Schema<SchemaDefinition>(
 			required: true,
 			default: 'customer',
 		},
+		emil: {
+			type: String,
+			required: true,
+		},
 		token: {
 			type: String,
 			default: '',
@@ -99,6 +103,17 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Boolean,
 			required: true,
 			default: false,
+		},
+		orderedTime: {
+			type: Date,
+			default: Date.now(),
+		},
+		finishedCokingTime: {
+			type: Date,
+		},
+		finishedTime: {
+			type: Date,
+			required: true,
 		},
 		orderedProducts: [
 			{

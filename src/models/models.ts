@@ -5,6 +5,7 @@ interface User {
 	name: string;
 	password: string;
 	role: string | undefined;
+	email: string | undefined;
 	token: string | undefined;
 }
 
