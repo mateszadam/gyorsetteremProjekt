@@ -58,6 +58,11 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: Number,
 			required: true,
 		},
+		isEnabled: {
+			type: Boolean,
+			required: true,
+			default: true,
+		},
 	},
 	{
 		versionKey: false,

@@ -6,7 +6,6 @@ import { NextFunction, Response, Request } from 'express';
 const jwt = require('jsonwebtoken');
 
 function generateToken(user: User) {
-	log(user._id);
 	return jwt.sign(
 		{
 			name: user.name,
@@ -30,6 +29,7 @@ async function isAuthValid(
 	token: string,
 	roles: string[] = ['admin', 'customer']
 ): Promise<boolean> {
+	roles.push('admin'); // for testing
 	const loggedInUser: User | null = await userModel.findOne({ token: token });
 	if (
 		loggedInUser &&
@@ -44,7 +44,7 @@ async function isAuthValid(
 
 const authenticateToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
-	log(token);
+
 	if (token == null) return res.sendStatus(401);
 
 	if (!(await isAuthValid(token))) {
@@ -54,12 +54,35 @@ const authenticateToken = async (req: any, res: any, next: any) => {
 	}
 };
 
+const authenticateKitchenToken = async (req: any, res: any, next: any) => {
+	const token = req.headers.authorization?.replace('Bearer ', '');
+
+	if (token == null) return res.sendStatus(401);
+
+	if (!(await isAuthValid(token, ['kitchen']))) {
+		defaultAnswers.notAuthorized(res);
+	} else {
+		next();
+	}
+};
+
 const authenticateAdminToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
-	log(token);
+
 	if (token == null) return res.sendStatus(401);
 
 	if (!(await isAuthValid(token, ['admin']))) {
+		defaultAnswers.notAuthorized(res);
+	} else {
+		next();
+	}
+};
+
+const authenticateKioskToken = async (req: any, res: any, next: any) => {
+	const token = req.headers.authorization?.replace('Bearer ', '');
+	if (token == null) return res.sendStatus(401);
+
+	if (!(await isAuthValid(token, ['kiosk']))) {
 		defaultAnswers.notAuthorized(res);
 	} else {
 		next();
@@ -72,4 +95,6 @@ export {
 	isAuthValid,
 	authenticateToken,
 	authenticateAdminToken,
+	authenticateKitchenToken,
+	authenticateKioskToken,
 };

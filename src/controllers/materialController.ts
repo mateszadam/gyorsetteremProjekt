@@ -10,7 +10,7 @@ export default class materialController implements IController {
 	private material = materialModel;
 	private food = foodModel;
 	/**
-	 * @swagger
+	 * @openapi
 	 * /material/add:
 	 *   post:
 	 *     summary: Add new materials
@@ -58,10 +58,7 @@ export default class materialController implements IController {
 	 *         description: Bad request
 	 *       401:
 	 *         description: Not authorized
-	 */
-
-	/**
-	 * @swagger
+	 *
 	 * definitions:
 	 *   Material:
 	 *     type: object
@@ -94,9 +91,8 @@ export default class materialController implements IController {
 		try {
 			const inputMaterials: Material[] = req.body.itemsToInsert;
 			if (inputMaterials) {
-				log('fut');
 				const user = await this.material.insertMany(inputMaterials);
-				log(user);
+
 				if (user) {
 					defaultAnswers.ok(res);
 				} else {

@@ -75,7 +75,7 @@ export default class App {
 			],
 		};
 		this.app.use(
-			'/',
+			'/docs',
 			this.swagger.serve,
 			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
 		);

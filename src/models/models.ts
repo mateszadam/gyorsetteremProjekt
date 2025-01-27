@@ -21,6 +21,7 @@ interface Food {
 	material: FoodMaterial[];
 	price: number;
 	name: string;
+	isEnabled: boolean;
 }
 
 interface FoodMaterial {
@@ -31,9 +32,9 @@ interface Order {
 	_id?: string;
 	costumerID: string;
 	isFinished: boolean;
+	finishedTime: Date;
 	orderedTime: Date;
 	finishedCokingTime: Date;
-	finishedTime: Date;
 	orderedProducts: {
 		name: string;
 		quantity: number;
