@@ -17,6 +17,10 @@ const userSchema = new Schema<SchemaDefinition>(
 			required: true,
 			default: 'customer',
 		},
+		email: {
+			type: String,
+			required: true,
+		},
 		token: {
 			type: String,
 			default: '',
@@ -93,12 +97,21 @@ const orderSchema = new Schema<SchemaDefinition>(
 		costumerID: {
 			type: String,
 			required: true,
-			unique: true,
 		},
 		isFinished: {
 			type: Boolean,
 			required: true,
 			default: false,
+		},
+		orderedTime: {
+			type: Date,
+			default: Date.now(),
+		},
+		finishedCokingTime: {
+			type: Date,
+		},
+		finishedTime: {
+			type: Date,
 		},
 		orderedProducts: [
 			{

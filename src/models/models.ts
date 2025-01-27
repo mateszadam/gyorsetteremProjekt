@@ -5,6 +5,7 @@ interface User {
 	name: string;
 	password: string;
 	role: string | undefined;
+	email: string | undefined;
 	token: string | undefined;
 }
 
@@ -30,6 +31,9 @@ interface Order {
 	_id?: string;
 	costumerID: string;
 	isFinished: boolean;
+	orderedTime: Date;
+	finishedCokingTime: Date;
+	finishedTime: Date;
 	orderedProducts: {
 		name: string;
 		quantity: number;
@@ -45,7 +49,7 @@ function getRawId(id: string) {
 }
 
 function getObjectID(id: string) {
-	return 'new ObjectId(' + id + ')';
+	return 'ObjectId(' + id + ')';
 }
 
 class defaultAnswers {

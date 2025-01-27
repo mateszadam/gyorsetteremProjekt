@@ -6,6 +6,7 @@ import {
 	generateToken,
 	isAuthValid,
 } from '../services/tokenService';
+import { log } from 'console';
 
 export default class userController implements IController {
 	public router = Router();
@@ -99,7 +100,20 @@ export default class userController implements IController {
 	private registerUser = async (req: Request, res: Response) => {
 		try {
 			let userInput: User = req.body;
-			if (userInput.name && userInput.password) {
+			const passwordRegex =
+				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+			log(userInput.name);
+			log(userInput.password);
+			log(userInput.email);
+			log(passwordRegex.test(userInput.password));
+			log(userInput.name.length > 4);
+			if (
+				userInput.name &&
+				userInput.password &&
+				userInput.email &&
+				passwordRegex.test(userInput.password) &&
+				userInput.name.length > 4
+			) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 				const userData: User = {
 					...userInput,
@@ -119,8 +133,6 @@ export default class userController implements IController {
 		}
 	};
 	private loginUser = async (req: Request, res: Response) => {
-		console.log('fut3');
-
 		try {
 			let userInput: User = req.body;
 			const databaseUser: User | null = await this.user.findOne({
@@ -140,7 +152,10 @@ export default class userController implements IController {
 					},
 					{ $set: { token: token } }
 				);
-				defaultAnswers.ok(res, token);
+				res.send({
+					token: token,
+					role: databaseUser.role,
+				});
 			} else {
 				throw Error('Password is not correct');
 			}
