@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import {
 	defaultAnswers,
+	getObjectID,
 	getRawId,
 	IController,
 	Order,
@@ -19,7 +20,8 @@ export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
 	private order = orderModel;
-
+	private user = userModel;
+	private mongoose = require('mongoose');
 	/**
 	 * @swagger
 	 * tags:
@@ -40,7 +42,23 @@ export default class orderController implements IController {
 	 *       content:
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/Order'
+	 *                   type: object
+	 *                   properties:
+	 *                     costumerID:
+	 *                       type: string
+	 *                       default: 6793bb6219bff92baf980ade
+	 *                     orderedProducts:
+	 *                       type: object
+	 *                       properties:
+	 *                         name:
+	 *                           type: string
+	 *                           default: Pizza
+	 *                         quantity:
+	 *                           type: number
+	 *                           default: 2
+	 *                   required:
+	 *                     - name
+	 *                     - price
 	 *     responses:
 	 *       201:
 	 *         description: Order created successfully
@@ -65,22 +83,22 @@ export default class orderController implements IController {
 
 	/**
 	 * @swagger
-	 * /order/ongoing/{name}:
+	 * /order/ongoing/{id}:
 	 *   get:
-	 *     summary: Get ongoing orders by name
+	 *     summary: Get ongoing orders by user id
 	 *     tags: [Orders]
 	 *     security:
 	 *       - bearerAuth: []
 	 *     parameters:
 	 *       - in: path
-	 *         name: name
+	 *         name: id
 	 *         schema:
 	 *           type: string
 	 *         required: true
-	 *         description: Name of the order
+	 *         description: User ID
 	 *     responses:
 	 *       200:
-	 *         description: List of ongoing orders by name
+	 *         description: Order marked as finished
 	 *       400:
 	 *         description: Bad request
 	 */
@@ -109,22 +127,22 @@ export default class orderController implements IController {
 
 	/**
 	 * @swagger
-	 * /order/{name}:
+	 * /order/{id}:
 	 *   get:
-	 *     summary: Get orders by name
+	 *     summary: Get an order by Id
 	 *     tags: [Orders]
 	 *     security:
 	 *       - bearerAuth: []
 	 *     parameters:
 	 *       - in: path
-	 *         name: name
+	 *         name: id
 	 *         schema:
 	 *           type: string
 	 *         required: true
-	 *         description: Name of the order
+	 *         description: Order ID
 	 *     responses:
 	 *       200:
-	 *         description: List of orders by name
+	 *         description: Order by id
 	 *       400:
 	 *         description: Bad request
 	 */
@@ -136,40 +154,79 @@ export default class orderController implements IController {
 			authenticateAdminToken,
 			this.getAllOngoingOrder
 		);
-		this.router.get('/ongoing/:name', authenticateToken, this.getOngoingByName);
+		this.router.get('/ongoing/:id', authenticateToken, this.getOngoingById);
 
 		this.router.get('/finish/:id', authenticateAdminToken, this.finishOrder);
 
-		this.router.get('/:name', authenticateToken, this.getByName);
+		this.router.get(
+			'kitchen/finish/:id',
+			authenticateAdminToken,
+			this.finishOrder
+		);
+
+		/**
+		 * @swagger
+		 * /order/time/{from}/{to}:
+		 *   get:
+		 *     summary: Get all orders within a time range
+		 *     tags: [Orders]
+		 *     security:
+		 *       - bearerAuth: []
+		 *     parameters:
+		 *       - in: path
+		 *         name: from
+		 *         schema:
+		 *           type: string
+		 *           format: date
+		 *         required: true
+		 *         description: Start date of the time range
+		 *       - in: path
+		 *         name: to
+		 *         schema:
+		 *           type: string
+		 *           format: date
+		 *         description: End date of the time range
+		 *     responses:
+		 *       200:
+		 *         description: List of orders within the time range
+		 *       400:
+		 *         description: Bad request
+		 */
 		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
+		this.router.get('/:id', authenticateToken, this.getById);
 	}
 
 	private newOrder = async (req: Request, res: Response) => {
 		try {
-			const newOrder: Order = req.body.order;
-			if (newOrder) {
-				const order = await this.order.insertMany([newOrder]);
-				if (order) {
-					defaultAnswers.created(res);
+			const newOrder: Order = req.body;
+			const userExists = await this.user.find({
+				_id: new this.mongoose.Types.ObjectId(newOrder.costumerID!),
+			});
+			if (userExists.length > 0) {
+				if (newOrder) {
+					const order = await this.order.insertMany([newOrder]);
+					if (order) {
+						defaultAnswers.created(res);
+					} else {
+						defaultAnswers.badRequest(res);
+					}
 				} else {
 					defaultAnswers.badRequest(res);
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				defaultAnswers.badRequest(res, 'User with this id not found');
 			}
-
-			defaultAnswers.notImplemented(res);
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	// TODO: Use id instead of name
-	private getByName = async (req: Request, res: Response) => {
+
+	private getById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
-			if (name) {
+			const id = req.params.id;
+			if (id) {
 				const order = await this.order.find({
-					name: name,
+					_id: new this.mongoose.Types.ObjectId(id),
 				});
 				if (order) {
 					res.json(order);
@@ -196,21 +253,16 @@ export default class orderController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private getOngoingByName = async (req: Request, res: Response) => {
+	private getOngoingById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
-			if (name) {
-				const newOrder: Order = req.body.order;
-				if (newOrder) {
-					const order = await this.order.find({
-						name: name,
-						isFinished: false,
-					});
-					if (order) {
-						res.json(order);
-					} else {
-						defaultAnswers.badRequest(res);
-					}
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.find({
+					costumerID: id,
+					isFinished: false,
+				});
+				if (order) {
+					res.json(order);
 				} else {
 					defaultAnswers.badRequest(res);
 				}
@@ -224,13 +276,14 @@ export default class orderController implements IController {
 	private finishOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
+			log(id);
 			if (id) {
 				const order = await this.order.updateOne(
 					{
-						_id: id,
+						_id: new this.mongoose.Types.ObjectId(id),
 					},
 					{
-						$set: { isFinished: true },
+						$set: { isFinished: true, finishedTime: Date.now() },
 					}
 				);
 				if (order) {
@@ -249,12 +302,13 @@ export default class orderController implements IController {
 		try {
 			const from: string = req.params.from;
 			let to: string = req.params.to;
-			if (!to) {
-				to = new Date().toLocaleDateString('en-CA');
+			if (to == '{to}' || to == '' || !to) {
+				to = new Date().toJSON();
 			}
+
 			if (from) {
 				const order = await this.order.find({
-					finishedTime: { $gte: new Date(from), $lt: new Date(to) },
+					finishedTime: { $gte: new Date(from), $lte: new Date(to) },
 				});
 				if (order) {
 					res.json(order);

@@ -14,7 +14,8 @@ import userController from './controllers/userController';
 import orderController from './controllers/orderController';
 import materialController from './controllers/materialController';
 import foodController from './controllers/foodController';
-import { log } from 'console';
+
+import tokenValidationController from './controllers/tokenValidationController';
 
 export default class App {
 	public app: express.Application;
@@ -27,7 +28,6 @@ export default class App {
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
-		log('fut');
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
@@ -57,6 +57,8 @@ export default class App {
 							type: 'http',
 							scheme: 'bearer',
 							bearerFormat: 'JWT',
+							description:
+								'Enter your bearer token in the format **Bearer &lt;token>**',
 						},
 					},
 				},
@@ -72,9 +74,11 @@ export default class App {
 				'./src/controllers/*.ts',
 			],
 		};
-
-		const spacs = this.swaggerjsdoc(optionsForSwagger);
-		this.app.use('/', this.swagger.serve, this.swagger.setup(spacs));
+		this.app.use(
+			'/',
+			this.swagger.serve,
+			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
+		);
 		this.app.listen(5005, () => {
 			console.log('App listening on the port 5005');
 		});
@@ -109,4 +113,5 @@ new App([
 	new orderController(),
 	new materialController(),
 	new foodController(),
+	new tokenValidationController(),
 ]);

@@ -17,7 +17,7 @@ const userSchema = new Schema<SchemaDefinition>(
 			required: true,
 			default: 'customer',
 		},
-		emil: {
+		email: {
 			type: String,
 			required: true,
 		},
@@ -97,7 +97,6 @@ const orderSchema = new Schema<SchemaDefinition>(
 		costumerID: {
 			type: String,
 			required: true,
-			unique: true,
 		},
 		isFinished: {
 			type: Boolean,
@@ -113,7 +112,6 @@ const orderSchema = new Schema<SchemaDefinition>(
 		},
 		finishedTime: {
 			type: Date,
-			required: true,
 		},
 		orderedProducts: [
 			{

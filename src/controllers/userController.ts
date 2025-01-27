@@ -6,6 +6,7 @@ import {
 	generateToken,
 	isAuthValid,
 } from '../services/tokenService';
+import { log } from 'console';
 
 export default class userController implements IController {
 	public router = Router();
@@ -101,6 +102,11 @@ export default class userController implements IController {
 			let userInput: User = req.body;
 			const passwordRegex =
 				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+			log(userInput.name);
+			log(userInput.password);
+			log(userInput.email);
+			log(passwordRegex.test(userInput.password));
+			log(userInput.name.length > 4);
 			if (
 				userInput.name &&
 				userInput.password &&
@@ -146,7 +152,10 @@ export default class userController implements IController {
 					},
 					{ $set: { token: token } }
 				);
-				defaultAnswers.ok(res, token);
+				res.send({
+					token: token,
+					role: databaseUser.role,
+				});
 			} else {
 				throw Error('Password is not correct');
 			}
