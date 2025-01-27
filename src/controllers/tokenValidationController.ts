@@ -67,6 +67,8 @@ export default class tokenValidationController implements IController {
 
 			if (token || (await isAuthValid(token!, ['admin']))) {
 				defaultAnswers.ok(res);
+			} else {
+				defaultAnswers.badRequest(res);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -78,6 +80,8 @@ export default class tokenValidationController implements IController {
 
 			if (token || (await isAuthValid(token!, ['admin', 'customer']))) {
 				defaultAnswers.ok(res);
+			} else {
+				defaultAnswers.badRequest(res);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -89,6 +93,8 @@ export default class tokenValidationController implements IController {
 
 			if (token || (await isAuthValid(token!, ['admin', 'kitchen']))) {
 				defaultAnswers.ok(res);
+			} else {
+				defaultAnswers.badRequest(res);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
