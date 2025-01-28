@@ -16,7 +16,7 @@ import {
 	generateToken,
 	isAuthValid,
 } from '../services/tokenService';
-import { log } from 'console';
+import { error, log } from 'console';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -252,10 +252,10 @@ export default class orderController implements IController {
 					if (order) {
 						defaultAnswers.created(res);
 					} else {
-						defaultAnswers.badRequest(res);
+						throw Error('Error in insert into database');
 					}
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('The order in body is not defined');
 				}
 			} else {
 				defaultAnswers.badRequest(res, 'User with this id not found');
@@ -272,10 +272,10 @@ export default class orderController implements IController {
 				const order = await this.order.find({
 					_id: new this.mongoose.Types.ObjectId(id),
 				});
-				if (order) {
+				if (order.length > 0) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Order id is not found is database');
 				}
 			} else {
 				defaultAnswers.created(res);
@@ -290,7 +290,7 @@ export default class orderController implements IController {
 			if (order) {
 				res.json(order);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -305,7 +305,7 @@ export default class orderController implements IController {
 			if (order) {
 				res.json(order);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -323,10 +323,10 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.created(res);
+				throw Error('Id is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -344,10 +344,10 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.created(res);
+				throw Error('Id is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -370,7 +370,7 @@ export default class orderController implements IController {
 				if (order.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Id from request is not in database');
 				}
 			} else {
 				defaultAnswers.badRequest(res);
@@ -394,10 +394,10 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('From date is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -418,10 +418,10 @@ export default class orderController implements IController {
 				if (order.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('The id of the request is not in the database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Id is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

@@ -91,15 +91,15 @@ export default class materialController implements IController {
 		try {
 			const inputMaterials: Material[] = req.body.itemsToInsert;
 			if (inputMaterials) {
-				const user = await this.material.insertMany(inputMaterials);
+				const databaseAnswer = await this.material.insertMany(inputMaterials);
 
-				if (user) {
+				if (databaseAnswer) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('No materials found to insert');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -126,7 +126,7 @@ export default class materialController implements IController {
 			if (materials) {
 				res.status(200).send(materials);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -136,9 +136,59 @@ export default class materialController implements IController {
 		try {
 			const materialsInStock = await this.material.aggregate([
 				{
+					$facet: {
+						stockMaterials: [
+							{
+								$group: {
+									_id: '$name',
+									inStock: { $sum: '$quantity' },
+								},
+							},
+							{
+								$project: {
+									_id: 0,
+									name: '$_id',
+									inStock: 1,
+								},
+							},
+						],
+						recipeMaterials: [
+							{
+								$lookup: {
+									from: 'foods',
+									pipeline: [
+										{ $unwind: '$material' },
+										{
+											$group: {
+												_id: '$material.name',
+											},
+										},
+									],
+									as: 'recipes',
+								},
+							},
+							{ $unwind: '$recipes' },
+							{
+								$project: {
+									name: '$recipes._id',
+									inStock: { $literal: 0 },
+								},
+							},
+						],
+					},
+				},
+				{
+					$project: {
+						combined: {
+							$setUnion: ['$stockMaterials', '$recipeMaterials'],
+						},
+					},
+				},
+				{ $unwind: '$combined' },
+				{
 					$group: {
-						_id: '$name',
-						inStock: { $sum: '$quantity' },
+						_id: '$combined.name',
+						inStock: { $max: '$combined.inStock' },
 					},
 				},
 				{
@@ -149,32 +199,10 @@ export default class materialController implements IController {
 					},
 				},
 			]);
-			const materials = await this.food.aggregate([
-				{
-					$unwind: '$material',
-				},
-				{
-					$group: {
-						_id: '$material.name',
-					},
-				},
-				{
-					$project: {
-						_id: 0,
-						name: '$_id',
-						inStock: { $literal: 0 },
-					},
-				},
-			]);
-			materials.forEach((x) => {
-				if (!materialsInStock.includes(x.name)) {
-					materialsInStock.push(x);
-				}
-			});
 			if (materialsInStock) {
 				res.status(200).send(materialsInStock);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

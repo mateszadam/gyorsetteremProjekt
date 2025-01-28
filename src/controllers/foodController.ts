@@ -231,10 +231,10 @@ export default class foodController implements IController {
 				if (inserted) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Food in the body is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -247,7 +247,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -256,7 +256,13 @@ export default class foodController implements IController {
 	private updateFood = async (req: Request, res: Response) => {
 		try {
 			const newFood: Food = req.body.params;
-			if (newFood) {
+			if (
+				newFood._id &&
+				newFood.name &&
+				newFood.material &&
+				newFood.price &&
+				newFood.isEnabled
+			) {
 				const foods = await this.food.updateOne(
 					{
 						_id: newFood._id,
@@ -271,10 +277,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Ihe id is the request is not found is database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Food in the body is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -296,10 +302,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Ihe name in the request is not found is database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Ihe name is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -320,10 +326,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('The name in the request is not found is database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Ihe name is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -338,7 +344,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -351,7 +357,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

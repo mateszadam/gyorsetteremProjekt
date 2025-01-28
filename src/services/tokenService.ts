@@ -12,7 +12,7 @@ function generateToken(user: User) {
 		},
 		getRawId(user._id),
 		{
-			expiresIn: '1h',
+			expiresIn: '12h',
 		}
 	);
 }
@@ -68,9 +68,7 @@ const authenticateKitchenToken = async (req: any, res: any, next: any) => {
 
 const authenticateAdminToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
-
 	if (token == null) return res.sendStatus(401);
-
 	if (!(await isAuthValid(token, ['admin']))) {
 		defaultAnswers.notAuthorized(res);
 	} else {
