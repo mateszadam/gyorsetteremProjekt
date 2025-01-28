@@ -8,9 +8,9 @@ const jwt = require('jsonwebtoken');
 function generateToken(user: User) {
 	return jwt.sign(
 		{
-			name: user.name,
+			name: user.role,
 		},
-		getRawId(user._id),
+		getRawId(user.role!),
 		{
 			expiresIn: '12h',
 		}
@@ -27,7 +27,7 @@ function verifyToken(token: string, id: string): boolean {
 
 async function isAuthValid(
 	token: string,
-	roles: string[] = ['admin', 'customer']
+	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	roles.push('admin'); // for testing
 	const loggedInUser: User | null = await userModel.findOne({ token: token });

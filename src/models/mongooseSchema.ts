@@ -63,6 +63,9 @@ const foodSchema = new Schema<SchemaDefinition>(
 			required: true,
 			default: true,
 		},
+		category: {
+			type: String,
+		},
 	},
 	{
 		versionKey: false,

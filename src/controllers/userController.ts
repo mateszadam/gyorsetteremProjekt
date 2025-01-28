@@ -125,7 +125,8 @@ export default class userController implements IController {
 		 *     tags:
 		 *       - User handling
 		 *     summary: Logout a user
-		 *     security: []
+		 *     security:
+		 *       - bearerAuth: []
 		 *     responses:
 		 *       200:
 		 *         description: User logged out successfully
@@ -223,17 +224,17 @@ export default class userController implements IController {
 			if (token) {
 				const updateResult = await this.user.updateOne(
 					{
-						_id: token,
+						token: token,
 					},
 					{ $set: { token: null } }
 				);
 				if (updateResult.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Token not found in database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Token not found in the header');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

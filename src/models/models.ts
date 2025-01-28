@@ -22,6 +22,7 @@ interface Food {
 	price: number;
 	name: string;
 	isEnabled: boolean;
+	category: string | undefined;
 }
 
 interface FoodMaterial {

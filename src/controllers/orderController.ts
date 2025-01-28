@@ -357,7 +357,6 @@ export default class orderController implements IController {
 	private kitchenFinishOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			log(id);
 			if (id) {
 				const order = await this.order.updateOne(
 					{

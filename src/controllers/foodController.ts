@@ -148,7 +148,7 @@ import { log } from 'console';
  *       401:
  *         description: Not authorized
  *
- * /food/enable/{name}:
+ * /food/enable/{id}:
  *   patch:
  *     summary: Enable a food item
  *     tags: [Food]
@@ -156,7 +156,7 @@ import { log } from 'console';
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
@@ -272,6 +272,7 @@ export default class foodController implements IController {
 						material: newFood.material,
 						price: newFood.price,
 						isEnabled: newFood.isEnabled,
+						category: newFood.category,
 					}
 				);
 				if (foods.modifiedCount > 0) {

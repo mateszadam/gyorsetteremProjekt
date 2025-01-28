@@ -17,9 +17,9 @@ export default class tokenValidationController implements IController {
 
 	/**
 	 * @openapi
-	 * /token/admin:
+	 * /token/:
 	 *   get:
-	 *     summary: Validate admin token
+	 *     summary: Validate token
 	 *     tags: [Token validation]
 	 *     responses:
 	 *       200:
@@ -27,50 +27,21 @@ export default class tokenValidationController implements IController {
 	 *       400:
 	 *         description: Token is invalid
 	 *
-	 * /token/customer:
-	 *   get:
-	 *     summary: Validate customer token
-	 *     tags: [Token validation]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
-	 *
-	 * /token/kitchen:
-	 *   get:
-	 *     summary: Validate kitchen token
-	 *     tags: [Token validation]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
-	 *
-	 * /token/kiosk:
-	 *   get:
-	 *     summary: Validate kitchen token
-	 *     tags: [Token validation]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
 	 */
+
 	constructor() {
-		this.router.get('/admin', this.isAdminTokenValid);
-
-		this.router.get('/customer', this.isCustomerTokenValid);
-
-		this.router.get('/kitchen', this.isKitchenTokenValid);
-		this.router.get('/kiosk', this.isKioskTokenValid);
+		// this.router.get('/admin', this.isAdminTokenValid);
+		// this.router.get('/customer', this.isCustomerTokenValid);
+		// this.router.get('/kitchen', this.isKitchenTokenValid);
+		// this.router.get('/kiosk', this.isKioskTokenValid);
+		this.router.get('/', this.isTokenValid);
 	}
 
 	private isAdminTokenValid = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');
 
-			if (token || (await isAuthValid(token!, ['admin']))) {
+			if (token && (await isAuthValid(token!, ['admin']))) {
 				defaultAnswers.ok(res);
 			} else {
 				defaultAnswers.badRequest(res);
@@ -79,37 +50,10 @@ export default class tokenValidationController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private isCustomerTokenValid = async (req: Request, res: Response) => {
+	private isTokenValid = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token || (await isAuthValid(token!, ['customer']))) {
-				defaultAnswers.ok(res);
-			} else {
-				defaultAnswers.badRequest(res);
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
-		}
-	};
-	private isKitchenTokenValid = async (req: Request, res: Response) => {
-		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token || (await isAuthValid(token!, ['kitchen']))) {
-				defaultAnswers.ok(res);
-			} else {
-				defaultAnswers.badRequest(res);
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
-		}
-	};
-	private isKioskTokenValid = async (req: Request, res: Response) => {
-		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token || (await isAuthValid(token!, ['kiosk']))) {
+			if (token && (await isAuthValid(token!))) {
 				defaultAnswers.ok(res);
 			} else {
 				defaultAnswers.badRequest(res);
