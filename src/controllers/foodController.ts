@@ -278,7 +278,7 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					throw Error('Ihe id is the request is not found is database');
+					throw Error('he id is the request is not found is database');
 				}
 			} else {
 				throw Error('Food in the body is not found in the request');
@@ -303,10 +303,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Ihe name in the request is not found is database');
+					throw Error('The name in the request is not found is database');
 				}
 			} else {
-				throw Error('Ihe name is not found in the request');
+				throw Error('The name is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -330,7 +330,7 @@ export default class foodController implements IController {
 					throw Error('The name in the request is not found is database');
 				}
 			} else {
-				throw Error('Ihe name is not found in the request');
+				throw Error('The name is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
