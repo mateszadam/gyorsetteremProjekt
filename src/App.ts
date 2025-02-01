@@ -3,9 +3,11 @@ import mongoose from 'mongoose';
 import { IController } from './models/models';
 import { Router, Request, Response } from 'express';
 import {
+	categoryModel,
 	foodModel,
 	materialModel,
 	orderModel,
+	unitOfMeasureModel,
 	userModel,
 } from './models/mongooseSchema';
 import morgan from 'morgan';
@@ -135,6 +137,8 @@ export default class App {
 		foodModel.init();
 		orderModel.init();
 		materialModel.init();
+		categoryModel.init();
+		unitOfMeasureModel.init();
 	}
 }
 

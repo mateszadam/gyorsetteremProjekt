@@ -1,7 +1,8 @@
 import { log } from 'console';
-import { defaultAnswers, getRawId, User } from '../models/models';
+import { getRawId, User } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { NextFunction, Response, Request } from 'express';
+import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 const jwt = require('jsonwebtoken');
 
