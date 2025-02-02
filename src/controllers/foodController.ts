@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Food, IController, Material } from '../models/models';
+import { IFood, IController, IMaterial } from '../models/models';
 import { foodModel, materialModel, orderModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
@@ -10,8 +10,7 @@ import { log } from 'console';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 /**
- *
- * @openapi
+ * @swagger
  * tags:
  *   name: Food
  *   description: Food management endpoints
@@ -27,19 +26,16 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               food:
- *                 type: array
- *                 items:
- *                   $ref: '#/components/schemas/Food'
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/Food'
  *     responses:
  *       200:
  *         description: Food items added successfully
  *       400:
  *         description: Bad request
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * /food/all:
  *   get:
@@ -49,7 +45,7 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of all enabled food items
+ *         description: List of enabled food items
  *         content:
  *           application/json:
  *             schema:
@@ -57,17 +53,17 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *               items:
  *                 $ref: '#/components/schemas/Food'
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * /food/allToOrder:
  *   get:
- *     summary: Get food items available for ordering (name and price only)
+ *     summary: Get food items for ordering (name and price only)
  *     tags: [Food]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of food items with name and price
+ *         description: List of food items
  *         content:
  *           application/json:
  *             schema:
@@ -80,34 +76,33 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *                   price:
  *                     type: number
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * /food/{name}:
  *   get:
- *     summary: Get food item by name
+ *     summary: Get food by name
  *     tags: [Food]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: name
+ *       - name: name
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: Name of the food item
  *     responses:
  *       200:
- *         description: Food item details
+ *         description: Food details
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Food'
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * /food/update:
  *   put:
- *     summary: Update a food item
+ *     summary: Update food item
  *     tags: [Food]
  *     security:
  *       - bearerAuth: []
@@ -116,64 +111,63 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               params:
- *                 $ref: '#/components/schemas/Food'
+ *             $ref: '#/components/schemas/Food'
  *     responses:
  *       200:
- *         description: Food item updated successfully
+ *         description: Food updated successfully
  *       400:
  *         description: Bad request
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * /food/disable/{name}:
  *   patch:
- *     summary: Disable a food item
+ *     summary: Disable food item
  *     tags: [Food]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: name
+ *       - name: name
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: Name of the food item to disable
  *     responses:
  *       200:
- *         description: Food item disabled successfully
+ *         description: Food disabled successfully
  *       400:
  *         description: Bad request
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
- * /food/enable/{id}:
+ * /food/enable/{name}:
  *   patch:
- *     summary: Enable a food item
+ *     summary: Enable food item
  *     tags: [Food]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: name
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: Name of the food item to enable
  *     responses:
  *       200:
- *         description: Food item enabled successfully
+ *         description: Food enabled successfully
  *       400:
  *         description: Bad request
  *       401:
- *         description: Not authorized
+ *         description: Unauthorized
  *
  * components:
  *   schemas:
  *     Food:
  *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *         - material
  *       properties:
  *         _id:
  *           type: string
@@ -193,10 +187,8 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *         isEnabled:
  *           type: boolean
  *           default: true
- *       required:
- *         - name
- *         - price
- *         - material
+ *         category:
+ *           type: string
  */
 export default class foodController implements IController {
 	public router = Router();
@@ -225,7 +217,7 @@ export default class foodController implements IController {
 
 	private addFood = async (req: Request, res: Response) => {
 		try {
-			const inputMaterials: Food[] = req.body.food;
+			const inputMaterials: IFood[] = req.body;
 
 			if (inputMaterials) {
 				const inserted = await this.food.insertMany(inputMaterials);
@@ -256,7 +248,7 @@ export default class foodController implements IController {
 	};
 	private updateFood = async (req: Request, res: Response) => {
 		try {
-			const newFood: Food = req.body.params;
+			const newFood: IFood = req.body;
 			if (
 				newFood._id &&
 				newFood.name &&

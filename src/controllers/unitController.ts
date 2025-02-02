@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, User } from '../models/models';
+import { getRawId, IController, IUnit } from '../models/models';
 import { unitOfMeasureModel, userModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
+	authenticateToken,
 	generateToken,
 	isAuthValid,
 } from '../services/tokenService';
@@ -15,13 +16,14 @@ export default class unitController implements IController {
 	public endPoint = '/unit';
 
 	constructor() {
-		this.router.get('/add', authenticateAdminToken, this.add);
+		this.router.post('/add', authenticateToken, this.add);
+		this.router.get('/all', authenticateToken, this.getAll);
 	}
 
 	/**
 	 * @swagger
 	 * /unit/add:
-	 *   get:
+	 *   post:
 	 *     summary: Add a new unit of measure
 	 *     tags: [Units]
 	 *     security:
@@ -48,7 +50,7 @@ export default class unitController implements IController {
 	 */
 	private add = async (req: Request, res: Response) => {
 		try {
-			const newUnit = req.body;
+			const newUnit: IUnit = req.body;
 			if (newUnit) {
 				const response = await this.unit.insertMany([newUnit]);
 				if (response) {
@@ -58,6 +60,18 @@ export default class unitController implements IController {
 				}
 			} else {
 				throw Error('No body found');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private getAll = async (req: Request, res: Response) => {
+		try {
+			const response = await this.unit.find({ _id: 0 });
+			if (response) {
+				defaultAnswers.ok(res);
+			} else {
+				throw Error('Failed to get from database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

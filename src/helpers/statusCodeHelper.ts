@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Response } from 'express';
 
 class defaultAnswers {
 	static async ok(res: Response, message: string = '') {

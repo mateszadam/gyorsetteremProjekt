@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 
-interface User {
+interface IUser {
 	_id: string;
 	name: string;
 	password: string;
@@ -9,27 +9,39 @@ interface User {
 	token: string | undefined;
 }
 
-interface Material {
+interface ICategory {
+	_id: string;
+	name: string;
+	icon: string;
+}
+
+interface IMaterial {
 	_id: string;
 	name: string;
 	quantity: number;
 	message: string;
 }
 
-interface Food {
+interface IUnit {
 	_id: string;
-	material: FoodMaterial[];
+	materialName: string;
+	unit: string;
+}
+
+interface IFood {
+	_id: string;
+	material: IFoodMaterial[];
 	price: number;
 	name: string;
 	isEnabled: boolean;
 	category: string | undefined;
 }
 
-interface FoodMaterial {
+interface IFoodMaterial {
 	name: string;
 	quantity: number;
 }
-interface Order {
+interface IOrder {
 	_id?: string;
 	costumerID: string;
 	isFinished: boolean;
@@ -54,4 +66,13 @@ function getObjectID(id: string) {
 	return 'ObjectId(' + id + ')';
 }
 
-export { User, Material, IController, Food, getRawId, getObjectID, Order };
+export {
+	IUser,
+	IMaterial,
+	IController,
+	IFood,
+	getRawId,
+	getObjectID,
+	IOrder,
+	IUnit,
+};

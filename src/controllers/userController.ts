@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, User } from '../models/models';
+import { getRawId, IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
@@ -156,7 +156,7 @@ export default class userController implements IController {
 
 	private registerUser = async (req: Request, res: Response) => {
 		try {
-			let userInput: User = req.body;
+			let userInput: IUser = req.body;
 			const passwordRegex =
 				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 			const emailRegex =
@@ -170,7 +170,7 @@ export default class userController implements IController {
 				userInput.name.length > 4
 			) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: User = {
+				const userData: IUser = {
 					...userInput,
 					password: hashedPassword,
 					role: 'customer',
@@ -190,8 +190,8 @@ export default class userController implements IController {
 	};
 	private loginUser = async (req: Request, res: Response) => {
 		try {
-			let userInput: User = req.body;
-			const databaseUser: User | null = await this.user.findOne({
+			let userInput: IUser = req.body;
+			const databaseUser: IUser | null = await this.user.findOne({
 				name: userInput.name,
 			});
 			if (!userInput || !databaseUser) {
@@ -243,7 +243,7 @@ export default class userController implements IController {
 	};
 	private registerAdmin = async (req: Request, res: Response) => {
 		try {
-			let userInput: User = req.body;
+			let userInput: IUser = req.body;
 			const passwordRegex =
 				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 			const emailRegex =
@@ -258,7 +258,7 @@ export default class userController implements IController {
 				userInput.name.length > 4
 			) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: User = {
+				const userData: IUser = {
 					...userInput,
 					password: hashedPassword,
 					role: 'admin',

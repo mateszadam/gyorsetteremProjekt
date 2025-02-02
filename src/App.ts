@@ -18,6 +18,7 @@ import materialController from './controllers/materialController';
 import foodController from './controllers/foodController';
 
 import tokenValidationController from './controllers/tokenValidationController';
+import unitController from './controllers/unitController';
 
 export default class App {
 	public app: express.Application;
@@ -106,7 +107,7 @@ export default class App {
 			],
 		};
 		this.app.use(
-			'/docs',
+			'/',
 			this.swagger.serve,
 			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
 		);
@@ -148,4 +149,5 @@ new App([
 	new materialController(),
 	new foodController(),
 	new tokenValidationController(),
+	new unitController(),
 ]);

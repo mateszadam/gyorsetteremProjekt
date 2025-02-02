@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, User } from '../models/models';
+import { getRawId, IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
@@ -35,7 +35,7 @@ export default class tokenValidationController implements IController {
 		// this.router.get('/customer', this.isCustomerTokenValid);
 		// this.router.get('/kitchen', this.isKitchenTokenValid);
 		// this.router.get('/kiosk', this.isKioskTokenValid);
-		this.router.get('/', this.isTokenValid);
+		this.router.get('/validate', this.isTokenValid);
 	}
 
 	private isAdminTokenValid = async (req: Request, res: Response) => {

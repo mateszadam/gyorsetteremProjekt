@@ -109,9 +109,10 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 		materialName: {
 			type: String,
 			required: true,
+			unique: true,
 		},
 		unit: {
-			type: Number,
+			type: String,
 			required: true,
 		},
 	},
@@ -127,6 +128,10 @@ const categorySchema = new Schema<SchemaDefinition>(
 	{
 		_id: {},
 		name: {
+			type: String,
+			required: true,
+		},
+		icon: {
 			type: String,
 			required: true,
 		},

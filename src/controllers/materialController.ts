@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { IController, Material } from '../models/models';
+import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel, orderModel } from '../models/mongooseSchema';
 import { authenticateAdminToken, isAuthValid } from '../services/tokenService';
 import { log } from 'console';
@@ -90,7 +90,7 @@ export default class materialController implements IController {
 
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
-			const inputMaterials: Material[] = req.body.itemsToInsert;
+			const inputMaterials: IMaterial[] = req.body;
 			if (inputMaterials) {
 				const databaseAnswer = await this.material.insertMany(inputMaterials);
 
@@ -117,10 +117,18 @@ export default class materialController implements IController {
 					},
 				},
 				{
+					$lookup: {
+						from: 'unitOfMeasures',
+						localField: '_id',
+						foreignField: 'materialName',
+						as: 'UOM',
+					},
+				},
+				{
 					$project: {
-						_id: 0,
-						name: '$_id',
+						_id: 1,
 						inStock: 1,
+						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
 					},
 				},
 			]);
@@ -193,10 +201,18 @@ export default class materialController implements IController {
 					},
 				},
 				{
+					$lookup: {
+						from: 'unitOfMeasures',
+						localField: '_id',
+						foreignField: 'materialName',
+						as: 'UOM',
+					},
+				},
+				{
 					$project: {
-						_id: 0,
-						name: '$_id',
+						_id: 1,
 						inStock: 1,
+						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
 					},
 				},
 			]);

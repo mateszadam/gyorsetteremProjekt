@@ -1,12 +1,12 @@
 import { log } from 'console';
-import { getRawId, User } from '../models/models';
+import { getRawId, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { NextFunction, Response, Request } from 'express';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 const jwt = require('jsonwebtoken');
 
-function generateToken(user: User) {
+function generateToken(user: IUser) {
 	return jwt.sign(
 		{
 			name: user.role,
@@ -31,7 +31,7 @@ async function isAuthValid(
 	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	roles.push('admin'); // for testing
-	const loggedInUser: User | null = await userModel.findOne({ token: token });
+	const loggedInUser: IUser | null = await userModel.findOne({ token: token });
 	if (
 		loggedInUser &&
 		loggedInUser._id &&

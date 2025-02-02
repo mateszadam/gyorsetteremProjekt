@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, User } from '../models/models';
+import { getRawId, IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
@@ -20,6 +20,7 @@ export default class userController implements IController {
 
 	private getAll = async (req: Request, res: Response) => {
 		try {
+			throw Error('Not implemented');
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}

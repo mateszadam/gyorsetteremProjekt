@@ -3,8 +3,8 @@ import {
 	getObjectID,
 	getRawId,
 	IController,
-	Order,
-	User,
+	IOrder,
+	IUser,
 } from '../models/models';
 import { orderModel, userModel } from '../models/mongooseSchema';
 import {
@@ -242,7 +242,7 @@ export default class orderController implements IController {
 
 	private newOrder = async (req: Request, res: Response) => {
 		try {
-			const newOrder: Order = req.body;
+			const newOrder: IOrder = req.body;
 			const userExists = await this.user.find({
 				_id: new this.mongoose.Types.ObjectId(newOrder.costumerID!),
 			});
@@ -286,7 +286,7 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order: Order[] = await this.order.find({ isFinished: false });
+			const order: IOrder[] = await this.order.find({ isFinished: false });
 			if (order) {
 				res.json(order);
 			} else {
@@ -299,7 +299,7 @@ export default class orderController implements IController {
 
 	private getAllForKitchen = async (req: Request, res: Response) => {
 		try {
-			const order: Order[] = await this.order.find({
+			const order: IOrder[] = await this.order.find({
 				finishedCokingTime: null,
 			});
 			if (order) {
