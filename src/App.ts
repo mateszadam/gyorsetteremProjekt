@@ -3,9 +3,11 @@ import mongoose from 'mongoose';
 import { IController } from './models/models';
 import { Router, Request, Response } from 'express';
 import {
+	categoryModel,
 	foodModel,
 	materialModel,
 	orderModel,
+	unitOfMeasureModel,
 	userModel,
 } from './models/mongooseSchema';
 import morgan from 'morgan';
@@ -16,18 +18,49 @@ import materialController from './controllers/materialController';
 import foodController from './controllers/foodController';
 
 import tokenValidationController from './controllers/tokenValidationController';
+import unitController from './controllers/unitController';
+import categoryController from './controllers/categoryController';
 
 export default class App {
 	public app: express.Application;
 	private swaggerjsdoc = require('swagger-jsdoc');
 	private swagger = require('swagger-ui-express');
+	private http = require('http');
+	private WebSocket = require('ws');
 
 	constructor(controllers: IController[]) {
 		this.app = express();
+		const server = this.http.createServer(this.app); // Create an HTTP server
+		const wss = new this.WebSocket.Server({ server });
 		this.connectToTheDatabase();
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
+
+		wss.on('connection', (ws: any) => {
+			console.log('New client connected');
+
+			// Handle messages from client
+			ws.on('message', (message: any) => {
+				console.log(`Received: ${message}`);
+
+				// Broadcast message to all connected clients
+				wss.clients.forEach((client: any) => {
+					if (client.readyState === WebSocket.OPEN) {
+						client.send(`Server: ${message}`);
+					}
+				});
+			});
+
+			// Handle client disconnection
+			ws.on('close', () => {
+				console.log('Client disconnected');
+			});
+
+			// Send a welcome message to the client
+			ws.send('Welcome to the WebSocket server!');
+		});
+
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
@@ -79,6 +112,7 @@ export default class App {
 			this.swagger.serve,
 			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
 		);
+
 		this.app.listen(5005, () => {
 			console.log('App listening on the port 5005');
 		});
@@ -105,6 +139,8 @@ export default class App {
 		foodModel.init();
 		orderModel.init();
 		materialModel.init();
+		categoryModel.init();
+		unitOfMeasureModel.init();
 	}
 }
 
@@ -114,4 +150,6 @@ new App([
 	new materialController(),
 	new foodController(),
 	new tokenValidationController(),
+	new unitController(),
+	new categoryController(),
 ]);

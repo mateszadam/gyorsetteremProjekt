@@ -1,20 +1,12 @@
 import { Router, Request, Response } from 'express';
-import {
-	defaultAnswers,
-	getObjectID,
-	getRawId,
-	IController,
-	Order,
-	User,
-} from '../models/models';
+import { IController, IOrder } from '../models/models';
 import { orderModel, userModel } from '../models/mongooseSchema';
 import {
-	authenticateAdminToken,
+	authenticateKioskToken,
+	authenticateKitchenToken,
 	authenticateToken,
-	generateToken,
-	isAuthValid,
 } from '../services/tokenService';
-import { log } from 'console';
+import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -23,14 +15,11 @@ export default class orderController implements IController {
 	private user = userModel;
 	private mongoose = require('mongoose');
 	/**
-	 * @swagger
+	 * @openapi
 	 * tags:
 	 *   name: Orders
 	 *   description: Order management
-	 */
-
-	/**
-	 * @swagger
+	 *
 	 * /order/new:
 	 *   post:
 	 *     summary: Create a new order
@@ -42,32 +31,34 @@ export default class orderController implements IController {
 	 *       content:
 	 *         application/json:
 	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               costumerID:
+	 *                 type: string
+	 *                 default: 6793bb6219bff92baf980ade
+	 *               orderedProducts:
+	 *                 type: array
+	 *                 items:
 	 *                   type: object
 	 *                   properties:
-	 *                     costumerID:
+	 *                     name:
 	 *                       type: string
-	 *                       default: 6793bb6219bff92baf980ade
-	 *                     orderedProducts:
-	 *                       type: object
-	 *                       properties:
-	 *                         name:
-	 *                           type: string
-	 *                           default: Pizza
-	 *                         quantity:
-	 *                           type: number
-	 *                           default: 2
+	 *                       default: Pizza
+	 *                     quantity:
+	 *                       type: number
+	 *                       default: 2
 	 *                   required:
 	 *                     - name
-	 *                     - price
+	 *                     - quantity
+	 *             required:
+	 *               - costumerID
+	 *               - orderedProducts
 	 *     responses:
 	 *       201:
 	 *         description: Order created successfully
 	 *       400:
 	 *         description: Bad request
-	 */
-
-	/**
-	 * @swagger
+	 *
 	 * /order/ongoing:
 	 *   get:
 	 *     summary: Get all ongoing orders
@@ -79,10 +70,7 @@ export default class orderController implements IController {
 	 *         description: List of ongoing orders
 	 *       400:
 	 *         description: Bad request
-	 */
-
-	/**
-	 * @swagger
+	 *
 	 * /order/ongoing/{id}:
 	 *   get:
 	 *     summary: Get ongoing orders by user id
@@ -101,12 +89,39 @@ export default class orderController implements IController {
 	 *         description: Order marked as finished
 	 *       400:
 	 *         description: Bad request
-	 */
-
-	/**
-	 * @swagger
-	 * /order/finish/{id}:
+	 * /order/{id}:
 	 *   get:
+	 *     summary: Mark order as received/handed over
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         description: Order ID
+	 *     responses:
+	 *       200:
+	 *         description: Order marked as received
+	 *       400:
+	 *         description: Bad request
+	 *
+	 * /order/kitchen:
+	 *   get:
+	 *     summary: Get all orders for kitchen
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     responses:
+	 *       200:
+	 *         description: List of orders for kitchen
+	 *       400:
+	 *         description: Bad request
+	 *
+	 * /order/finish/{id}:
+	 *   patch:
 	 *     summary: Mark an order as finished
 	 *     tags: [Orders]
 	 *     security:
@@ -123,13 +138,10 @@ export default class orderController implements IController {
 	 *         description: Order marked as finished
 	 *       400:
 	 *         description: Bad request
-	 */
-
-	/**
-	 * @swagger
-	 * /order/{id}:
-	 *   get:
-	 *     summary: Get an order by Id
+	 *
+	 * /order/handover/{id}:
+	 *   patch:
+	 *     summary: Get an order for handover
 	 *     tags: [Orders]
 	 *     security:
 	 *       - bearerAuth: []
@@ -142,7 +154,52 @@ export default class orderController implements IController {
 	 *         description: Order ID
 	 *     responses:
 	 *       200:
-	 *         description: Order by id
+	 *         description: Order ready for handover
+	 *       400:
+	 *         description: Bad request
+	 *
+	 * /order/time/{from}/{to}:
+	 *   get:
+	 *     summary: Get all orders within a time range
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: from
+	 *         schema:
+	 *           type: string
+	 *           format: date
+	 *         required: true
+	 *         description: Start date of the time range
+	 *       - in: path
+	 *         name: to
+	 *         schema:
+	 *           type: string
+	 *           format: date
+	 *         description: End date of the time range
+	 *     responses:
+	 *       200:
+	 *         description: List of orders within the time range
+	 *       400:
+	 *         description: Bad request
+	 *
+	 * /order/finished/{id}:
+	 *   get:
+	 *     summary: Get finished orders by user id
+	 *     tags: [Orders]
+	 *     security:
+	 *       - bearerAuth: []
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         description: User ID
+	 *     responses:
+	 *       200:
+	 *         description: List of finished orders for the user
 	 *       400:
 	 *         description: Bad request
 	 */
@@ -151,54 +208,36 @@ export default class orderController implements IController {
 		this.router.post('/new', authenticateToken, this.newOrder);
 		this.router.get(
 			'/ongoing',
-			authenticateAdminToken,
+			authenticateKioskToken,
 			this.getAllOngoingOrder
 		);
 		this.router.get('/ongoing/:id', authenticateToken, this.getOngoingById);
+		this.router.get('/finished/:id', authenticateToken, this.getFinishedById);
+		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
 
-		this.router.get('/finish/:id', authenticateAdminToken, this.finishOrder);
-
-		this.router.get(
-			'kitchen/finish/:id',
-			authenticateAdminToken,
-			this.finishOrder
+		this.router.patch(
+			'/finish/:id',
+			authenticateKitchenToken,
+			this.kitchenFinishOrder
 		);
 
-		/**
-		 * @swagger
-		 * /order/time/{from}/{to}:
-		 *   get:
-		 *     summary: Get all orders within a time range
-		 *     tags: [Orders]
-		 *     security:
-		 *       - bearerAuth: []
-		 *     parameters:
-		 *       - in: path
-		 *         name: from
-		 *         schema:
-		 *           type: string
-		 *           format: date
-		 *         required: true
-		 *         description: Start date of the time range
-		 *       - in: path
-		 *         name: to
-		 *         schema:
-		 *           type: string
-		 *           format: date
-		 *         description: End date of the time range
-		 *     responses:
-		 *       200:
-		 *         description: List of orders within the time range
-		 *       400:
-		 *         description: Bad request
-		 */
-		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
+		this.router.get(
+			'/kitchen',
+			authenticateKitchenToken,
+			this.getAllForKitchen
+		);
+
 		this.router.get('/:id', authenticateToken, this.getById);
+		this.router.patch(
+			'/handover/:id',
+			authenticateKioskToken,
+			this.receivedOrder
+		);
 	}
 
 	private newOrder = async (req: Request, res: Response) => {
 		try {
-			const newOrder: Order = req.body;
+			const newOrder: IOrder = req.body;
 			const userExists = await this.user.find({
 				_id: new this.mongoose.Types.ObjectId(newOrder.costumerID!),
 			});
@@ -208,10 +247,10 @@ export default class orderController implements IController {
 					if (order) {
 						defaultAnswers.created(res);
 					} else {
-						defaultAnswers.badRequest(res);
+						throw Error('Error in insert into database');
 					}
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('The order in body is not defined');
 				}
 			} else {
 				defaultAnswers.badRequest(res, 'User with this id not found');
@@ -228,31 +267,46 @@ export default class orderController implements IController {
 				const order = await this.order.find({
 					_id: new this.mongoose.Types.ObjectId(id),
 				});
-				if (order) {
+				if (order.length > 0) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Order id is not found is database');
 				}
 			} else {
 				defaultAnswers.created(res);
 			}
-			defaultAnswers.notImplemented(res);
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order: Order[] = await this.order.find({ isFinished: false });
+			const order: IOrder[] = await this.order.find({ isFinished: false });
 			if (order) {
 				res.json(order);
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
+
+	private getAllForKitchen = async (req: Request, res: Response) => {
+		try {
+			const order: IOrder[] = await this.order.find({
+				finishedCokingTime: null,
+			});
+			if (order) {
+				res.json(order);
+			} else {
+				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
 	private getOngoingById = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
@@ -264,32 +318,53 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.created(res);
+				throw Error('Id is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private finishOrder = async (req: Request, res: Response) => {
+
+	private getFinishedById = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			log(id);
+			if (id) {
+				const order = await this.order.find({
+					costumerID: id,
+					isFinished: true,
+				});
+				if (order) {
+					res.json(order);
+				} else {
+					throw Error('Error in database');
+				}
+			} else {
+				throw Error('Id is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
+	private kitchenFinishOrder = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
 			if (id) {
 				const order = await this.order.updateOne(
 					{
 						_id: new this.mongoose.Types.ObjectId(id),
 					},
 					{
-						$set: { isFinished: true, finishedTime: Date.now() },
+						$set: { finishedCokingTime: Date.now() },
 					}
 				);
-				if (order) {
-					res.json(order);
+				if (order.modifiedCount > 0) {
+					defaultAnswers.ok(res);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Id from request is not in database');
 				}
 			} else {
 				defaultAnswers.badRequest(res);
@@ -303,9 +378,10 @@ export default class orderController implements IController {
 			const from: string = req.params.from;
 			let to: string = req.params.to;
 			if (to == '{to}' || to == '' || !to) {
-				to = new Date().toJSON();
+				const toDate = new Date();
+				toDate.setDate(toDate.getDate() + 1);
+				to = toDate.toJSON().split('T')[0];
 			}
-
 			if (from) {
 				const order = await this.order.find({
 					finishedTime: { $gte: new Date(from), $lte: new Date(to) },
@@ -313,10 +389,34 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Error in database');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('From date is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private receivedOrder = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.updateOne(
+					{
+						_id: new this.mongoose.Types.ObjectId(id),
+					},
+					{
+						$set: { isFinished: true, finishedTime: Date.now() },
+					}
+				);
+				if (order.modifiedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('The id of the request is not in the database');
+				}
+			} else {
+				throw Error('Id is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

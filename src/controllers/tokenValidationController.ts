@@ -1,12 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { defaultAnswers, getRawId, IController, User } from '../models/models';
+import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
-import {
-	authenticateAdminToken,
-	generateToken,
-	isAuthValid,
-} from '../services/tokenService';
-import { log } from 'console';
+import { isAuthValid } from '../services/tokenService';
+import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class tokenValidationController implements IController {
 	public router = Router();
@@ -16,56 +12,32 @@ export default class tokenValidationController implements IController {
 	bcrypt = require('bcrypt');
 
 	/**
-	 * @swagger
-	 * /token/admin:
+	 * @openapi
+	 * /token/validate:
 	 *   get:
-	 *     summary: Validate admin token
-	 *     tags: [Token]
+	 *     summary: Validate token
+	 *     tags: [Token validation]
 	 *     responses:
 	 *       200:
 	 *         description: Token is valid
 	 *       400:
 	 *         description: Token is invalid
+	 *
 	 */
 
-	/**
-	 * @swagger
-	 * /token/customer:
-	 *   get:
-	 *     summary: Validate customer token
-	 *     tags: [Token]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
-	 */
-
-	/**
-	 * @swagger
-	 * /token/kitchen:
-	 *   get:
-	 *     summary: Validate kitchen token
-	 *     tags: [Token]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
-	 */
 	constructor() {
-		this.router.get('/admin', this.isAdminTokenValid);
-
-		this.router.get('/customer', this.isCustomerTokenValid);
-
-		this.router.get('/kitchen', this.isKitchenTokenValid);
+		// this.router.get('/admin', this.isAdminTokenValid);
+		// this.router.get('/customer', this.isCustomerTokenValid);
+		// this.router.get('/kitchen', this.isKitchenTokenValid);
+		// this.router.get('/kiosk', this.isKioskTokenValid);
+		this.router.get('/validate', this.isTokenValid);
 	}
 
 	private isAdminTokenValid = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');
 
-			if (token || (await isAuthValid(token!, ['admin']))) {
+			if (token && (await isAuthValid(token!, ['admin']))) {
 				defaultAnswers.ok(res);
 			} else {
 				defaultAnswers.badRequest(res);
@@ -74,24 +46,10 @@ export default class tokenValidationController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private isCustomerTokenValid = async (req: Request, res: Response) => {
+	private isTokenValid = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token || (await isAuthValid(token!, ['admin', 'customer']))) {
-				defaultAnswers.ok(res);
-			} else {
-				defaultAnswers.badRequest(res);
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
-		}
-	};
-	private isKitchenTokenValid = async (req: Request, res: Response) => {
-		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token || (await isAuthValid(token!, ['admin', 'kitchen']))) {
+			if (token && (await isAuthValid(token!))) {
 				defaultAnswers.ok(res);
 			} else {
 				defaultAnswers.badRequest(res);

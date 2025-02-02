@@ -1,25 +1,26 @@
 import { log } from 'console';
-import { defaultAnswers, getRawId, User } from '../models/models';
+import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
-import { NextFunction, Response, Request } from 'express';
+import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 const jwt = require('jsonwebtoken');
 
-function generateToken(user: User) {
-	log(user._id);
+function generateToken(user: IUser) {
 	return jwt.sign(
 		{
-			name: user.name,
+			name: user.role,
 		},
-		getRawId(user._id),
+		user.role,
 		{
-			expiresIn: '1h',
+			expiresIn: '12h',
 		}
 	);
 }
 
 function verifyToken(token: string, id: string): boolean {
 	try {
+		log(token);
+		log(id);
 		return jwt.verify(token, id);
 	} catch {
 		return false;
@@ -28,26 +29,48 @@ function verifyToken(token: string, id: string): boolean {
 
 async function isAuthValid(
 	token: string,
-	roles: string[] = ['admin', 'customer']
+	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
-	const loggedInUser: User | null = await userModel.findOne({ token: token });
-	if (
-		loggedInUser &&
-		loggedInUser._id &&
-		verifyToken(token, getRawId(loggedInUser._id)) &&
-		roles.includes(loggedInUser.role!)
-	) {
-		return true;
+	try {
+		roles.push('admin');
+		const loggedInUser: IUser | null = await userModel.findOne({
+			token: token,
+		});
+		log(loggedInUser);
+		log(verifyToken(token, loggedInUser!.role!));
+		log(roles.includes(loggedInUser!.role!));
+		if (
+			loggedInUser &&
+			loggedInUser._id &&
+			verifyToken(token, loggedInUser.role!) &&
+			roles.includes(loggedInUser.role!)
+		) {
+			return true;
+		}
+		return false;
+	} catch {
+		return false;
 	}
-	return false;
 }
 
 const authenticateToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
-	log(token);
+
 	if (token == null) return res.sendStatus(401);
 
 	if (!(await isAuthValid(token))) {
+		defaultAnswers.notAuthorized(res);
+	} else {
+		next();
+	}
+};
+
+const authenticateKitchenToken = async (req: any, res: any, next: any) => {
+	const token = req.headers.authorization?.replace('Bearer ', '');
+
+	if (token == null) return res.sendStatus(401);
+
+	if (!(await isAuthValid(token, ['kitchen']))) {
 		defaultAnswers.notAuthorized(res);
 	} else {
 		next();
@@ -58,8 +81,19 @@ const authenticateAdminToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 	log(token);
 	if (token == null) return res.sendStatus(401);
-
 	if (!(await isAuthValid(token, ['admin']))) {
+		log('not');
+		defaultAnswers.notAuthorized(res);
+	} else {
+		next();
+	}
+};
+
+const authenticateKioskToken = async (req: any, res: any, next: any) => {
+	const token = req.headers.authorization?.replace('Bearer ', '');
+	if (token == null) return res.sendStatus(401);
+
+	if (!(await isAuthValid(token, ['kiosk']))) {
 		defaultAnswers.notAuthorized(res);
 	} else {
 		next();
@@ -72,4 +106,6 @@ export {
 	isAuthValid,
 	authenticateToken,
 	authenticateAdminToken,
+	authenticateKitchenToken,
+	authenticateKioskToken,
 };

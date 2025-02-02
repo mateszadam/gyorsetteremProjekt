@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 
-interface User {
+interface IUser {
 	_id: string;
 	name: string;
 	password: string;
@@ -9,31 +9,45 @@ interface User {
 	token: string | undefined;
 }
 
-interface Material {
+interface ICategory {
+	_id: string;
+	name: string;
+	icon: string;
+}
+
+interface IMaterial {
 	_id: string;
 	name: string;
 	quantity: number;
 	message: string;
 }
 
-interface Food {
+interface IUnit {
 	_id: string;
-	material: FoodMaterial[];
-	price: number;
-	name: string;
+	materialName: string;
+	unit: string;
 }
 
-interface FoodMaterial {
+interface IFood {
+	_id: string;
+	material: IFoodMaterial[];
+	price: number;
+	name: string;
+	isEnabled: boolean;
+	category: string | undefined;
+}
+
+interface IFoodMaterial {
 	name: string;
 	quantity: number;
 }
-interface Order {
+interface IOrder {
 	_id?: string;
 	costumerID: string;
 	isFinished: boolean;
+	finishedTime: Date;
 	orderedTime: Date;
 	finishedCokingTime: Date;
-	finishedTime: Date;
 	orderedProducts: {
 		name: string;
 		quantity: number;
@@ -52,45 +66,14 @@ function getObjectID(id: string) {
 	return 'ObjectId(' + id + ')';
 }
 
-class defaultAnswers {
-	static async ok(res: Response, message: string = '') {
-		if (message == '') {
-			res.sendStatus(200);
-		} else {
-			res.status(200).json({ message });
-		}
-	}
-
-	static async created(res: Response) {
-		res.sendStatus(201);
-	}
-
-	static async notAuthorized(res: Response) {
-		res.sendStatus(401);
-	}
-
-	static async notFound(res: Response) {
-		res.sendStatus(404);
-	}
-	static async notImplemented(res: Response) {
-		res.sendStatus(501);
-	}
-	static async badRequest(res: Response, message: string = '') {
-		if (message == '') {
-			res.sendStatus(400);
-		} else {
-			res.status(400).json({ message: message });
-		}
-	}
-}
-
 export {
-	User,
-	Material,
+	IUser,
+	IMaterial,
 	IController,
-	Food,
+	IFood,
 	getRawId,
 	getObjectID,
-	defaultAnswers,
-	Order,
+	IOrder,
+	IUnit,
+	ICategory,
 };

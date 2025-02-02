@@ -58,6 +58,14 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: Number,
 			required: true,
 		},
+		isEnabled: {
+			type: Boolean,
+			required: true,
+			default: true,
+		},
+		category: {
+			type: String,
+		},
 	},
 	{
 		versionKey: false,
@@ -79,6 +87,52 @@ const materialSchema = new Schema<SchemaDefinition>(
 			required: true,
 		},
 		message: {
+			type: String,
+			required: true,
+		},
+		date: {
+			type: Date,
+			default: new Date(),
+		},
+	},
+	{
+		versionKey: false,
+		id: false,
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true },
+	}
+);
+
+const unitOfMeasure = new Schema<SchemaDefinition>(
+	{
+		_id: {},
+		materialName: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		unit: {
+			type: String,
+			required: true,
+		},
+	},
+	{
+		versionKey: false,
+		id: false,
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true },
+	}
+);
+
+const categorySchema = new Schema<SchemaDefinition>(
+	{
+		_id: {},
+		name: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		icon: {
 			type: String,
 			required: true,
 		},
@@ -138,3 +192,10 @@ export const userModel = model('userId', userSchema, 'users');
 export const foodModel = model('foodId', foodSchema, 'foods');
 export const orderModel = model('orderId', orderSchema, 'orders');
 export const materialModel = model('materialId', materialSchema, 'materials');
+export const categoryModel = model('categoryId', categorySchema, 'categories');
+
+export const unitOfMeasureModel = model(
+	'unitId',
+	unitOfMeasure,
+	'unitOfMeasures'
+);
