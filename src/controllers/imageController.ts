@@ -97,28 +97,6 @@ export default class imagesController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	/**
-	 * @swagger
-	 * /images:
-	 *   post:
-	 *     summary: Upload an image
-	 *     tags: [Images]
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         multipart/form-data:
-	 *           schema:
-	 *             type: object
-	 *             properties:
-	 *               image:
-	 *                 type: string
-	 *                 format: binary
-	 *     responses:
-	 *       200:
-	 *         description: Image uploaded successfully
-	 *       400:
-	 *         description: Bad request
-	 */
 
 	private uploadImage = async (req: Request, res: Response) => {
 		try {
