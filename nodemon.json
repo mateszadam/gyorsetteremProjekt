@@ -4,7 +4,7 @@
         "NODE_ENV": "development"
     },
     "watch": ["favicon.ico", "src/"],
-    "ext": "ts, js, txt, json, ico",
+    "ext": "ts, js, txt, json, ico, svg, jpg",
     "delay": 0,
     "exec": "./node_modules/.bin/tsc && node --inspect ./dist/App.js  || exit 1"
 }
