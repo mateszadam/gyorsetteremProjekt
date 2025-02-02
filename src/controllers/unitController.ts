@@ -1,13 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, IUnit } from '../models/models';
-import { unitOfMeasureModel, userModel } from '../models/mongooseSchema';
-import {
-	authenticateAdminToken,
-	authenticateToken,
-	generateToken,
-	isAuthValid,
-} from '../services/tokenService';
-import { log } from 'console';
+import { IController, IUnit } from '../models/models';
+import { unitOfMeasureModel } from '../models/mongooseSchema';
+import { authenticateAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 /**
@@ -70,8 +64,8 @@ export default class unitController implements IController {
 	public endPoint = '/unit';
 
 	constructor() {
-		this.router.post('/add', authenticateToken, this.add);
-		this.router.get('/all', authenticateToken, this.getAll);
+		this.router.post('/add', authenticateAdminToken, this.add);
+		this.router.get('/all', authenticateAdminToken, this.getAll);
 	}
 
 	private add = async (req: Request, res: Response) => {

@@ -1,13 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { getRawId, IController, IUser } from '../models/models';
-import { userModel } from '../models/mongooseSchema';
-import {
-	authenticateAdminToken,
-	authenticateToken,
-	generateToken,
-	isAuthValid,
-} from '../services/tokenService';
-import { log } from 'console';
+import { IController } from '../models/models';
+import { authenticateToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class userController implements IController {

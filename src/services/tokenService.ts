@@ -1,7 +1,6 @@
 import { log } from 'console';
-import { getRawId, IUser } from '../models/models';
+import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
-import { NextFunction, Response, Request } from 'express';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 const jwt = require('jsonwebtoken');
@@ -32,20 +31,26 @@ async function isAuthValid(
 	token: string,
 	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
-	roles.push('admin');
-	const loggedInUser: IUser | null = await userModel.findOne({ token: token });
-	log(loggedInUser);
-	log(verifyToken(token, loggedInUser!.role!));
-	log(roles.includes(loggedInUser!.role!));
-	if (
-		loggedInUser &&
-		loggedInUser._id &&
-		verifyToken(token, loggedInUser.role!) &&
-		roles.includes(loggedInUser.role!)
-	) {
-		return true;
+	try {
+		roles.push('admin');
+		const loggedInUser: IUser | null = await userModel.findOne({
+			token: token,
+		});
+		log(loggedInUser);
+		log(verifyToken(token, loggedInUser!.role!));
+		log(roles.includes(loggedInUser!.role!));
+		if (
+			loggedInUser &&
+			loggedInUser._id &&
+			verifyToken(token, loggedInUser.role!) &&
+			roles.includes(loggedInUser.role!)
+		) {
+			return true;
+		}
+		return false;
+	} catch {
+		return false;
 	}
-	return false;
 }
 
 const authenticateToken = async (req: any, res: any, next: any) => {

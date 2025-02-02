@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { IController, IMaterial } from '../models/models';
-import { foodModel, materialModel, orderModel } from '../models/mongooseSchema';
-import { authenticateAdminToken, isAuthValid } from '../services/tokenService';
-import { log } from 'console';
+import { foodModel, materialModel } from '../models/mongooseSchema';
+import { authenticateAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 /**

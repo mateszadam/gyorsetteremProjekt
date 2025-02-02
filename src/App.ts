@@ -19,6 +19,7 @@ import foodController from './controllers/foodController';
 
 import tokenValidationController from './controllers/tokenValidationController';
 import unitController from './controllers/unitController';
+import categoryController from './controllers/categoryController';
 
 export default class App {
 	public app: express.Application;
@@ -150,4 +151,5 @@ new App([
 	new foodController(),
 	new tokenValidationController(),
 	new unitController(),
+	new categoryController(),
 ]);

@@ -1,21 +1,11 @@
 import { Router, Request, Response } from 'express';
-import {
-	getObjectID,
-	getRawId,
-	IController,
-	IOrder,
-	IUser,
-} from '../models/models';
+import { IController, IOrder } from '../models/models';
 import { orderModel, userModel } from '../models/mongooseSchema';
 import {
-	authenticateAdminToken,
 	authenticateKioskToken,
 	authenticateKitchenToken,
 	authenticateToken,
-	generateToken,
-	isAuthValid,
 } from '../services/tokenService';
-import { error, log } from 'console';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class orderController implements IController {
@@ -392,7 +382,6 @@ export default class orderController implements IController {
 				toDate.setDate(toDate.getDate() + 1);
 				to = toDate.toJSON().split('T')[0];
 			}
-			log(to);
 			if (from) {
 				const order = await this.order.find({
 					finishedTime: { $gte: new Date(from), $lte: new Date(to) },

@@ -1,12 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController, IMaterial } from '../models/models';
-import { foodModel, materialModel, orderModel } from '../models/mongooseSchema';
+import { IFood, IController } from '../models/models';
+import { categoryModel, foodModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
 	authenticateToken,
-	isAuthValid,
 } from '../services/tokenService';
-import { log } from 'console';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 /**
@@ -26,8 +24,6 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       content:
  *         application/json:
  *           schema:
- *             type: array
- *             items:
  *               $ref: '#/components/schemas/Food'
  *     responses:
  *       200:
@@ -94,7 +90,7 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       401:
  *         description: Unauthorized
  *
- * /food/{name}:
+ * /food/name/{name}:
  *   get:
  *     summary: Get food by name
  *     tags: [Food]
@@ -102,6 +98,27 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       - bearerAuth: []
  *     parameters:
  *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
+ * /food/category/{category}:
+ *   get:
+ *     summary: Get food by category
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: category
  *         in: path
  *         required: true
  *         schema:
@@ -208,6 +225,7 @@ export default class foodController implements IController {
 	public router = Router();
 	public endPoint = '/food';
 	private food = foodModel;
+	private category = categoryModel;
 
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.addFood);
@@ -215,7 +233,12 @@ export default class foodController implements IController {
 		this.router.get('/all', authenticateToken, this.getFood);
 
 		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
-		this.router.get('/:name', authenticateToken, this.getFoodByName);
+		this.router.get('name/:name', authenticateToken, this.getFoodByName);
+		this.router.get(
+			'/category/:category',
+			authenticateToken,
+			this.getFoodByCategory
+		);
 
 		this.router.put('/update', authenticateAdminToken, this.updateFood);
 
@@ -233,14 +256,17 @@ export default class foodController implements IController {
 
 	private addFood = async (req: Request, res: Response) => {
 		try {
-			const inputMaterials: IFood[] = req.body;
-
+			const inputMaterials: IFood = req.body;
 			if (inputMaterials) {
-				const inserted = await this.food.insertMany(inputMaterials);
-				if (inserted) {
-					defaultAnswers.ok(res);
+				if (await this.category.findOne({ name: inputMaterials.category })) {
+					const inserted = await this.food.insertMany(inputMaterials);
+					if (inserted) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('Error in database');
+					}
 				} else {
-					throw Error('Error in database');
+					throw Error('Input category not in categories');
 				}
 			} else {
 				throw Error('Food in the body is not found in the request');
@@ -376,6 +402,19 @@ export default class foodController implements IController {
 		try {
 			const name = req.params.name;
 			const foods = await this.food.find({ name: name });
+			if (foods) {
+				res.send(foods);
+			} else {
+				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private getFoodByCategory = async (req: Request, res: Response) => {
+		try {
+			const category = req.params.category;
+			const foods = await this.food.find({ category: category });
 			if (foods) {
 				res.send(foods);
 			} else {

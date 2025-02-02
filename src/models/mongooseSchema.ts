@@ -130,6 +130,7 @@ const categorySchema = new Schema<SchemaDefinition>(
 		name: {
 			type: String,
 			required: true,
+			unique: true,
 		},
 		icon: {
 			type: String,
