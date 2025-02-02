@@ -89,7 +89,7 @@ export default class imagesController implements IController {
 			const image = req.params.imageName;
 			if (image) {
 				res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
-				fs.createReadStream('./src/images/hamburger.svg').pipe(res);
+				fs.createReadStream(`./src/images/${image}`).pipe(res);
 			} else {
 				throw Error('Image name not found in request');
 			}
@@ -103,10 +103,9 @@ export default class imagesController implements IController {
 			console.log('fut');
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
-				console.log(image);
 				const uploadPath = './src/images/' + image.name;
 
-				image.mv(uploadPath, (err: any) => {
+				await image.mv(uploadPath, (err: any) => {
 					if (err) {
 						return defaultAnswers.badRequest(res, err.message);
 					}
