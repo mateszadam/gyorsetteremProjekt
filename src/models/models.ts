@@ -75,4 +75,5 @@ export {
 	getObjectID,
 	IOrder,
 	IUnit,
+	ICategory,
 };

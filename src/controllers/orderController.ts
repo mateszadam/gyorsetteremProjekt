@@ -41,23 +41,28 @@ export default class orderController implements IController {
 	 *       content:
 	 *         application/json:
 	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               costumerID:
+	 *                 type: string
+	 *                 default: 6793bb6219bff92baf980ade
+	 *               orderedProducts:
+	 *                 type: array
+	 *                 items:
 	 *                   type: object
 	 *                   properties:
-	 *                     costumerID:
+	 *                     name:
 	 *                       type: string
-	 *                       default: 6793bb6219bff92baf980ade
-	 *                     orderedProducts:
-	 *                       type: object
-	 *                       properties:
-	 *                         name:
-	 *                           type: string
-	 *                           default: Pizza
-	 *                         quantity:
-	 *                           type: number
-	 *                           default: 2
+	 *                       default: Pizza
+	 *                     quantity:
+	 *                       type: number
+	 *                       default: 2
 	 *                   required:
 	 *                     - name
-	 *                     - price
+	 *                     - quantity
+	 *             required:
+	 *               - costumerID
+	 *               - orderedProducts
 	 *     responses:
 	 *       201:
 	 *         description: Order created successfully
@@ -383,9 +388,11 @@ export default class orderController implements IController {
 			const from: string = req.params.from;
 			let to: string = req.params.to;
 			if (to == '{to}' || to == '' || !to) {
-				to = new Date().toJSON();
+				const toDate = new Date();
+				toDate.setDate(toDate.getDate() + 1);
+				to = toDate.toJSON().split('T')[0];
 			}
-
+			log(to);
 			if (from) {
 				const order = await this.order.find({
 					finishedTime: { $gte: new Date(from), $lte: new Date(to) },

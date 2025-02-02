@@ -37,6 +37,23 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       401:
  *         description: Unauthorized
  *
+ * /food/allEnabled:
+ *   get:
+ *     summary: Get all enabled food items
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of enabled food items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
  * /food/all:
  *   get:
  *     summary: Get all enabled food items
@@ -54,7 +71,6 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *                 $ref: '#/components/schemas/Food'
  *       401:
  *         description: Unauthorized
- *
  * /food/allToOrder:
  *   get:
  *     summary: Get food items for ordering (name and price only)
@@ -169,8 +185,6 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *         - price
  *         - material
  *       properties:
- *         _id:
- *           type: string
  *         name:
  *           type: string
  *         price:
@@ -197,7 +211,9 @@ export default class foodController implements IController {
 
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.addFood);
+		this.router.get('/allEnabled', authenticateToken, this.getAllEnabledFood);
 		this.router.get('/all', authenticateToken, this.getFood);
+
 		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
 		this.router.get('/:name', authenticateToken, this.getFoodByName);
 
@@ -233,8 +249,20 @@ export default class foodController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-
 	private getFood = async (req: Request, res: Response) => {
+		try {
+			const foods = await this.food.find({});
+			if (foods) {
+				res.send(foods);
+			} else {
+				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
+	private getAllEnabledFood = async (req: Request, res: Response) => {
 		try {
 			const foods = await this.food.find({ isEnabled: true });
 			if (foods) {

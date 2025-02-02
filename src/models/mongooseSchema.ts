@@ -90,9 +90,9 @@ const materialSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: true,
 		},
-		unitId: {
-			type: String,
-			required: true,
+		date: {
+			type: Date,
+			default: new Date(),
 		},
 	},
 	{

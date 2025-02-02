@@ -18,7 +18,7 @@ export default class tokenValidationController implements IController {
 
 	/**
 	 * @openapi
-	 * /token/:
+	 * /token/validate:
 	 *   get:
 	 *     summary: Validate token
 	 *     tags: [Token validation]

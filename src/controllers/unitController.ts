@@ -10,6 +10,60 @@ import {
 import { log } from 'console';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
+/**
+ * Controller for managing units of measurement
+ * @class unitController
+ * @implements {IController}
+ *
+ * @swagger
+ * tags:
+ *   name: Units
+ *   description: API endpoints for managing units of measurement
+ *
+ * /unit/add:
+ *   post:
+ *     summary: Add a new unit of measure
+ *     tags: [Units]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - materialName
+ *               - unit
+ *             properties:
+ *               materialName:
+ *                 type: string
+ *                 description: Name of the item
+ *               unit:
+ *                 type: string
+ *                 description: Name of the unit of measure
+ *     responses:
+ *       200:
+ *         description: Unit successfully added
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *
+ * /unit/all:
+ *   get:
+ *     summary: Get all units of measure
+ *     tags: [Units]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all units retrieved successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 export default class unitController implements IController {
 	public router = Router();
 	private unit = unitOfMeasureModel;
@@ -20,34 +74,6 @@ export default class unitController implements IController {
 		this.router.get('/all', authenticateToken, this.getAll);
 	}
 
-	/**
-	 * @swagger
-	 * /unit/add:
-	 *   post:
-	 *     summary: Add a new unit of measure
-	 *     tags: [Units]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             type: object
-	 *             required:
-	 *               - name
-	 *             properties:
-	 *               name:
-	 *                 type: string
-	 *                 description: Name of the unit of measure
-	 *     responses:
-	 *       200:
-	 *         description: Unit successfully added
-	 *       400:
-	 *         description: Bad request
-	 *       401:
-	 *         description: Unauthorized
-	 */
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newUnit: IUnit = req.body;
@@ -67,9 +93,9 @@ export default class unitController implements IController {
 	};
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const response = await this.unit.find({ _id: 0 });
+			const response = await this.unit.find({}, { _id: 0 });
 			if (response) {
-				defaultAnswers.ok(res);
+				res.send(response);
 			} else {
 				throw Error('Failed to get from database');
 			}
