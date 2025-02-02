@@ -20,6 +20,8 @@ import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
 import unitController from './controllers/unitController';
 import categoryController from './controllers/categoryController';
+import { log } from 'console';
+import imagesController from './controllers/imageController';
 
 export default class App {
 	public app: express.Application;
@@ -37,6 +39,10 @@ export default class App {
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
 
+		// Images service
+		// https://www.svgrepo.com/collection/bakery-education-line-icons/
+
+		// WebSocket service
 		wss.on('connection', (ws: any) => {
 			console.log('New client connected');
 
@@ -152,4 +158,5 @@ new App([
 	new tokenValidationController(),
 	new unitController(),
 	new categoryController(),
+	new imagesController(),
 ]);
