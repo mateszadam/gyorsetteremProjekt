@@ -19,8 +19,6 @@ function generateToken(user: IUser) {
 
 function verifyToken(token: string, id: string): boolean {
 	try {
-		log(token);
-		log(id);
 		return jwt.verify(token, id);
 	} catch {
 		return false;
@@ -36,9 +34,6 @@ async function isAuthValid(
 		const loggedInUser: IUser | null = await userModel.findOne({
 			token: token,
 		});
-		log(loggedInUser);
-		log(verifyToken(token, loggedInUser!.role!));
-		log(roles.includes(loggedInUser!.role!));
 		if (
 			loggedInUser &&
 			loggedInUser._id &&
@@ -79,10 +74,8 @@ const authenticateKitchenToken = async (req: any, res: any, next: any) => {
 
 const authenticateAdminToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
-	log(token);
 	if (token == null) return res.sendStatus(401);
 	if (!(await isAuthValid(token, ['admin']))) {
-		log('not');
 		defaultAnswers.notAuthorized(res);
 	} else {
 		next();
