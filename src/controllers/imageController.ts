@@ -60,7 +60,7 @@ export default class imagesController implements IController {
 		 *
 		 * /images:
 		 *   post:
-		 *     summary: Upload a new image
+		 *     summary: Upload an image
 		 *     tags: [Images]
 		 *     requestBody:
 		 *       required: true
@@ -69,11 +69,11 @@ export default class imagesController implements IController {
 		 *           schema:
 		 *             type: object
 		 *             properties:
-		 *               file:
+		 *               image:
 		 *                 type: string
 		 *                 format: binary
 		 *     responses:
-		 *       201:
+		 *       200:
 		 *         description: Image uploaded successfully
 		 *       400:
 		 *         description: Bad request
@@ -100,9 +100,10 @@ export default class imagesController implements IController {
 
 	private uploadImage = async (req: Request, res: Response) => {
 		try {
+			console.log('fut');
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
-
+				console.log(image);
 				const uploadPath = './src/images/' + image.name;
 
 				image.mv(uploadPath, (err: any) => {
