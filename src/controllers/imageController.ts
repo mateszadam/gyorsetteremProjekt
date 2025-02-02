@@ -100,7 +100,6 @@ export default class imagesController implements IController {
 
 	private uploadImage = async (req: Request, res: Response) => {
 		try {
-			console.log('fut');
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
 				const uploadPath = './src/images/' + image.name;
