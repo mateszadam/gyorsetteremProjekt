@@ -23,7 +23,7 @@ import categoryController from './controllers/categoryController';
 import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
-
+require('dotenv').config();
 export default class App {
 	public app: express.Application;
 	private swaggerjsdoc = require('swagger-jsdoc');

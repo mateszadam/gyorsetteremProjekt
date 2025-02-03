@@ -2,17 +2,19 @@ const fs = require('fs');
 
 import { log } from 'console';
 const { google } = require('googleapis');
+require('dotenv').config();
 
 class GoogleDriveManager {
 	private static SCOPES = ['https://www.googleapis.com/auth/drive'];
-
 	public static authClient: any;
 	public static bearerToken: any;
 	static async authorize() {
+		const CLIENT_EMAIL: string = process.env.CLIENT_EMAIL || '';
+		const PRIVATE_KEY: string = process.env.PRIVATE_KEY || '';
 		const auth = new google.auth.JWT(
-			process.env.CLIENT_EMAIL,
+			CLIENT_EMAIL,
 			null,
-			process.env.PRIVATE_KEY,
+			PRIVATE_KEY.split(String.raw`\n`).join('\n'),
 			this.SCOPES
 		);
 
