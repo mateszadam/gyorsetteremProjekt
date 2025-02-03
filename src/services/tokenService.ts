@@ -2,7 +2,6 @@ import { log } from 'console';
 import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
-
 const jwt = require('jsonwebtoken');
 
 function generateToken(user: IUser) {

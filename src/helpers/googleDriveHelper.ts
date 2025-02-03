@@ -47,6 +47,7 @@ class GoogleDriveManager {
 	}
 	static async uploadFile(filePath: string) {
 		const drive = google.drive({ version: 'v3', auth: this.authClient });
+
 		const folderId = '1fGZ42ZFdgGLBCKMcKuIRwk3hFXIgbEPm';
 		const fileMetadata = {
 			name: filePath.split('/').pop(), // Extract file name from path
@@ -127,6 +128,7 @@ class GoogleDriveManager {
 	static async init() {
 		await this.authorize();
 		const files = await this.listFiles();
+		this.AuthEveryDay();
 		files.forEach((element: any) => {
 			if (element.name != 'project') {
 				var url = `https://www.googleapis.com/drive/v3/files/${element.id}?alt=media`;
@@ -163,6 +165,24 @@ class GoogleDriveManager {
 			}
 		});
 		log('Google drive sync successful');
+	}
+	static async AuthEveryDay() {
+		var now = new Date();
+		var night = new Date(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate() + 1, // the next day, ...
+			0,
+			0,
+			0 // ...at 00:00:00 hours
+		);
+		var msToMidnight = night.getTime() - now.getTime();
+
+		setTimeout(async function () {
+			await GoogleDriveManager.authorize();
+			console.log('New auth run.');
+			GoogleDriveManager.AuthEveryDay();
+		}, msToMidnight);
 	}
 }
 
