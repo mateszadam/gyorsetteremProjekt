@@ -1,9 +1,8 @@
 import { Router, Request, Response } from 'express';
 import fileUpload, { UploadedFile } from 'express-fileupload';
-import express from 'express';
-import { ICategory, IController } from '../models/models';
+import { IController } from '../models/models';
 import fs from 'fs';
-import { categoryModel } from '../models/mongooseSchema';
+
 import {
 	authenticateAdminToken,
 	authenticateToken,
@@ -12,7 +11,6 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class imagesController implements IController {
 	public router = Router();
-	private category = categoryModel;
 	public endPoint = '/images';
 
 	constructor() {
@@ -86,10 +84,26 @@ export default class imagesController implements IController {
 
 	private getImage = async (req: Request, res: Response) => {
 		try {
+			var mime = {
+				jpg: 'image/jpeg',
+				png: 'image/png',
+				svg: 'image/svg+xml',
+			};
 			const image = req.params.imageName;
+			const filePath = `./src/images/${image}`;
 			if (image) {
-				res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
-				fs.createReadStream(`./src/images/${image}`).pipe(res);
+				if (fs.existsSync(filePath)) {
+					const ext = image.split('.')[1] as 'jpg' | 'png' | 'svg';
+					res.writeHead(200, {
+						'Content-Type': mime[ext] || 'text/plain',
+					});
+					const a = fs.createReadStream(`./src/images/${image}`).pipe(res);
+					if (!a) {
+						throw Error('Error in file handling');
+					}
+				} else {
+					throw Error('File not exist');
+				}
 			} else {
 				throw Error('Image name not found in request');
 			}

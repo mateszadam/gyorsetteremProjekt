@@ -14,9 +14,6 @@
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
-		"@types/dotenv": "^6.1.1",
-		"@types/express-fileupload": "^1.5.1",
-		"@types/express-ws": "^3.0.5",
 		"bcrypt": "^5.1.1",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
@@ -33,6 +30,9 @@
 		"ws": "^8.18.0"
 	},
 	"devDependencies": {
+		"@types/dotenv": "^6.1.1",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/express-ws": "^3.0.5",
 		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.0",
 		"@types/jest": "^29.5.12",
