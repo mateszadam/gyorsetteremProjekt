@@ -1,5 +1,5 @@
 const fs = require('fs');
-import apikeys from '../ivory-granite-394511-e2070349e429.json';
+
 import { log } from 'console';
 const { google } = require('googleapis');
 
@@ -10,9 +10,9 @@ class GoogleDriveManager {
 	public static bearerToken: any;
 	static async authorize() {
 		const auth = new google.auth.JWT(
-			apikeys.client_email,
+			process.env.CLIENT_EMAIL,
 			null,
-			apikeys.private_key,
+			process.env.PRIVATE_KEY,
 			this.SCOPES
 		);
 
