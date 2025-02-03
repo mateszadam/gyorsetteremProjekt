@@ -1,12 +1,8 @@
-import { Auth } from 'googleapis';
-import { AuthPlus } from 'googleapis/build/src/googleapis';
-
 const fs = require('fs');
-const readline = require('readline');
 import apikeys from '../ivory-granite-394511-e2070349e429.json';
+import { log } from 'console';
 const { google } = require('googleapis');
 
-//https://dev.to/mearjuntripathi/upload-files-on-drive-with-nodejs-15j2
 class GoogleDriveManager {
 	private static SCOPES = ['https://www.googleapis.com/auth/drive'];
 
@@ -28,8 +24,8 @@ class GoogleDriveManager {
 			throw new Error(`Error authorizing Google Drive API: ${error.message}`);
 		}
 	}
-	static async listFiles(auth: any) {
-		const drive = google.drive({ version: 'v3', auth });
+	static async listFiles() {
+		const drive = google.drive({ version: 'v3', auth: this.authClient });
 
 		try {
 			const response = await drive.files.list({
@@ -47,9 +43,9 @@ class GoogleDriveManager {
 			throw Error(`Error listing files in Google Drive: ${error.message}`);
 		}
 	}
-	static async uploadFile(filePath: string, folderId: string) {
+	static async uploadFile(filePath: string) {
 		const drive = google.drive({ version: 'v3', auth: this.authClient });
-
+		const folderId = '1fGZ42ZFdgGLBCKMcKuIRwk3hFXIgbEPm';
 		const fileMetadata = {
 			name: filePath.split('/').pop(), // Extract file name from path
 			parents: [folderId], // Folder ID to upload the file into
@@ -82,6 +78,7 @@ class GoogleDriveManager {
 			});
 
 			console.log('File deleted successfully.');
+			return 'Success';
 		} catch (error: any) {
 			throw Error(`Error deleting file from Google Drive: ${error.message}`);
 		}
@@ -119,11 +116,48 @@ class GoogleDriveManager {
 				resource: fileMetadata,
 				media: media,
 			});
-
 			console.log('File updated successfully.');
+			return response;
 		} catch (error: any) {
 			throw Error(`Error updating file in Google Drive: ${error.message}`);
 		}
+	}
+	static async init() {
+		await this.authorize();
+		const files = await this.listFiles();
+		files.forEach((element: any) => {
+			if (element.name != 'project') {
+				var url = `https://www.googleapis.com/drive/v3/files/${element.id}?alt=media`;
+				var bearer = 'Bearer ' + GoogleDriveManager.bearerToken;
+				log(url);
+				fetch(url, {
+					method: 'GET',
+					credentials: 'include',
+					headers: {
+						Authorization: bearer,
+					},
+				})
+					.then(async (response) => {
+						const buffer = await response.arrayBuffer();
+						const a = Buffer.from(buffer);
+						if (!a) {
+							throw Error('Error in file handling');
+						}
+						const uploadPath = './src/images/' + element.name;
+
+						fs.writeFile(uploadPath, a, (err: any) => {
+							if (err) {
+								throw Error('Error writing file: ' + err.message);
+							}
+						});
+					})
+
+					.catch((error) => {
+						console.error('Something bad happened', error);
+					});
+			}
+		});
+		log('Google drive sync successful');
 	}
 }
 

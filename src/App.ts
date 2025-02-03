@@ -20,7 +20,7 @@ import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
 import unitController from './controllers/unitController';
 import categoryController from './controllers/categoryController';
-import { log } from 'console';
+import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
 
@@ -39,11 +39,16 @@ export default class App {
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
-
-		// TODO: Implement express-rate-limiter
+		const limiter = rateLimit({
+			windowMs: 15 * 60 * 1000,
+			limit: 100,
+			standardHeaders: 'draft-8',
+			legacyHeaders: false,
+		});
+		this.app.use(limiter);
 		// TODO: Implement helmet
 
-		GoogleDriveManager.authorize();
+		GoogleDriveManager.init();
 
 		wss.on('connection', (ws: any) => {
 			console.log('New client connected');
@@ -127,10 +132,9 @@ export default class App {
 
 	private connectToTheDatabase() {
 		mongoose.set('strictQuery', true);
+		const mongoUri = process.env.MONGO_URI;
 		mongoose
-			.connect(
-				'mongodb+srv://m001-student:m001-student@main.0030e.mongodb.net/loginService'
-			)
+			.connect(mongoUri!)
 			.catch(() =>
 				console.log('Unable to connect to the server. Please start MongoDB.')
 			);
