@@ -145,6 +145,9 @@ class GoogleDriveManager {
 						if (!a) {
 							throw Error('Error in file handling');
 						}
+						if (!fs.existsSync('./src/images/')) {
+							fs.mkdirSync('./src/images/');
+						}
 						const uploadPath = './src/images/' + element.name;
 
 						fs.writeFile(uploadPath, a, (err: any) => {
