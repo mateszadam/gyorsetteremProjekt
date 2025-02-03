@@ -17,9 +17,9 @@ function generateToken(user: IUser) {
 	);
 }
 
-function verifyToken(token: string, id: string): boolean {
+function verifyToken(token: string, role: string): boolean {
 	try {
-		return jwt.verify(token, id);
+		return jwt.verify(token, role);
 	} catch {
 		return false;
 	}
