@@ -145,7 +145,7 @@ export default class userController implements IController {
 
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const data = await this.user.find();
+			const data = await this.user.find({}, { password: 0, token: 0 });
 			res.send(data);
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

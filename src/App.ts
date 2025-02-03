@@ -20,9 +20,10 @@ import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
 import unitController from './controllers/unitController';
 import categoryController from './controllers/categoryController';
-import { log } from 'console';
+import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
-
+import GoogleDriveManager from './helpers/googleDriveHelper';
+require('dotenv').config();
 export default class App {
 	public app: express.Application;
 	private swaggerjsdoc = require('swagger-jsdoc');
@@ -38,11 +39,17 @@ export default class App {
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
+		const limiter = rateLimit({
+			windowMs: 15 * 60 * 1000,
+			limit: 100,
+			standardHeaders: 'draft-8',
+			legacyHeaders: false,
+		});
+		this.app.use(limiter);
+		// TODO: Implement helmet
 
-		// Images service
-		// https://www.svgrepo.com/collection/bakery-education-line-icons/
+		GoogleDriveManager.init();
 
-		// WebSocket service
 		wss.on('connection', (ws: any) => {
 			console.log('New client connected');
 
@@ -63,7 +70,6 @@ export default class App {
 				console.log('Client disconnected');
 			});
 
-			// Send a welcome message to the client
 			ws.send('Welcome to the WebSocket server!');
 		});
 
@@ -126,10 +132,9 @@ export default class App {
 
 	private connectToTheDatabase() {
 		mongoose.set('strictQuery', true);
+		const mongoUri = process.env.MONGO_URI;
 		mongoose
-			.connect(
-				'mongodb+srv://m001-student:m001-student@main.0030e.mongodb.net/loginService'
-			)
+			.connect(mongoUri!)
 			.catch(() =>
 				console.log('Unable to connect to the server. Please start MongoDB.')
 			);

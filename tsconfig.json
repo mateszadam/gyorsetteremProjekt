@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
+        // other options
+        "resolveJsonModule": true,
         "target": "esnext",
         "strict": true,
         "pretty": true,
