@@ -22,6 +22,7 @@ import unitController from './controllers/unitController';
 import categoryController from './controllers/categoryController';
 import { log } from 'console';
 import imagesController from './controllers/imageController';
+import GoogleDriveManager from './helpers/googleDriveHelper';
 
 export default class App {
 	public app: express.Application;
@@ -39,10 +40,11 @@ export default class App {
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
 
-		// Images service
-		// https://www.svgrepo.com/collection/bakery-education-line-icons/
+		// TODO: Implement express-rate-limiter
+		// TODO: Implement helmet
 
-		// WebSocket service
+		GoogleDriveManager.authorize();
+
 		wss.on('connection', (ws: any) => {
 			console.log('New client connected');
 
@@ -63,7 +65,6 @@ export default class App {
 				console.log('Client disconnected');
 			});
 
-			// Send a welcome message to the client
 			ws.send('Welcome to the WebSocket server!');
 		});
 

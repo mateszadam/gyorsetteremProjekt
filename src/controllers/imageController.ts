@@ -8,6 +8,8 @@ import {
 	authenticateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import GoogleDriveManager from '../helpers/googleDriveHelper';
+import { log } from 'console';
 
 export default class imagesController implements IController {
 	public router = Router();
@@ -81,6 +83,7 @@ export default class imagesController implements IController {
 
 		this.router.post('/', authenticateAdminToken, this.uploadImage);
 	}
+	private https = require('https');
 
 	private getImage = async (req: Request, res: Response) => {
 		try {
@@ -90,17 +93,34 @@ export default class imagesController implements IController {
 				svg: 'image/svg+xml',
 			};
 			const image = req.params.imageName;
-			const filePath = `./src/images/${image}`;
 			if (image) {
-				if (fs.existsSync(filePath)) {
-					const ext = image.split('.')[1] as 'jpg' | 'png' | 'svg';
-					res.writeHead(200, {
-						'Content-Type': mime[ext] || 'text/plain',
+				var url = `https://www.googleapis.com/drive/v3/files/${image}?alt=media`;
+				var bearer = 'Bearer ' + GoogleDriveManager.bearerToken;
+				log(url);
+				fetch(url, {
+					method: 'GET',
+					credentials: 'include',
+					headers: {
+						Authorization: bearer,
+					},
+				})
+					.then(async (response) => {
+						const ext = image.split('.')[1] as 'jpg' | 'png' | 'svg';
+						res.writeHead(200, {
+							'Content-Type': mime[ext] || 'text/plain',
+						});
+						const buffer = await response.arrayBuffer();
+						const a = Buffer.from(buffer);
+						log(a);
+						if (!a) {
+							throw Error('Error in file handling');
+						}
+					})
+					.catch((error) => {
+						console.error('Something bad happened', error);
 					});
-					const a = fs.createReadStream(`./src/images/${image}`).pipe(res);
-					if (!a) {
-						throw Error('Error in file handling');
-					}
+
+				if (image) {
 				} else {
 					throw Error('File not exist');
 				}
@@ -111,7 +131,7 @@ export default class imagesController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-
+	// https://drive.google.com/drive/u/1/folders/1fGZ42ZFdgGLBCKMcKuIRwk3hFXIgbEPm
 	private uploadImage = async (req: Request, res: Response) => {
 		try {
 			if (req.files && Object.keys(req.files).length > 0) {
