@@ -42,7 +42,7 @@ interface IFoodMaterial {
 	quantity: number;
 }
 interface IOrder {
-	_id?: string;
+	_id: string;
 	costumerID: string;
 	isFinished: boolean;
 	finishedTime: Date;
