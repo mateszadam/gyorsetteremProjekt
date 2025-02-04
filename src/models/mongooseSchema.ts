@@ -1,4 +1,4 @@
-import mongoose, { Schema, SchemaDefinition, model } from 'mongoose';
+import { Schema, SchemaDefinition, model } from 'mongoose';
 
 const userSchema = new Schema<SchemaDefinition>(
 	{
@@ -67,6 +67,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			{
 				name: {
 					type: String,
+					unique: true,
 					required: true,
 				},
 				quantity: {
@@ -85,13 +86,13 @@ const foodSchema = new Schema<SchemaDefinition>(
 			default: true,
 		},
 		category: {
-			type: mongoose.Types.ObjectId,
+			type: String,
 			required: true,
 			ref: 'categoryModel._id',
 		},
 		image: {
 			type: String,
-			default: 'notFound',
+			default: 'no-image.svg',
 		},
 	},
 	{

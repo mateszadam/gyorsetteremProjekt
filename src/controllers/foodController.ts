@@ -6,6 +6,7 @@ import {
 	authenticateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
 
 /**
  * @swagger
@@ -233,7 +234,7 @@ export default class foodController implements IController {
 		this.router.get('/all', authenticateToken, this.getFood);
 
 		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
-		this.router.get('name/:name', authenticateToken, this.getFoodByName);
+		this.router.get('/name/:name', authenticateToken, this.getFoodByName);
 		this.router.get(
 			'/category/:category',
 			authenticateToken,
@@ -277,7 +278,7 @@ export default class foodController implements IController {
 	};
 	private getFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({});
+			const foods: IFood[] = await this.food.find({});
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -290,7 +291,7 @@ export default class foodController implements IController {
 
 	private getAllEnabledFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({ isEnabled: true });
+			const foods: IFood[] = await this.food.find({ isEnabled: true });
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -310,7 +311,7 @@ export default class foodController implements IController {
 				newFood.price &&
 				newFood.isEnabled
 			) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						_id: newFood._id,
 					},
@@ -339,7 +340,7 @@ export default class foodController implements IController {
 		try {
 			const name = req.params.name;
 			if (name) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						name: name,
 					},
@@ -363,7 +364,7 @@ export default class foodController implements IController {
 		try {
 			const name = req.params.name;
 			if (name) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						name: name,
 					},
@@ -401,7 +402,7 @@ export default class foodController implements IController {
 	private getFoodByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			const foods = await this.food.find({ name: name });
+			const foods: IFood | null = await this.food.findOne({ name: name });
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -414,7 +415,7 @@ export default class foodController implements IController {
 	private getFoodByCategory = async (req: Request, res: Response) => {
 		try {
 			const category = req.params.category;
-			const foods: ICategory[] = await this.food.find({ categoryId: category });
+			const foods: IFood[] = await this.food.find({ category: category });
 			if (foods) {
 				res.send(foods);
 			} else {

@@ -48,12 +48,7 @@ export default class categoryController implements IController {
 	 *     responses:
 	 *       200:
 	 *         description: A list of categories
-	 *         content:
-	 *           application/json:
-	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 $ref: '#/components/schemas/Category'
+
 	 *       400:
 	 *         description: Bad request
 	 */

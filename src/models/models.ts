@@ -39,6 +39,7 @@ interface IFood {
 }
 
 interface IFoodMaterial {
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 }

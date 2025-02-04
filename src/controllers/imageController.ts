@@ -76,8 +76,8 @@ export default class imagesController implements IController {
 
 		this.router.post('/', authenticateAdminToken, this.uploadImage);
 	}
-	private https = require('https');
-	private utf8 = require('utf8');
+	// User képeknek??????
+	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/
 
 	private getImage = async (req: Request, res: Response) => {
 		try {
