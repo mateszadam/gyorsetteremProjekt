@@ -3,6 +3,7 @@ import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
 import { authenticateAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { InsertManyResult } from 'mongoose';
 
 export default class categoryController implements IController {
 	public router = Router();
@@ -81,7 +82,7 @@ export default class categoryController implements IController {
 	};
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const response = await this.category.find({}, { _id: 0 });
+			const response: ICategory[] = await this.category.find({});
 			if (response) {
 				res.send(response);
 			} else {

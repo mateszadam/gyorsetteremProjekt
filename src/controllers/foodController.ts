@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController } from '../models/models';
+import { IFood, IController, ICategory } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
@@ -414,7 +414,7 @@ export default class foodController implements IController {
 	private getFoodByCategory = async (req: Request, res: Response) => {
 		try {
 			const category = req.params.category;
-			const foods = await this.food.find({ category: category });
+			const foods: ICategory[] = await this.food.find({ categoryId: category });
 			if (foods) {
 				res.send(foods);
 			} else {

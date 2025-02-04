@@ -248,7 +248,7 @@ export default class orderController implements IController {
 		try {
 			const newOrder: IOrder = req.body;
 			const userExists = await this.user.find({
-				_id: new this.mongoose.Types.ObjectId(newOrder.costumerID!),
+				_id: newOrder.costumerID,
 			});
 			if (userExists.length > 0) {
 				const insertedOrders = await this.order.insertMany([newOrder], {

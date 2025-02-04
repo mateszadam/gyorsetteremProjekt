@@ -1,8 +1,8 @@
-import { Schema, SchemaDefinition, model } from 'mongoose';
+import mongoose, { Schema, SchemaDefinition, model } from 'mongoose';
 
 const userSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -33,10 +33,31 @@ const userSchema = new Schema<SchemaDefinition>(
 		toObject: { virtuals: true },
 	}
 );
+const categorySchema = new Schema<SchemaDefinition>(
+	{
+		_id: Schema.Types.ObjectId,
+		name: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		icon: {
+			type: String,
+			required: true,
+		},
+	},
+	{
+		versionKey: false,
+		id: false,
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true },
+	}
+);
+export const categoryModel = model('categoryId', categorySchema, 'categories');
 
 const foodSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -64,7 +85,9 @@ const foodSchema = new Schema<SchemaDefinition>(
 			default: true,
 		},
 		category: {
-			type: String,
+			type: mongoose.Types.ObjectId,
+			required: true,
+			ref: 'categoryModel._id',
 		},
 		image: {
 			type: String,
@@ -81,7 +104,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 
 const materialSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -109,7 +132,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 
 const unitOfMeasure = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		materialName: {
 			type: String,
 			required: true,
@@ -128,33 +151,13 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 	}
 );
 
-const categorySchema = new Schema<SchemaDefinition>(
-	{
-		_id: {},
-		name: {
-			type: String,
-			required: true,
-			unique: true,
-		},
-		icon: {
-			type: String,
-			required: true,
-		},
-	},
-	{
-		versionKey: false,
-		id: false,
-		toJSON: { virtuals: true },
-		toObject: { virtuals: true },
-	}
-);
-
 const orderSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		costumerID: {
 			type: String,
 			required: true,
+			ref: 'userModel._id',
 		},
 		isFinished: {
 			type: Boolean,
@@ -196,7 +199,6 @@ export const userModel = model('userId', userSchema, 'users');
 export const foodModel = model('foodId', foodSchema, 'foods');
 export const orderModel = model('orderId', orderSchema, 'orders');
 export const materialModel = model('materialId', materialSchema, 'materials');
-export const categoryModel = model('categoryId', categorySchema, 'categories');
 
 export const unitOfMeasureModel = model(
 	'unitId',

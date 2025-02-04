@@ -1,7 +1,8 @@
 import { Router } from 'express';
+import { ObjectId } from 'mongodb';
 
 interface IUser {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	password: string;
 	role: string | undefined;
@@ -10,26 +11,26 @@ interface IUser {
 }
 
 interface ICategory {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	icon: string;
 }
 
 interface IMaterial {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 	message: string;
 }
 
 interface IUnit {
-	_id: string;
+	_id: ObjectId;
 	materialName: string;
 	unit: string;
 }
 
 interface IFood {
-	_id: string;
+	_id: ObjectId;
 	material: IFoodMaterial[];
 	price: number;
 	name: string;
@@ -42,7 +43,7 @@ interface IFoodMaterial {
 	quantity: number;
 }
 interface IOrder {
-	_id: string;
+	_id: ObjectId;
 	costumerID: string;
 	isFinished: boolean;
 	finishedTime: Date;
