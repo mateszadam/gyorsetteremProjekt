@@ -7,7 +7,6 @@ interface IUser {
 	password: string;
 	role: string;
 	email: string | undefined;
-	token: string | undefined;
 }
 
 interface ICategory {

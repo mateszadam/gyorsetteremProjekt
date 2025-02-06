@@ -7,21 +7,15 @@ const jwt = require('jsonwebtoken');
 function generateToken(user: IUser) {
 	return jwt.sign(
 		{
-			name: user.role,
+			name: user.name,
+			role: user.role,
+			_id: user._id,
 		},
-		user.role,
+		'SeCrEtToKeN',
 		{
 			expiresIn: '12h',
 		}
 	);
-}
-
-function verifyToken(token: string, role: string): boolean {
-	try {
-		return jwt.verify(token, role);
-	} catch {
-		return false;
-	}
 }
 
 async function isAuthValid(
@@ -29,16 +23,9 @@ async function isAuthValid(
 	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	try {
-		roles.push('admin');
-		const loggedInUser: IUser | null = await userModel.findOne({
-			token: token,
-		});
-		if (
-			loggedInUser &&
-			loggedInUser._id &&
-			verifyToken(token, loggedInUser.role!) &&
-			roles.includes(loggedInUser.role!)
-		) {
+		const data: IUser = jwt.verify(token, 'SeCrEtToKeN');
+		log(data);
+		if (roles.includes(data.role)) {
 			return true;
 		}
 		return false;
@@ -94,7 +81,6 @@ const authenticateKioskToken = async (req: any, res: any, next: any) => {
 
 export {
 	generateToken,
-	verifyToken,
 	isAuthValid,
 	authenticateToken,
 	authenticateAdminToken,

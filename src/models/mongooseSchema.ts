@@ -21,10 +21,6 @@ const userSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: true,
 		},
-		token: {
-			type: String,
-			default: '',
-		},
 		profilePicture: {
 			type: String,
 			default: '',
@@ -160,7 +156,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
 		costumerID: {
-			type: String,
+			type: Schema.Types.ObjectId,
 			required: true,
 			ref: 'userModel._id',
 		},
