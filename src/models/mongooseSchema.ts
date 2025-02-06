@@ -155,7 +155,7 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 const orderSchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
-		costumerID: {
+		costumerId: {
 			type: Schema.Types.ObjectId,
 			required: true,
 			ref: 'userModel._id',

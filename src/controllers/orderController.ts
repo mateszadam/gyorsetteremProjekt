@@ -42,7 +42,7 @@ export default class orderController implements IController {
 	 *           schema:
 	 *             type: object
 	 *             properties:
-	 *               costumerID:
+	 *               costumerId:
 	 *                 type: string
 	 *                 default: 6793bb6219bff92baf980ade
 	 *               orderedProducts:
@@ -60,7 +60,7 @@ export default class orderController implements IController {
 	 *                     - name
 	 *                     - quantity
 	 *             required:
-	 *               - costumerID
+	 *               - costumerId
 	 *               - orderedProducts
 	 *     responses:
 	 *       201:
@@ -248,7 +248,7 @@ export default class orderController implements IController {
 		try {
 			const newOrder: IOrder = req.body;
 			const userExists = await this.user.find({
-				_id: newOrder.costumerID,
+				_id: newOrder.costumerId,
 			});
 			if (userExists.length > 0) {
 				const insertedOrders = await this.order.insertMany([newOrder], {
@@ -257,7 +257,7 @@ export default class orderController implements IController {
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
 
-					if (newOrder || newOrderId) {
+					if (newOrder && newOrderId) {
 						for (
 							let index = 0;
 							index < newOrder.orderedProducts.length;
@@ -382,7 +382,7 @@ export default class orderController implements IController {
 			const id = req.params.id;
 			if (id) {
 				const order = await this.order.find({
-					costumerID: id,
+					costumerId: id,
 					isFinished: false,
 				});
 				if (order) {
@@ -403,7 +403,7 @@ export default class orderController implements IController {
 			const id = req.params.id;
 			if (id) {
 				const order = await this.order.find({
-					costumerID: id,
+					costumerId: id,
 					isFinished: true,
 				});
 				if (order) {

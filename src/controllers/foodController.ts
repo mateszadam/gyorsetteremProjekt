@@ -134,7 +134,7 @@ import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
  *       401:
  *         description: Unauthorized
  *
- * /food/update:
+ * /food/update/{id}:
  *   put:
  *     summary: Update food item
  *     tags: [Food]
@@ -146,6 +146,12 @@ import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Food'
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Food updated successfully
@@ -241,7 +247,7 @@ export default class foodController implements IController {
 			this.getFoodByCategory
 		);
 
-		this.router.put('/update', authenticateAdminToken, this.updateFood);
+		this.router.put('/update/:id', authenticateAdminToken, this.updateFood);
 
 		this.router.patch(
 			'/disable/:name',
@@ -304,16 +310,17 @@ export default class foodController implements IController {
 	private updateFood = async (req: Request, res: Response) => {
 		try {
 			const newFood: IFood = req.body;
+			const id = req.params.id;
 			if (
-				newFood._id &&
 				newFood.name &&
 				newFood.material &&
 				newFood.price &&
-				newFood.isEnabled
+				newFood.isEnabled &&
+				id
 			) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						_id: newFood._id,
+						_id: id,
 					},
 					{
 						name: newFood.name,
@@ -326,7 +333,7 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					throw Error('he id is the request is not found is database');
+					throw Error('The id is the request is not found is database');
 				}
 			} else {
 				throw Error('Food in the body is not found in the request');

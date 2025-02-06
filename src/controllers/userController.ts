@@ -156,6 +156,8 @@ export default class userController implements IController {
 		);
 
 		this.router.post('/login', this.loginUser);
+		this.router.get('/all', this.getAll);
+
 		this.router.post('/logout', this.logoutUser);
 		this.router.post(
 			'/picture/change/:newImageName',

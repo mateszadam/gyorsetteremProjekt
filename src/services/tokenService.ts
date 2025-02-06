@@ -1,4 +1,4 @@
-import { log } from 'console';
+import { error, log } from 'console';
 import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
@@ -7,11 +7,13 @@ const jwt = require('jsonwebtoken');
 function generateToken(user: IUser) {
 	return jwt.sign(
 		{
+			_id: user._id,
 			name: user.name,
 			role: user.role,
-			_id: user._id,
+			email: user.email || '',
+			profilePicture: user.profilePicture,
 		},
-		'SeCrEtToKeN',
+		'SeCrEtToKeNeTtErEm!',
 		{
 			expiresIn: '12h',
 		}
@@ -20,16 +22,20 @@ function generateToken(user: IUser) {
 
 async function isAuthValid(
 	token: string,
-	roles: string[] = ['admin', 'customer', 'kitchen', 'kiosk']
+	roles: string[] = ['customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	try {
-		const data: IUser = jwt.verify(token, 'SeCrEtToKeN');
-		log(data);
+		roles.push('admin');
+		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
+		console.log(data);
+
 		if (roles.includes(data.role)) {
 			return true;
 		}
 		return false;
-	} catch {
+	} catch (err) {
+		console.log(error);
+
 		return false;
 	}
 }

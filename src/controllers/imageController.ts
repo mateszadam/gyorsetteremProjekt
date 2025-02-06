@@ -79,7 +79,7 @@ export default class imagesController implements IController {
 		 *       400:
 		 *         description: Bad request
 		 * /images/profile/{name}:
-		 *   post:
+		 *   get:
 		 *     summary: Get profile picture by name
 		 *     tags: [Images]
 		 *     parameters:
@@ -108,7 +108,7 @@ export default class imagesController implements IController {
 
 		this.router.post('/', authenticateAdminToken, this.uploadImage);
 		this.router.get('/profile', this.listAllProfilePictures);
-		this.router.post('/profile/:name', this.getProfiePictureByName);
+		this.router.get('/profile/:name', this.getProfiePictureByName);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/

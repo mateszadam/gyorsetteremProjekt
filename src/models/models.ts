@@ -6,6 +6,7 @@ interface IUser {
 	name: string;
 	password: string;
 	role: string;
+	profilePicture: String;
 	email: string | undefined;
 }
 
@@ -44,7 +45,7 @@ interface IFoodMaterial {
 }
 interface IOrder {
 	_id: ObjectId;
-	costumerID: string;
+	costumerId: string;
 	isFinished: boolean;
 	finishedTime: Date;
 	orderedTime: Date;
