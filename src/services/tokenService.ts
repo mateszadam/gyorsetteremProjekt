@@ -19,10 +19,10 @@ function generateToken(user: IUser) {
 	);
 }
 
-async function isAuthValid(
+function isAuthValid(
 	token: string,
 	roles: string[] = ['customer', 'kitchen', 'kiosk']
-): Promise<boolean> {
+): boolean {
 	try {
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
@@ -37,6 +37,11 @@ async function isAuthValid(
 	}
 }
 
+function getDataFromToken(token: string): IUser | undefined {
+	try {
+		return jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
+	} catch (error) {}
+}
 const authenticateToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -89,4 +94,5 @@ export {
 	authenticateAdminToken,
 	authenticateKitchenToken,
 	authenticateKioskToken,
+	getDataFromToken,
 };

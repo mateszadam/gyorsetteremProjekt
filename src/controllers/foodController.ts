@@ -284,7 +284,7 @@ export default class foodController implements IController {
 	};
 	private getFood = async (req: Request, res: Response) => {
 		try {
-			const foods: IFood[] = await this.food.find({});
+			const foods: IFood[] = await this.food.find();
 			if (foods) {
 				res.send(foods);
 			} else {

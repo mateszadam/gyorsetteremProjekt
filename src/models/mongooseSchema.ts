@@ -33,6 +33,8 @@ const userSchema = new Schema<SchemaDefinition>(
 		toObject: { virtuals: true },
 	}
 );
+export const userModel = model('userId', userSchema, 'users');
+
 const categorySchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
@@ -85,10 +87,10 @@ const foodSchema = new Schema<SchemaDefinition>(
 			required: true,
 			default: true,
 		},
-		category: {
+		categoryId: {
 			type: String,
 			required: true,
-			ref: 'categoryModel._id',
+			ref: 'categoryId',
 		},
 		image: {
 			type: String,
@@ -121,6 +123,12 @@ const materialSchema = new Schema<SchemaDefinition>(
 		date: {
 			type: Date,
 			default: new Date(),
+			validate: {
+				validator: function (v: Date) {
+					return v >= new Date();
+				},
+				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+			},
 		},
 	},
 	{
@@ -130,6 +138,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 		toObject: { virtuals: true },
 	}
 );
+export const materialModel = model('materialId', materialSchema, 'materials');
 
 const unitOfMeasure = new Schema<SchemaDefinition>(
 	{
@@ -158,22 +167,35 @@ const orderSchema = new Schema<SchemaDefinition>(
 		costumerId: {
 			type: Schema.Types.ObjectId,
 			required: true,
-			ref: 'userModel._id',
-		},
-		isFinished: {
-			type: Boolean,
-			required: true,
-			default: false,
+			ref: 'userId',
 		},
 		orderedTime: {
 			type: Date,
 			default: Date.now(),
+			validate: {
+				validator: function (v: Date) {
+					return v >= new Date();
+				},
+				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+			},
 		},
 		finishedCokingTime: {
 			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v >= new Date();
+				},
+				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+			},
 		},
 		finishedTime: {
 			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v >= new Date();
+				},
+				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+			},
 		},
 		orderedProducts: [
 			{
@@ -196,10 +218,8 @@ const orderSchema = new Schema<SchemaDefinition>(
 	}
 );
 
-export const userModel = model('userId', userSchema, 'users');
 export const foodModel = model('foodId', foodSchema, 'foods');
 export const orderModel = model('orderId', orderSchema, 'orders');
-export const materialModel = model('materialId', materialSchema, 'materials');
 
 export const unitOfMeasureModel = model(
 	'unitId',

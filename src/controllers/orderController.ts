@@ -12,6 +12,7 @@ import {
 	authenticateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { log } from 'console';
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
@@ -98,7 +99,7 @@ export default class orderController implements IController {
 	 *         description: Bad request
 	 * /order/{id}:
 	 *   get:
-	 *     summary: Mark order as received/handed over
+	 *     summary: Get an order by id
 	 *     tags: [Orders]
 	 *     security:
 	 *       - bearerAuth: []
@@ -111,7 +112,7 @@ export default class orderController implements IController {
 	 *         description: Order ID
 	 *     responses:
 	 *       200:
-	 *         description: Order marked as received
+	 *         description: Received the order
 	 *       400:
 	 *         description: Bad request
 	 *
@@ -332,9 +333,12 @@ export default class orderController implements IController {
 		try {
 			const id = req.params.id;
 			if (id) {
-				const order = await this.order.find({
-					_id: new this.mongoose.Types.ObjectId(id),
-				});
+				log('Ez fut');
+				const order = await this.order
+					.find({
+						_id: id,
+					})
+					.populate('costumerId');
 				if (order.length > 0) {
 					res.json(order);
 				} else {
@@ -402,7 +406,7 @@ export default class orderController implements IController {
 			if (id) {
 				const order = await this.order.find({
 					costumerId: id,
-					isFinished: true,
+					finishedTime: { $ne: null },
 				});
 				if (order) {
 					res.json(order);
@@ -423,7 +427,7 @@ export default class orderController implements IController {
 			if (id) {
 				const order = await this.order.updateOne(
 					{
-						_id: new this.mongoose.Types.ObjectId(id),
+						_id: id,
 					},
 					{
 						$set: { finishedCokingTime: Date.now() },
@@ -472,10 +476,10 @@ export default class orderController implements IController {
 			if (id) {
 				const order = await this.order.updateOne(
 					{
-						_id: new this.mongoose.Types.ObjectId(id),
+						_id: id,
 					},
 					{
-						$set: { isFinished: true, finishedTime: Date.now() },
+						$set: { finishedTime: Date.now() },
 					}
 				);
 				if (order.modifiedCount > 0) {

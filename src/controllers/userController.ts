@@ -4,6 +4,7 @@ import { userModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
 	generateToken,
+	getDataFromToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import fs from 'fs';
@@ -168,22 +169,23 @@ export default class userController implements IController {
 	private changeProfilePicture = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');
-			if (token) {
+			const data = getDataFromToken(token!);
+			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
 				if (
 					newImageName &&
-					(await fs.existsSync(`./src/images/profilePictures/${newImageName}`))
+					fs.existsSync(`./src/images/profilePictures/${newImageName}`)
 				) {
 					const updateResult = await this.user.updateOne(
 						{
-							token: token,
+							_id: data._id,
 						},
 						{ $set: { profilePicture: newImageName } }
 					);
 					if (updateResult.modifiedCount > 0) {
 						defaultAnswers.ok(res);
 					} else {
-						throw Error('Token not found in database');
+						throw Error('Id not valid in token');
 					}
 				} else {
 					throw Error('New image name not found');
