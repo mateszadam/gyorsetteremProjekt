@@ -9,6 +9,7 @@ import {
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
+import fileHandler from '../helpers/fileHandlingHelper';
 export default class imagesController implements IController {
 	public router = Router();
 	public endPoint = '/images';
@@ -61,42 +62,79 @@ export default class imagesController implements IController {
 		 *         description: Bad request
 		 * /images/all:
 		 *   get:
-		 *     summary: Get all uploaded image
+		 *     summary: List all images
 		 *     tags: [Images]
 		 *     responses:
 		 *       200:
-		 *         description: Get all image name
+		 *         description: A list of all images
+		 *       400:
+		 *         description: Bad request
+		 * /images/profile:
+		 *   get:
+		 *     summary: List all profile pictures
+		 *     tags: [Images]
+		 *     responses:
+		 *       200:
+		 *         description: A list of all profile pictures
+		 *       400:
+		 *         description: Bad request
+		 * /images/profile/{name}:
+		 *   post:
+		 *     summary: Get profile picture by name
+		 *     tags: [Images]
+		 *     parameters:
+		 *       - in: path
+		 *         name: name
+		 *         required: true
+		 *         schema:
+		 *           type: string
+		 *         description: The name of the profile picture to retrieve
+		 *     responses:
+		 *       200:
+		 *         description: A profile picture file.
+		 *         content:
+		 *           image/svg+xml:
+		 *             schema:
+		 *               type: string
+		 *               format: binary
 		 *       400:
 		 *         description: Bad request
 		 */
-		this.router.get('/all', authenticateToken, this.listAllFiles);
 
 		this.router.get('/name/:imageName', authenticateToken, this.getImage);
+		this.router.get('/all', authenticateToken, this.listAllFiles);
+
 		// this.router.delete('/:imageName', authenticateToken, this.deleteImage);
 
 		this.router.post('/', authenticateAdminToken, this.uploadImage);
+		this.router.get('/profile', this.listAllProfilePictures);
+		this.router.post('/profile/:name', this.getProfiePictureByName);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/
 
 	private getImage = async (req: Request, res: Response) => {
 		try {
-			var mime = {
-				jpg: 'image/jpeg',
-				png: 'image/png',
-				svg: 'image/svg+xml',
-			};
 			const image = req.params.imageName;
 			if (image) {
-				if (fs.existsSync(`./src/images/${image}`)) {
-					const ext = image.split('.')[1] as 'jpg' | 'png' | 'svg';
-					res.writeHead(200, {
-						'Content-Type': mime[ext] || 'text/plain',
-					});
-					fs.createReadStream(`./src/images/${image}`).pipe(res);
-				} else {
-					throw Error('Image not fount');
-				}
+				fileHandler.getImageByName(`./src/images/other/${image}`, res);
+			} else {
+				throw Error('No image name found');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
+	private getProfiePictureByName = async (req: Request, res: Response) => {
+		try {
+			const image = req.params.name;
+			console.log(image);
+			if (image) {
+				fileHandler.getImageByName(
+					`./src/images/profilePictures/${image}`,
+					res
+				);
 			} else {
 				throw Error('Image name not found in request');
 			}
@@ -104,33 +142,13 @@ export default class imagesController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
+
 	// https://drive.google.com/drive/u/1/folders/1fGZ42ZFdgGLBCKMcKuIRwk3hFXIgbEPm
 	private uploadImage = async (req: Request, res: Response) => {
 		try {
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
-				if (!image) {
-					throw Error('No image found in context');
-				}
-				image.name = Buffer.from(image.name, 'ascii').toString('utf-8');
-				const uploadPath = './src/images/' + image.name;
-				if (!fs.existsSync(uploadPath)) {
-					await image.mv(uploadPath, async (err: any) => {
-						if (err) {
-							return defaultAnswers.badRequest(res, err.message);
-						}
-						const message = await GoogleDriveManager.uploadFile(uploadPath);
-						if (message) {
-							res.status(200).send('Image uploaded successfully');
-						} else {
-							throw Error(
-								'Failed to upload image to google drive (it is only uploaded to the server)'
-							);
-						}
-					});
-				} else {
-					throw Error('Image with this name already exist');
-				}
+				await fileHandler.saveImage(image, './src/images/other/', res);
 			} else {
 				throw new Error('No files were uploaded.');
 			}
@@ -141,7 +159,7 @@ export default class imagesController implements IController {
 	private deleteImage = async (req: Request, res: Response) => {
 		try {
 			const imageName = req.params.imageName;
-			const imagePath = `./src/images/${imageName}`;
+			const imagePath = `./src/images/other/${imageName}`;
 
 			if (fs.existsSync(imagePath)) {
 				fs.unlinkSync(imagePath);
@@ -167,7 +185,14 @@ export default class imagesController implements IController {
 	};
 	private listAllFiles = async (req: Request, res: Response) => {
 		try {
-			res.status(200).send(fs.readdirSync('./src/images/'));
+			fileHandler.listDictionary('./src/images/other/', res);
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private listAllProfilePictures = async (req: Request, res: Response) => {
+		try {
+			fileHandler.listDictionary('./src/images/profilePictures/', res);
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}

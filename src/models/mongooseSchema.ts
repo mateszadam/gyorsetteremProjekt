@@ -25,6 +25,10 @@ const userSchema = new Schema<SchemaDefinition>(
 			type: String,
 			default: '',
 		},
+		profilePicture: {
+			type: String,
+			default: '',
+		},
 	},
 	{
 		versionKey: false,

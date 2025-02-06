@@ -6,6 +6,9 @@ import {
 	generateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import fs from 'fs';
+import fileHandler from '../helpers/fileHandlingHelper';
+import { log } from 'console';
 
 export default class userController implements IController {
 	public router = Router();
@@ -28,7 +31,6 @@ export default class userController implements IController {
 		 *         description: Bad request
 		 *       401:
 		 *         description: Not authorized
-		 *
 		 *
 		 * /user/register/customer:
 		 *   post:
@@ -129,9 +131,23 @@ export default class userController implements IController {
 		 *     responses:
 		 *       200:
 		 *         description: User logged out successfully
+		 *
+		 * /user/picture/change/{newImageName}:
+		 *   post:
+		 *     tags:
+		 *       - User handling
+		 *     summary: Change profile picture
+		 *     parameters:
+		 *       - in: path
+		 *         name: newImageName
+		 *         required: true
+		 *         schema:
+		 *           type: string
+		 *         description: The new image name for the profile picture
+		 *     responses:
+		 *       200:
+		 *         description: Profile picture changed successfully
 		 */
-
-		this.router.get('/all', authenticateAdminToken, this.getAll);
 		this.router.post('/register/customer', this.registerUser);
 		this.router.post(
 			'/register/admin',
@@ -141,7 +157,43 @@ export default class userController implements IController {
 
 		this.router.post('/login', this.loginUser);
 		this.router.post('/logout', this.logoutUser);
+		this.router.post(
+			'/picture/change/:newImageName',
+			this.changeProfilePicture
+		);
 	}
+	// https://www.svgrepo.com/collection/people-gestures-and-signs-icons/
+
+	private changeProfilePicture = async (req: Request, res: Response) => {
+		try {
+			const token = req.headers.authorization?.replace('Bearer ', '');
+			if (token) {
+				const newImageName = req.params.newImageName;
+				if (
+					newImageName &&
+					(await fs.existsSync(`./src/images/profilePictures/${newImageName}`))
+				) {
+					const updateResult = await this.user.updateOne(
+						{
+							token: token,
+						},
+						{ $set: { profilePicture: newImageName } }
+					);
+					if (updateResult.modifiedCount > 0) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('Token not found in database');
+					}
+				} else {
+					throw Error('New image name not found');
+				}
+			} else {
+				throw Error('Token not found in the header');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
 
 	private getAll = async (req: Request, res: Response) => {
 		try {

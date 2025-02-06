@@ -5,7 +5,7 @@ interface IUser {
 	_id: ObjectId;
 	name: string;
 	password: string;
-	role: string | undefined;
+	role: string;
 	email: string | undefined;
 	token: string | undefined;
 }
@@ -50,32 +50,16 @@ interface IOrder {
 	finishedTime: Date;
 	orderedTime: Date;
 	finishedCokingTime: Date;
-	orderedProducts: {
-		name: string;
-		quantity: number;
-	}[];
+	orderedProducts: IOrderedProducts[];
 }
 interface IController {
 	router: Router;
 	endPoint: String;
 }
 
-function getRawId(id: string) {
-	return id.toString().replace('new ObjectId(', '').replace(')', '');
+interface IOrderedProducts {
+	name: string;
+	quantity: number;
 }
 
-function getObjectID(id: string) {
-	return 'ObjectId(' + id + ')';
-}
-
-export {
-	IUser,
-	IMaterial,
-	IController,
-	IFood,
-	getRawId,
-	getObjectID,
-	IOrder,
-	IUnit,
-	ICategory,
-};
+export { IUser, IMaterial, IController, IFood, IOrder, IUnit, ICategory };
