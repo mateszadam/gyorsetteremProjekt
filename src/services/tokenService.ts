@@ -1,4 +1,3 @@
-import { error, log } from 'console';
 import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
@@ -27,14 +26,12 @@ async function isAuthValid(
 	try {
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
-		console.log(data);
-
 		if (roles.includes(data.role)) {
 			return true;
 		}
 		return false;
-	} catch (err) {
-		console.log(error);
+	} catch (err: any) {
+		console.log(err.message);
 
 		return false;
 	}

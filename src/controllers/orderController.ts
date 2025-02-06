@@ -12,8 +12,6 @@ import {
 	authenticateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
-import { log } from 'console';
-
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';

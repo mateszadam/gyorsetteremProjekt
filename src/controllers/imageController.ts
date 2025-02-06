@@ -129,7 +129,6 @@ export default class imagesController implements IController {
 	private getProfiePictureByName = async (req: Request, res: Response) => {
 		try {
 			const image = req.params.name;
-			console.log(image);
 			if (image) {
 				fileHandler.getImageByName(
 					`./src/images/profilePictures/${image}`,
