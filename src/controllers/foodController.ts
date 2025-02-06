@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController } from '../models/models';
+import { IFood, IController, ICategory } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
 	authenticateToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
 
 /**
  * @swagger
@@ -133,7 +134,7 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *       401:
  *         description: Unauthorized
  *
- * /food/update:
+ * /food/update/{id}:
  *   put:
  *     summary: Update food item
  *     tags: [Food]
@@ -145,6 +146,12 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Food'
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Food updated successfully
@@ -233,14 +240,14 @@ export default class foodController implements IController {
 		this.router.get('/all', authenticateToken, this.getFood);
 
 		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
-		this.router.get('name/:name', authenticateToken, this.getFoodByName);
+		this.router.get('/name/:name', authenticateToken, this.getFoodByName);
 		this.router.get(
 			'/category/:category',
 			authenticateToken,
 			this.getFoodByCategory
 		);
 
-		this.router.put('/update', authenticateAdminToken, this.updateFood);
+		this.router.put('/update/:id', authenticateAdminToken, this.updateFood);
 
 		this.router.patch(
 			'/disable/:name',
@@ -277,7 +284,7 @@ export default class foodController implements IController {
 	};
 	private getFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({});
+			const foods: IFood[] = await this.food.find({});
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -290,7 +297,7 @@ export default class foodController implements IController {
 
 	private getAllEnabledFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({ isEnabled: true });
+			const foods: IFood[] = await this.food.find({ isEnabled: true });
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -303,16 +310,17 @@ export default class foodController implements IController {
 	private updateFood = async (req: Request, res: Response) => {
 		try {
 			const newFood: IFood = req.body;
+			const id = req.params.id;
 			if (
-				newFood._id &&
 				newFood.name &&
 				newFood.material &&
 				newFood.price &&
-				newFood.isEnabled
+				newFood.isEnabled &&
+				id
 			) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						_id: newFood._id,
+						_id: id,
 					},
 					{
 						name: newFood.name,
@@ -325,7 +333,7 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					throw Error('he id is the request is not found is database');
+					throw Error('The id is the request is not found is database');
 				}
 			} else {
 				throw Error('Food in the body is not found in the request');
@@ -339,7 +347,7 @@ export default class foodController implements IController {
 		try {
 			const name = req.params.name;
 			if (name) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						name: name,
 					},
@@ -363,7 +371,7 @@ export default class foodController implements IController {
 		try {
 			const name = req.params.name;
 			if (name) {
-				const foods = await this.food.updateOne(
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						name: name,
 					},
@@ -401,7 +409,7 @@ export default class foodController implements IController {
 	private getFoodByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			const foods = await this.food.find({ name: name });
+			const foods: IFood | null = await this.food.findOne({ name: name });
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -414,7 +422,7 @@ export default class foodController implements IController {
 	private getFoodByCategory = async (req: Request, res: Response) => {
 		try {
 			const category = req.params.category;
-			const foods = await this.food.find({ category: category });
+			const foods: IFood[] = await this.food.find({ category: category });
 			if (foods) {
 				res.send(foods);
 			} else {

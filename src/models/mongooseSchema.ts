@@ -2,7 +2,7 @@ import { Schema, SchemaDefinition, model } from 'mongoose';
 
 const userSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -21,7 +21,7 @@ const userSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: true,
 		},
-		token: {
+		profilePicture: {
 			type: String,
 			default: '',
 		},
@@ -33,10 +33,31 @@ const userSchema = new Schema<SchemaDefinition>(
 		toObject: { virtuals: true },
 	}
 );
+const categorySchema = new Schema<SchemaDefinition>(
+	{
+		_id: Schema.Types.ObjectId,
+		name: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		icon: {
+			type: String,
+			required: true,
+		},
+	},
+	{
+		versionKey: false,
+		id: false,
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true },
+	}
+);
+export const categoryModel = model('categoryId', categorySchema, 'categories');
 
 const foodSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -46,6 +67,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			{
 				name: {
 					type: String,
+					unique: true,
 					required: true,
 				},
 				quantity: {
@@ -65,10 +87,12 @@ const foodSchema = new Schema<SchemaDefinition>(
 		},
 		category: {
 			type: String,
+			required: true,
+			ref: 'categoryModel._id',
 		},
 		image: {
 			type: String,
-			default: 'notFound',
+			default: 'no-image.svg',
 		},
 	},
 	{
@@ -81,7 +105,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 
 const materialSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
 			required: true,
@@ -109,7 +133,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 
 const unitOfMeasure = new Schema<SchemaDefinition>(
 	{
-		_id: {},
+		_id: Schema.Types.ObjectId,
 		materialName: {
 			type: String,
 			required: true,
@@ -128,33 +152,13 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 	}
 );
 
-const categorySchema = new Schema<SchemaDefinition>(
-	{
-		_id: {},
-		name: {
-			type: String,
-			required: true,
-			unique: true,
-		},
-		icon: {
-			type: String,
-			required: true,
-		},
-	},
-	{
-		versionKey: false,
-		id: false,
-		toJSON: { virtuals: true },
-		toObject: { virtuals: true },
-	}
-);
-
 const orderSchema = new Schema<SchemaDefinition>(
 	{
-		_id: {},
-		costumerID: {
-			type: String,
+		_id: Schema.Types.ObjectId,
+		costumerId: {
+			type: Schema.Types.ObjectId,
 			required: true,
+			ref: 'userModel._id',
 		},
 		isFinished: {
 			type: Boolean,
@@ -196,7 +200,6 @@ export const userModel = model('userId', userSchema, 'users');
 export const foodModel = model('foodId', foodSchema, 'foods');
 export const orderModel = model('orderId', orderSchema, 'orders');
 export const materialModel = model('materialId', materialSchema, 'materials');
-export const categoryModel = model('categoryId', categorySchema, 'categories');
 
 export const unitOfMeasureModel = model(
 	'unitId',

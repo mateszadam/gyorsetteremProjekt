@@ -1,35 +1,36 @@
 import { Router } from 'express';
+import { ObjectId } from 'mongodb';
 
 interface IUser {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	password: string;
-	role: string | undefined;
+	role: string;
+	profilePicture: String;
 	email: string | undefined;
-	token: string | undefined;
 }
 
 interface ICategory {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	icon: string;
 }
 
 interface IMaterial {
-	_id: string;
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 	message: string;
 }
 
 interface IUnit {
-	_id: string;
+	_id: ObjectId;
 	materialName: string;
 	unit: string;
 }
 
 interface IFood {
-	_id: string;
+	_id: ObjectId;
 	material: IFoodMaterial[];
 	price: number;
 	name: string;
@@ -38,42 +39,27 @@ interface IFood {
 }
 
 interface IFoodMaterial {
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 }
 interface IOrder {
-	_id?: string;
-	costumerID: string;
+	_id: ObjectId;
+	costumerId: string;
 	isFinished: boolean;
 	finishedTime: Date;
 	orderedTime: Date;
 	finishedCokingTime: Date;
-	orderedProducts: {
-		name: string;
-		quantity: number;
-	}[];
+	orderedProducts: IOrderedProducts[];
 }
 interface IController {
 	router: Router;
 	endPoint: String;
 }
 
-function getRawId(id: string) {
-	return id.toString().replace('new ObjectId(', '').replace(')', '');
+interface IOrderedProducts {
+	name: string;
+	quantity: number;
 }
 
-function getObjectID(id: string) {
-	return 'ObjectId(' + id + ')';
-}
-
-export {
-	IUser,
-	IMaterial,
-	IController,
-	IFood,
-	getRawId,
-	getObjectID,
-	IOrder,
-	IUnit,
-	ICategory,
-};
+export { IUser, IMaterial, IController, IFood, IOrder, IUnit, ICategory };

@@ -23,6 +23,8 @@ import categoryController from './controllers/categoryController';
 import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
+const { Worker } = require('worker_threads');
+
 require('dotenv').config();
 export default class App {
 	public app: express.Application;
@@ -30,7 +32,6 @@ export default class App {
 	private swagger = require('swagger-ui-express');
 	private http = require('http');
 	private WebSocket = require('ws');
-
 	constructor(controllers: IController[]) {
 		this.app = express();
 		const server = this.http.createServer(this.app); // Create an HTTP server
@@ -46,6 +47,7 @@ export default class App {
 			legacyHeaders: false,
 		});
 		this.app.use(limiter);
+
 		// TODO: Implement helmet
 
 		GoogleDriveManager.init();
