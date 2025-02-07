@@ -65,7 +65,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			required: true,
 			unique: true,
 		},
-		material: [
+		materials: [
 			{
 				name: {
 					type: String,
@@ -113,6 +113,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: true,
 			lowercase: true,
+			trim: true,
 		},
 		quantity: {
 			type: Number,
@@ -150,6 +151,7 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 			required: true,
 			unique: true,
 			lowercase: true,
+			trim: true,
 		},
 		unit: {
 			type: String,
@@ -206,6 +208,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 					type: String,
 					required: true,
 					lowercase: true,
+					trim: true,
 				},
 				quantity: {
 					type: Number,
