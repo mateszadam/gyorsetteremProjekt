@@ -225,8 +225,9 @@ import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
  *         isEnabled:
  *           type: boolean
  *           default: true
- *         category:
+ *         categoryId:
  *           type: string
+ *           default: 679f462818947c0fa463a88f
  */
 export default class foodController implements IController {
 	public router = Router();
@@ -265,7 +266,7 @@ export default class foodController implements IController {
 		try {
 			const inputMaterials: IFood = req.body;
 			if (inputMaterials) {
-				if (await this.category.findOne({ name: inputMaterials.category })) {
+				if (await this.category.findOne({ _id: inputMaterials.categoryId })) {
 					const inserted = await this.food.insertMany(inputMaterials);
 					if (inserted) {
 						defaultAnswers.ok(res);
@@ -284,7 +285,7 @@ export default class foodController implements IController {
 	};
 	private getFood = async (req: Request, res: Response) => {
 		try {
-			const foods: IFood[] = await this.food.find();
+			const foods = await this.food.find().populate('categoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -297,7 +298,9 @@ export default class foodController implements IController {
 
 	private getAllEnabledFood = async (req: Request, res: Response) => {
 		try {
-			const foods: IFood[] = await this.food.find({ isEnabled: true });
+			const foods = await this.food
+				.find({ isEnabled: true }, { 'material._id': 0 })
+				.populate('categoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -327,7 +330,7 @@ export default class foodController implements IController {
 						material: newFood.material,
 						price: newFood.price,
 						isEnabled: newFood.isEnabled,
-						category: newFood.category,
+						categoryId: newFood.categoryId,
 					}
 				);
 				if (foods.modifiedCount > 0) {
@@ -393,10 +396,12 @@ export default class foodController implements IController {
 	};
 	private getFoodToOrder = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find(
-				{ isEnabled: true },
-				{ _id: 0, name: 1, price: 1 }
-			);
+			const foods = await this.food
+				.find(
+					{ isEnabled: true },
+					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 0 }
+				)
+				.populate('categoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -409,7 +414,9 @@ export default class foodController implements IController {
 	private getFoodByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			const foods: IFood | null = await this.food.findOne({ name: name });
+			const foods = await this.food
+				.findOne({ name: name })
+				.populate('categoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {

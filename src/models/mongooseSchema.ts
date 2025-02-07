@@ -71,6 +71,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 					type: String,
 					unique: true,
 					required: true,
+					lowercase: true,
 				},
 				quantity: {
 					type: Number,
@@ -88,7 +89,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			default: true,
 		},
 		categoryId: {
-			type: String,
+			type: Schema.Types.ObjectId,
 			required: true,
 			ref: 'categoryId',
 		},
@@ -111,6 +112,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 		name: {
 			type: String,
 			required: true,
+			lowercase: true,
 		},
 		quantity: {
 			type: Number,
@@ -125,9 +127,9 @@ const materialSchema = new Schema<SchemaDefinition>(
 			default: new Date(),
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+				message: `Az aktuális dátumnál nem adhat meg későbbi dátumot!`,
 			},
 		},
 	},
@@ -147,6 +149,7 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 			type: String,
 			required: true,
 			unique: true,
+			lowercase: true,
 		},
 		unit: {
 			type: String,
@@ -174,18 +177,18 @@ const orderSchema = new Schema<SchemaDefinition>(
 			default: Date.now(),
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+				message: 'Az aktuális dátumnál nem adhat meg későbbi dátumot!',
 			},
 		},
 		finishedCokingTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+				message: 'Az aktuális dátumnál nem adhat meg későbbi dátumot!',
 			},
 		},
 		finishedTime: {
@@ -202,6 +205,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 				name: {
 					type: String,
 					required: true,
+					lowercase: true,
 				},
 				quantity: {
 					type: Number,

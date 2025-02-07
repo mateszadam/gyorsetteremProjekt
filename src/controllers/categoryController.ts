@@ -3,7 +3,6 @@ import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
 import { authenticateAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
-import { InsertManyResult } from 'mongoose';
 
 export default class categoryController implements IController {
 	public router = Router();

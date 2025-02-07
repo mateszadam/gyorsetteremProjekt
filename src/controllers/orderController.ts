@@ -94,7 +94,7 @@ export default class orderController implements IController {
 	 *         description: User ID
 	 *     responses:
 	 *       200:
-	 *         description: Order marked as finished
+	 *         description: List of ongoing orders for the user
 	 *       400:
 	 *         description: Bad request
 	 * /order/{id}:
@@ -243,6 +243,7 @@ export default class orderController implements IController {
 		);
 	}
 
+	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
 		try {
 			const newOrder: IOrder = req.body;
