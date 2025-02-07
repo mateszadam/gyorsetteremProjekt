@@ -13,6 +13,7 @@ import {
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { log } from 'console';
+import webSocetController from './websocketController';
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
@@ -287,10 +288,10 @@ export default class orderController implements IController {
 							if (orderedFood) {
 								for (
 									let index = 0;
-									index < orderedFood.material.length;
+									index < orderedFood.materials.length;
 									index++
 								) {
-									const orderedFoodMaterials = orderedFood.material[index];
+									const orderedFoodMaterials = orderedFood.materials[index];
 									const materialChange = {
 										name: orderedFoodMaterials.name,
 										quantity:
@@ -321,6 +322,7 @@ export default class orderController implements IController {
 				} else {
 					throw Error('User with this id not found');
 				}
+				webSocetController.sendStateChange();
 				defaultAnswers.created(res);
 			} else {
 				throw Error('Error in insert into database');
@@ -435,6 +437,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
+					webSocetController.sendStateChange();
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('Id from request is not in database');
@@ -484,6 +487,8 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
+					webSocetController.sendStateChange();
+
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('The id of the request is not in the database');

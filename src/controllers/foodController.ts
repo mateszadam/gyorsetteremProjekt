@@ -316,7 +316,7 @@ export default class foodController implements IController {
 			const id = req.params.id;
 			if (
 				newFood.name &&
-				newFood.material &&
+				newFood.materials &&
 				newFood.price &&
 				newFood.isEnabled &&
 				id
@@ -327,7 +327,7 @@ export default class foodController implements IController {
 					},
 					{
 						name: newFood.name,
-						material: newFood.material,
+						material: newFood.materials,
 						price: newFood.price,
 						isEnabled: newFood.isEnabled,
 						categoryId: newFood.categoryId,
