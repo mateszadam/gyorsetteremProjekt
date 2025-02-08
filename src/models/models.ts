@@ -35,7 +35,7 @@ interface IFood {
 	price: number;
 	name: string;
 	isEnabled: boolean;
-	category: string | undefined;
+	categoryId: string | undefined;
 }
 
 interface IFoodMaterial {
@@ -46,10 +46,9 @@ interface IFoodMaterial {
 interface IOrder {
 	_id: ObjectId;
 	costumerId: string;
-	isFinished: boolean;
-	finishedTime: Date;
+	finishedTime: Date | undefined;
 	orderedTime: Date;
-	finishedCokingTime: Date;
+	finishedCokingTime: Date | undefined;
 	orderedProducts: IOrderedProducts[];
 }
 interface IController {

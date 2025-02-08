@@ -62,6 +62,11 @@ export default class materialController implements IController {
 						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
 					},
 				},
+				{
+					$match: {
+						inStock: { $gt: 0 },
+					},
+				},
 			]);
 			if (materials) {
 				res.status(200).send(materials);

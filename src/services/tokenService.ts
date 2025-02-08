@@ -1,4 +1,3 @@
-import { error, log } from 'console';
 import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
@@ -20,10 +19,10 @@ function generateToken(user: IUser) {
 	);
 }
 
-async function isAuthValid(
+function isAuthValid(
 	token: string,
 	roles: string[] = ['customer', 'kitchen', 'kiosk']
-): Promise<boolean> {
+): boolean {
 	try {
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
@@ -31,13 +30,18 @@ async function isAuthValid(
 			return true;
 		}
 		return false;
-	} catch (err) {
-		console.log(error);
+	} catch (err: any) {
+		console.log(err.message);
 
 		return false;
 	}
 }
 
+function getDataFromToken(token: string): IUser | undefined {
+	try {
+		return jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
+	} catch (error) {}
+}
 const authenticateToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -90,4 +94,5 @@ export {
 	authenticateAdminToken,
 	authenticateKitchenToken,
 	authenticateKioskToken,
+	getDataFromToken,
 };

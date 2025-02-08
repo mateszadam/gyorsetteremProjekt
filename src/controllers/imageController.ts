@@ -23,8 +23,12 @@ export default class imagesController implements IController {
 		// this.router.delete('/:imageName', authenticateToken, this.deleteImage);
 
 		this.router.post('/', authenticateAdminToken, this.uploadImage);
-		this.router.get('/profile', this.listAllProfilePictures);
-		this.router.get('/profile/:name', this.getProfiePictureByName);
+		this.router.get('/profile', authenticateToken, this.listAllProfilePictures);
+		this.router.get(
+			'/profile/:name',
+			authenticateToken,
+			this.getProfiePictureByName
+		);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/
@@ -45,7 +49,6 @@ export default class imagesController implements IController {
 	private getProfiePictureByName = async (req: Request, res: Response) => {
 		try {
 			const image = req.params.name;
-			console.log(image);
 			if (image) {
 				fileHandler.getImageByName(
 					`./src/images/profilePictures/${image}`,

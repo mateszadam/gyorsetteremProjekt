@@ -130,3 +130,5 @@ new App([
 	new categoryController(),
 	new imagesController(),
 ]);
+// TODO: Implement: statistic controller
+// TODO: Implement: 2fa
