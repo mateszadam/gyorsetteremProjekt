@@ -1,134 +1,391 @@
 import { Router, Request, Response } from 'express';
-import { defaultAnswers, Food, IController, Material } from '../models/models';
-import { foodModel, materialModel, orderModel } from '../models/mongooseSchema';
+import { IFood, IController, ICategory } from '../models/models';
+import { categoryModel, foodModel } from '../models/mongooseSchema';
 import {
 	authenticateAdminToken,
 	authenticateToken,
-	isAuthValid,
 } from '../services/tokenService';
-import { log } from 'console';
+import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
 
+/**
+ * @swagger
+ * tags:
+ *   name: Food
+ *   description: Food management endpoints
+ *
+ * /food/add:
+ *   post:
+ *     summary: Add new food items
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *               $ref: '#/components/schemas/Food'
+ *     responses:
+ *       200:
+ *         description: Food items added successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *
+ * /food/allEnabled:
+ *   get:
+ *     summary: Get all enabled food items
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of enabled food items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
+ * /food/all:
+ *   get:
+ *     summary: Get all enabled food items
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of enabled food items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
+ * /food/allToOrder:
+ *   get:
+ *     summary: Get food items for ordering (name and price only)
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of food items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   price:
+ *                     type: number
+ *       401:
+ *         description: Unauthorized
+ *
+ * /food/name/{name}:
+ *   get:
+ *     summary: Get food by name
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
+ * /food/category/{category}:
+ *   get:
+ *     summary: Get food by category
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: category
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Food'
+ *       401:
+ *         description: Unauthorized
+ *
+ * /food/update/{id}:
+ *   put:
+ *     summary: Update food item
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Food'
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food updated successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *
+ * /food/disable/{name}:
+ *   patch:
+ *     summary: Disable food item
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food disabled successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *
+ * /food/enable/{name}:
+ *   patch:
+ *     summary: Enable food item
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Food enabled successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *
+ * components:
+ *   schemas:
+ *     Food:
+ *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *         - material
+ *       properties:
+ *         name:
+ *           type: string
+ *         price:
+ *           type: number
+ *         material:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *         isEnabled:
+ *           type: boolean
+ *           default: true
+ *         category:
+ *           type: string
+ */
 export default class foodController implements IController {
 	public router = Router();
 	public endPoint = '/food';
 	private food = foodModel;
-
-	/**
-	 * @swagger
-	 * /food/add:
-	 *   post:
-	 *     summary: Add new food items
-	 *     tags: [Food]
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             type: object
-	 *             properties:
-	 *               food:
-	 *                 type: array
-	 *                 items:
-	 *                   type: object
-	 *                   properties:
-	 *                     name:
-	 *                       type: string
-	 *                     price:
-	 *                       type: number
-	 *                     ingredients:
-	 *                       type: object
-	 *                       properties:
-	 *                         name:
-	 *                           type: string
-	 *                           default: kenyér
-	 *                         quantity:
-	 *                           type: number
-	 *                           default: 2
-	 *                   required:
-	 *                     - name
-	 *                     - price
-	 *     responses:
-	 *       200:
-	 *         description: Food items added successfully
-	 *       400:
-	 *         description: Bad request
-	 *       401:
-	 *         description: Not authorized
-	 *
-	 * /food/all:
-	 *   get:
-	 *     summary: Get all food items
-	 *     tags: [Food]
-	 *     responses:
-	 *       200:
-	 *         description: List of all food items
-	 *       400:
-	 *         description: Bad request
-	 *       401:
-	 *         description: Not authorized
-	 *
-	 * /food/allToOrder:
-	 *   get:
-	 *     summary: Get food items for order
-	 *     tags: [Food]
-	 *     responses:
-	 *       200:
-	 *         description: List of food items for order
-	 *       400:
-	 *         description: Bad request
-	 *       401:
-	 *         description: Not authorized
-	 * /food/{name}:
-	 *   get:
-	 *     summary: Get food item by name
-	 *     tags: [Food]
-	 *     parameters:
-	 *       - in: path
-	 *         name: name
-	 *         required: true
-	 *         schema:
-	 *           type: string
-	 *         description: Name of the food item
-	 *     responses:
-	 *       200:
-	 *         description: Food item details
-	 *       400:
-	 *         description: Bad request
-	 *       401:
-	 *         description: Not authorized
-	 */
+	private category = categoryModel;
 
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.addFood);
+		this.router.get('/allEnabled', authenticateToken, this.getAllEnabledFood);
 		this.router.get('/all', authenticateToken, this.getFood);
+
 		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
-		this.router.get('/:name', authenticateToken, this.getFoodByName);
+		this.router.get('/name/:name', authenticateToken, this.getFoodByName);
+		this.router.get(
+			'/category/:category',
+			authenticateToken,
+			this.getFoodByCategory
+		);
+
+		this.router.put('/update/:id', authenticateAdminToken, this.updateFood);
+
+		this.router.patch(
+			'/disable/:name',
+			authenticateAdminToken,
+			this.disableByName
+		);
+		this.router.patch(
+			'/enable/:name',
+			authenticateAdminToken,
+			this.enableByName
+		);
 	}
 
 	private addFood = async (req: Request, res: Response) => {
 		try {
-			const inputMaterials: Food[] = req.body.food;
-			log(inputMaterials);
+			const inputMaterials: IFood = req.body;
 			if (inputMaterials) {
-				const inserted = await this.food.insertMany(inputMaterials);
-				if (inserted) {
-					defaultAnswers.ok(res);
+				if (await this.category.findOne({ name: inputMaterials.category })) {
+					const inserted = await this.food.insertMany(inputMaterials);
+					if (inserted) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('Error in database');
+					}
 				} else {
-					defaultAnswers.badRequest(res);
+					throw Error('Input category not in categories');
 				}
 			} else {
-				defaultAnswers.badRequest(res);
+				throw Error('Food in the body is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private getFood = async (req: Request, res: Response) => {
+		try {
+			const foods: IFood[] = await this.food.find({});
+			if (foods) {
+				res.send(foods);
+			} else {
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
 
-	private getFood = async (req: Request, res: Response) => {
+	private getAllEnabledFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({});
+			const foods: IFood[] = await this.food.find({ isEnabled: true });
 			if (foods) {
 				res.send(foods);
+			} else {
+				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private updateFood = async (req: Request, res: Response) => {
+		try {
+			const newFood: IFood = req.body;
+			const id = req.params.id;
+			if (
+				newFood.name &&
+				newFood.material &&
+				newFood.price &&
+				newFood.isEnabled &&
+				id
+			) {
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
+					{
+						_id: id,
+					},
+					{
+						name: newFood.name,
+						material: newFood.material,
+						price: newFood.price,
+						isEnabled: newFood.isEnabled,
+						category: newFood.category,
+					}
+				);
+				if (foods.modifiedCount > 0) {
+					res.send(foods);
+				} else {
+					throw Error('The id is the request is not found is database');
+				}
+			} else {
+				throw Error('Food in the body is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
+	private disableByName = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+			if (name) {
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
+					{
+						name: name,
+					},
+					{
+						$set: { isEnabled: false },
+					}
+				);
+				if (foods.modifiedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('The name in the request is not found is database');
+				}
+			} else {
+				throw Error('The name is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private enableByName = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+			if (name) {
+				const foods: UpdateWriteOpResult = await this.food.updateOne(
+					{
+						name: name,
+					},
+					{
+						$set: { isEnabled: true },
+					}
+				);
+				if (foods.modifiedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('The name in the request is not found is database');
+				}
+			} else {
+				throw Error('The name is not found in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -136,9 +393,14 @@ export default class foodController implements IController {
 	};
 	private getFoodToOrder = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find({}, { _id: 0, name: 1, price: 1 });
+			const foods = await this.food.find(
+				{ isEnabled: true },
+				{ _id: 0, name: 1, price: 1 }
+			);
 			if (foods) {
 				res.send(foods);
+			} else {
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -147,9 +409,24 @@ export default class foodController implements IController {
 	private getFoodByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			const foods = await this.food.find({ name: name });
+			const foods: IFood | null = await this.food.findOne({ name: name });
 			if (foods) {
 				res.send(foods);
+			} else {
+				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+	private getFoodByCategory = async (req: Request, res: Response) => {
+		try {
+			const category = req.params.category;
+			const foods: IFood[] = await this.food.find({ category: category });
+			if (foods) {
+				res.send(foods);
+			} else {
+				throw Error('Error in database');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

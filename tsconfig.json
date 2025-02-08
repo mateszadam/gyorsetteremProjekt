@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "resolveJsonModule": true,
         "target": "esnext",
         "strict": true,
         "pretty": true,
@@ -8,17 +9,29 @@
         "experimentalDecorators": true,
         "esModuleInterop": true,
         "module": "CommonJS",
-        "lib": ["es2016"],
+        "lib": [
+            "es2016"
+        ],
         "emitDecoratorMetadata": true,
         "moduleResolution": "node",
         "importHelpers": true,
         "declaration": true,
         "sourceMap": true,
         "outDir": "dist",
-        "types": ["node", "jest"],
+        "types": [
+            "node",
+            "jest"
+        ],
         "rootDir": "./src",
-        "typeRoots": ["./node_modules/@types"]
+        "typeRoots": [
+            "./node_modules/@types"
+        ]
     },
-    "exclude": ["node_modules"],
-    "include": ["src/**/*.ts", "**/test/**/*.ts"]
+    "exclude": [
+        "node_modules"
+    ],
+    "include": [
+        "src/**/*.ts",
+        "**/test/**/*.ts",
+    ]
 }

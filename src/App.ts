@@ -3,9 +3,11 @@ import mongoose from 'mongoose';
 import { IController } from './models/models';
 import { Router, Request, Response } from 'express';
 import {
+	categoryModel,
 	foodModel,
 	materialModel,
 	orderModel,
+	unitOfMeasureModel,
 	userModel,
 } from './models/mongooseSchema';
 import morgan from 'morgan';
@@ -14,20 +16,65 @@ import userController from './controllers/userController';
 import orderController from './controllers/orderController';
 import materialController from './controllers/materialController';
 import foodController from './controllers/foodController';
-import { log } from 'console';
 
+import tokenValidationController from './controllers/tokenValidationController';
+import unitController from './controllers/unitController';
+import categoryController from './controllers/categoryController';
+import { rateLimit } from 'express-rate-limit';
+import imagesController from './controllers/imageController';
+import GoogleDriveManager from './helpers/googleDriveHelper';
+const { Worker } = require('worker_threads');
+
+require('dotenv').config();
 export default class App {
 	public app: express.Application;
 	private swaggerjsdoc = require('swagger-jsdoc');
 	private swagger = require('swagger-ui-express');
-
+	private http = require('http');
+	private WebSocket = require('ws');
 	constructor(controllers: IController[]) {
 		this.app = express();
+		const server = this.http.createServer(this.app); // Create an HTTP server
+		const wss = new this.WebSocket.Server({ server });
 		this.connectToTheDatabase();
 		this.app.use(express.json());
 		this.app.use(cors());
 		this.app.use(morgan('dev'));
-		log('fut');
+		const limiter = rateLimit({
+			windowMs: 15 * 60 * 1000,
+			limit: 100,
+			standardHeaders: 'draft-8',
+			legacyHeaders: false,
+		});
+		this.app.use(limiter);
+
+		// TODO: Implement helmet
+
+		GoogleDriveManager.init();
+
+		wss.on('connection', (ws: any) => {
+			console.log('New client connected');
+
+			// Handle messages from client
+			ws.on('message', (message: any) => {
+				console.log(`Received: ${message}`);
+
+				// Broadcast message to all connected clients
+				wss.clients.forEach((client: any) => {
+					if (client.readyState === WebSocket.OPEN) {
+						client.send(`Server: ${message}`);
+					}
+				});
+			});
+
+			// Handle client disconnection
+			ws.on('close', () => {
+				console.log('Client disconnected');
+			});
+
+			ws.send('Welcome to the WebSocket server!');
+		});
+
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
@@ -57,6 +104,8 @@ export default class App {
 							type: 'http',
 							scheme: 'bearer',
 							bearerFormat: 'JWT',
+							description:
+								'Enter your bearer token in the format **Bearer &lt;token>**',
 						},
 					},
 				},
@@ -72,9 +121,12 @@ export default class App {
 				'./src/controllers/*.ts',
 			],
 		};
+		this.app.use(
+			'/',
+			this.swagger.serve,
+			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
+		);
 
-		const spacs = this.swaggerjsdoc(optionsForSwagger);
-		this.app.use('/', this.swagger.serve, this.swagger.setup(spacs));
 		this.app.listen(5005, () => {
 			console.log('App listening on the port 5005');
 		});
@@ -82,10 +134,9 @@ export default class App {
 
 	private connectToTheDatabase() {
 		mongoose.set('strictQuery', true);
+		const mongoUri = process.env.MONGO_URI;
 		mongoose
-			.connect(
-				'mongodb+srv://m001-student:m001-student@main.0030e.mongodb.net/loginService'
-			)
+			.connect(mongoUri!)
 			.catch(() =>
 				console.log('Unable to connect to the server. Please start MongoDB.')
 			);
@@ -101,6 +152,8 @@ export default class App {
 		foodModel.init();
 		orderModel.init();
 		materialModel.init();
+		categoryModel.init();
+		unitOfMeasureModel.init();
 	}
 }
 
@@ -109,4 +162,8 @@ new App([
 	new orderController(),
 	new materialController(),
 	new foodController(),
+	new tokenValidationController(),
+	new unitController(),
+	new categoryController(),
+	new imagesController(),
 ]);

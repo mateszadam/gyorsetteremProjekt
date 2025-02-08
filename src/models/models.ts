@@ -1,92 +1,65 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { ObjectId } from 'mongodb';
 
-interface User {
-	_id: string;
+interface IUser {
+	_id: ObjectId;
 	name: string;
 	password: string;
-	role: string | undefined;
-	token: string | undefined;
+	role: string;
+	profilePicture: String;
+	email: string | undefined;
 }
 
-interface Material {
-	_id: string;
+interface ICategory {
+	_id: ObjectId;
+	name: string;
+	icon: string;
+}
+
+interface IMaterial {
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 	message: string;
 }
 
-interface Food {
-	_id: string;
-	material: FoodMaterial[];
-	price: number;
-	name: string;
+interface IUnit {
+	_id: ObjectId;
+	materialName: string;
+	unit: string;
 }
 
-interface FoodMaterial {
+interface IFood {
+	_id: ObjectId;
+	material: IFoodMaterial[];
+	price: number;
+	name: string;
+	isEnabled: boolean;
+	category: string | undefined;
+}
+
+interface IFoodMaterial {
+	_id: ObjectId;
 	name: string;
 	quantity: number;
 }
-interface Order {
-	_id?: string;
-	costumerID: string;
+interface IOrder {
+	_id: ObjectId;
+	costumerId: string;
 	isFinished: boolean;
-	orderedProducts: {
-		name: string;
-		quantity: number;
-	}[];
+	finishedTime: Date;
+	orderedTime: Date;
+	finishedCokingTime: Date;
+	orderedProducts: IOrderedProducts[];
 }
 interface IController {
 	router: Router;
 	endPoint: String;
 }
 
-function getRawId(id: string) {
-	return id.toString().replace('new ObjectId(', '').replace(')', '');
+interface IOrderedProducts {
+	name: string;
+	quantity: number;
 }
 
-function getObjectID(id: string) {
-	return 'new ObjectId(' + id + ')';
-}
-
-class defaultAnswers {
-	static async ok(res: Response, message: string = '') {
-		if (message == '') {
-			res.sendStatus(200);
-		} else {
-			res.status(200).json({ message });
-		}
-	}
-
-	static async created(res: Response) {
-		res.sendStatus(201);
-	}
-
-	static async notAuthorized(res: Response) {
-		res.sendStatus(401);
-	}
-
-	static async notFound(res: Response) {
-		res.sendStatus(404);
-	}
-	static async notImplemented(res: Response) {
-		res.sendStatus(501);
-	}
-	static async badRequest(res: Response, message: string = '') {
-		if (message == '') {
-			res.sendStatus(400);
-		} else {
-			res.status(400).json({ message: message });
-		}
-	}
-}
-
-export {
-	User,
-	Material,
-	IController,
-	Food,
-	getRawId,
-	getObjectID,
-	defaultAnswers,
-	Order,
-};
+export { IUser, IMaterial, IController, IFood, IOrder, IUnit, ICategory };
