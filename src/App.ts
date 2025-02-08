@@ -23,7 +23,11 @@ import categoryController from './controllers/categoryController';
 import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
+
+import webSocetController from './controllers/websocketController';
+
 import YAML from 'yamljs';
+
 const { Worker } = require('worker_threads');
 
 require('dotenv').config();
@@ -35,8 +39,6 @@ export default class App {
 	private WebSocket = require('ws');
 	constructor(controllers: IController[]) {
 		this.app = express();
-		const server = this.http.createServer(this.app); // Create an HTTP server
-		const wss = new this.WebSocket.Server({ server });
 		this.connectToTheDatabase();
 		this.app.use(express.json());
 		this.app.use(cors());
@@ -52,30 +54,7 @@ export default class App {
 		// TODO: Implement helmet
 
 		GoogleDriveManager.init();
-
-		wss.on('connection', (ws: any) => {
-			console.log('New client connected');
-
-			// Handle messages from client
-			ws.on('message', (message: any) => {
-				console.log(`Received: ${message}`);
-
-				// Broadcast message to all connected clients
-				wss.clients.forEach((client: any) => {
-					if (client.readyState === WebSocket.OPEN) {
-						client.send(`Server: ${message}`);
-					}
-				});
-			});
-
-			// Handle client disconnection
-			ws.on('close', () => {
-				console.log('Client disconnected');
-			});
-
-			ws.send('Welcome to the WebSocket server!');
-		});
-
+		webSocetController.initializeWebSocket();
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
