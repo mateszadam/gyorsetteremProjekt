@@ -4,60 +4,6 @@ import { unitOfMeasureModel } from '../models/mongooseSchema';
 import { authenticateAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
-/**
- * Controller for managing units of measurement
- * @class unitController
- * @implements {IController}
- *
- * @swagger
- * tags:
- *   name: Units
- *   description: API endpoints for managing units of measurement
- *
- * /unit/add:
- *   post:
- *     summary: Add a new unit of measure
- *     tags: [Units]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - materialName
- *               - unit
- *             properties:
- *               materialName:
- *                 type: string
- *                 description: Name of the item
- *               unit:
- *                 type: string
- *                 description: Name of the unit of measure
- *     responses:
- *       200:
- *         description: Unit successfully added
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *
- * /unit/all:
- *   get:
- *     summary: Get all units of measure
- *     tags: [Units]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of all units retrieved successfully
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- */
 export default class unitController implements IController {
 	public router = Router();
 	private unit = unitOfMeasureModel;

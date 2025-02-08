@@ -1,0 +1,798 @@
+definition:
+  openapi: 3.0.0
+  info:
+    title: Gyors éttermi rendszer API dokumentáció
+    description: A /user/login tól kapott tokent kell be másolni az autentikációhoz
+    version: 0.0.2
+  servers:
+    - url: https://mateszadam.koyeb.app/
+    - url: http://localhost:5005/
+  components:
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+        description: 'Enter your bearer token in the format **Bearer <token>**'
+  security:
+    - bearerAuth: []
+apis: [./src/swagger/swagger.yaml]
+
+paths:
+  # Category Paths
+  /category/add:
+    post:
+      summary: Add a new category
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - icon
+              properties:
+                name:
+                  type: string
+                  description: Name of the item
+                icon:
+                  type: string
+                  description: Icon of the category
+                  default: no-image.svg
+      responses:
+        200:
+          description: Category added successfully
+        400:
+          description: Bad request
+  /category/all:
+    get:
+      summary: Get all categories
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: A list of categories
+        400:
+          description: Bad request
+  # Food Paths
+  /food/add:
+    post:
+      summary: Add new food items
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Food'
+      responses:
+        200:
+          description: Food items added successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+
+  /food/allEnabled:
+    get:
+      summary: Get all enabled food items
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of enabled food items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
+        401:
+          description: Unauthorized
+
+  /food/all:
+    get:
+      summary: Get all enabled food items
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of enabled food items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
+        401:
+          description: Unauthorized
+
+  /food/allToOrder:
+    get:
+      summary: Get food items for ordering (name and price only)
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of food items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    price:
+                      type: number
+        401:
+          description: Unauthorized
+
+  /food/name/{name}:
+    get:
+      summary: Get food by name
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        401:
+          description: Unauthorized
+
+  /food/category/{category}:
+    get:
+      summary: Get food by category
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        401:
+          description: Unauthorized
+
+  /food/update/{id}:
+    put:
+      summary: Update food item
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Food'
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food updated successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+
+  /food/disable/{name}:
+    patch:
+      summary: Disable food item
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food disabled successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+
+  /food/enable/{name}:
+    patch:
+      summary: Enable food item
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food enabled successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+
+# Image paths
+/images/name/{imageName}:
+  get:
+    summary: Retrieve an image
+    tags: [Images]
+    parameters:
+      - in: path
+        name: imageName
+        required: true
+        schema:
+          type: string
+        description: The name of the image to retrieve
+    responses:
+      200:
+        description: An image file.
+        content:
+          image/svg+xml:
+            schema:
+              type: string
+              format: binary
+      400:
+        description: Bad request
+/images:
+  post:
+    summary: Upload an image
+    tags: [Images]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              image:
+                type: string
+                format: binary
+    responses:
+      200:
+        description: Image uploaded successfully
+      400:
+        description: Bad request
+/images/all:
+  get:
+    summary: List all images
+    tags: [Images]
+    responses:
+      200:
+        description: A list of all images
+      400:
+        description: Bad request
+/images/profile:
+  get:
+    summary: List all profile pictures
+    tags: [Images]
+    responses:
+      200:
+        description: A list of all profile pictures
+      400:
+        description: Bad request
+/images/profile/{name}:
+  get:
+    summary: Get profile picture by name
+    tags: [Images]
+    parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        description: The name of the profile picture to retrieve
+    responses:
+      200:
+        description: A profile picture file.
+        content:
+          image/svg+xml:
+            schema:
+              type: string
+              format: binary
+      400:
+        description: Bad request
+
+# Material
+/material/add:
+  post:
+    summary: Add new materials to inventory
+    tags: [Material]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                default: kenyér
+              quantity:
+                type: number
+                default: 2
+              message:
+                type: string
+                default: Vásárlás
+    responses:
+      200:
+        description: Materials successfully added
+      400:
+        description: Bad request - Invalid input
+      401:
+        description: Unauthorized - Invalid or missing token
+/material/stock:
+  get:
+    summary: Get current material stock levels
+    tags: [Material]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: List of materials with stock levels
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  inStock:
+                    type: number
+                  unit:
+                    type: string
+      401:
+        description: Unauthorized access
+/material/all:
+  get:
+    summary: Get all materials from recipes and stock
+    tags: [Material]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Combined list of materials from recipes and stock
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  inStock:
+                    type: number
+                  unit:
+                    type: string
+      401:
+        description: Unauthorized access
+
+# Order
+/order/new:
+  post:
+    summary: Create a new order
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              costumerId:
+                type: string
+                default: 6793bb6219bff92baf980ade
+              orderedProducts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      default: Pizza
+                    quantity:
+                      type: number
+                      default: 2
+                  required:
+                    - name
+                    - quantity
+            required:
+              - costumerId
+              - orderedProducts
+    responses:
+      201:
+        description: Order created successfully
+      400:
+        description: Bad request
+/order/ongoing:
+  get:
+    summary: Get all ongoing orders
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: List of ongoing orders
+      400:
+        description: Bad request
+/order/ongoing/{id}:
+  get:
+    summary: Get ongoing orders by user id
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: User ID
+    responses:
+      200:
+        description: List of ongoing orders for the user
+      400:
+        description: Bad request
+/order/{id}:
+  get:
+    summary: Get an order by id
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        description: Received the order
+      400:
+        description: Bad request
+/order/kitchen:
+  get:
+    summary: Get all orders for kitchen
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: List of orders for kitchen
+      400:
+        description: Bad request
+/order/finish/{id}:
+  patch:
+    summary: Mark an order as finished
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        description: Order marked as finished
+      400:
+        description: Bad request
+/order/handover/{id}:
+  patch:
+    summary: Get an order for handover
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        description: Order ready for handover
+      400:
+        description: Bad request
+/order/time/{from}/{to}:
+  get:
+    summary: Get all orders within a time range
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: from
+        schema:
+          type: string
+          format: date
+        required: true
+        description: Start date of the time range
+      - in: path
+        name: to
+        schema:
+          type: string
+          format: date
+        description: End date of the time range
+    responses:
+      200:
+        description: List of orders within the time range
+      400:
+        description: Bad request
+/order/finished/{id}:
+  get:
+    summary: Get finished orders by user id
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: User ID
+    responses:
+      200:
+        description: List of finished orders for the user
+      400:
+        description: Bad request
+
+# Token validation
+/token/validate:
+  get:
+    summary: Validate token
+    tags: [Token validation]
+    responses:
+      200:
+        description: Token is valid
+      400:
+        description: Token is invalid
+
+# Units
+/unit/add:
+  post:
+    summary: Add a new unit of measure
+    tags: [Units]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - materialName
+              - unit
+            properties:
+              materialName:
+                type: string
+                description: Name of the item
+              unit:
+                type: string
+                description: Name of the unit of measure
+    responses:
+      200:
+        description: Unit successfully added
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/unit/all:
+  get:
+    summary: Get all units of measure
+    tags: [Units]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: List of all units retrieved successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+# User handling
+/user/all:
+  get:
+    tags: [User handling]
+    summary: Get all users
+    responses:
+      201:
+        description: User registered successfully
+      400:
+        description: Bad request
+      401:
+        description: Not authorized
+
+/user/register/customer:
+  post:
+    tags: [User handling]
+    summary: Register a new user
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - password
+              - email
+            properties:
+              name:
+                type: string
+                default: customerUser
+              password:
+                type: string
+                default: customerUser!1
+              email:
+                type: string
+                default: admin@gmail.hu
+    responses:
+      201:
+        description: User registered successfully
+
+/user/register/admin:
+  post:
+    tags: [User handling]
+    summary: Register a new admin
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - password
+              - email
+            properties:
+              name:
+                type: string
+                default: adminUser
+              password:
+                type: string
+                default: adminUser!1
+              email:
+                type: string
+                default: admin@gmail.com
+    responses:
+      201:
+        description: Admin registered successfully
+      400:
+        description: Bad request
+
+/user/login:
+  post:
+    tags: [User handling]
+    summary: Login a user
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - password
+            properties:
+              name:
+                type: string
+                default: admin
+              password:
+                type: string
+                default: admin
+    responses:
+      200:
+        description: User logged in successfully
+
+/user/logout:
+  post:
+    tags: [User handling]
+    summary: Logout a user
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: User logged out successfully
+
+/user/picture/change/{newImageName}:
+  post:
+    tags: [User handling]
+    summary: Change profile picture
+    parameters:
+      - in: path
+        name: newImageName
+        required: true
+        schema:
+          type: string
+        description: The new image name for the profile picture
+    responses:
+      200:
+        description: Profile picture changed successfully
+
+components:
+  schemas:
+    Food:
+      type: object
+      required:
+        - name
+        - price
+        - material
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        materials:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: number
+        isEnabled:
+          type: boolean
+          default: true
+        categoryId:
+          type: string
+          default: 679f462818947c0fa463a88f
+        image:
+          type: string
