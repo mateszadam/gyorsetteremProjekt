@@ -31,7 +31,7 @@ interface IUnit {
 
 interface IFood {
 	_id: ObjectId;
-	material: IFoodMaterial[];
+	materials: IFoodMaterial[];
 	price: number;
 	name: string;
 	isEnabled: boolean;

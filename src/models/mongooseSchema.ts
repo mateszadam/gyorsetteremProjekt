@@ -63,7 +63,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			required: true,
 			unique: true,
 		},
-		material: [
+		materials: [
 			{
 				name: {
 					type: String,

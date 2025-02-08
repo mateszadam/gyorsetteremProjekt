@@ -98,10 +98,10 @@ export default class orderController implements IController {
 							if (orderedFood) {
 								for (
 									let index = 0;
-									index < orderedFood.material.length;
+									index < orderedFood.materials.length;
 									index++
 								) {
-									const orderedFoodMaterials = orderedFood.material[index];
+									const orderedFoodMaterials = orderedFood.materials[index];
 									const materialChange = {
 										name: orderedFoodMaterials.name,
 										quantity:
