@@ -106,7 +106,9 @@ export default class foodController implements IController {
 					},
 					{
 						name: newFood.name,
+
 						materials: newFood.materials,
+
 						price: newFood.price,
 						isEnabled: newFood.isEnabled,
 						categoryId: newFood.categoryId,
