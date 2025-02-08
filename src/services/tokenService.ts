@@ -27,8 +27,6 @@ async function isAuthValid(
 	try {
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
-		console.log(data);
-
 		if (roles.includes(data.role)) {
 			return true;
 		}
