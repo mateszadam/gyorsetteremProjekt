@@ -11,20 +11,6 @@ export default class tokenValidationController implements IController {
 
 	bcrypt = require('bcrypt');
 
-	/**
-	 * @openapi
-	 * /token/validate:
-	 *   get:
-	 *     summary: Validate token
-	 *     tags: [Token validation]
-	 *     responses:
-	 *       200:
-	 *         description: Token is valid
-	 *       400:
-	 *         description: Token is invalid
-	 *
-	 */
-
 	constructor() {
 		// this.router.get('/admin', this.isAdminTokenValid);
 		// this.router.get('/customer', this.isCustomerTokenValid);

@@ -22,195 +22,6 @@ export default class orderController implements IController {
 	private food = foodModel;
 
 	private mongoose = require('mongoose');
-	/**
-	 * @openapi
-	 * tags:
-	 *   name: Orders
-	 *   description: Order management
-	 *
-	 * /order/new:
-	 *   post:
-	 *     summary: Create a new order
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             type: object
-	 *             properties:
-	 *               costumerId:
-	 *                 type: string
-	 *                 default: 6793bb6219bff92baf980ade
-	 *               orderedProducts:
-	 *                 type: array
-	 *                 items:
-	 *                   type: object
-	 *                   properties:
-	 *                     name:
-	 *                       type: string
-	 *                       default: Pizza
-	 *                     quantity:
-	 *                       type: number
-	 *                       default: 2
-	 *                   required:
-	 *                     - name
-	 *                     - quantity
-	 *             required:
-	 *               - costumerId
-	 *               - orderedProducts
-	 *     responses:
-	 *       201:
-	 *         description: Order created successfully
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/ongoing:
-	 *   get:
-	 *     summary: Get all ongoing orders
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     responses:
-	 *       200:
-	 *         description: List of ongoing orders
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/ongoing/{id}:
-	 *   get:
-	 *     summary: Get ongoing orders by user id
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: id
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         description: User ID
-	 *     responses:
-	 *       200:
-	 *         description: List of ongoing orders for the user
-	 *       400:
-	 *         description: Bad request
-	 * /order/{id}:
-	 *   get:
-	 *     summary: Get an order by id
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: id
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         description: Order ID
-	 *     responses:
-	 *       200:
-	 *         description: Received the order
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/kitchen:
-	 *   get:
-	 *     summary: Get all orders for kitchen
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     responses:
-	 *       200:
-	 *         description: List of orders for kitchen
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/finish/{id}:
-	 *   patch:
-	 *     summary: Mark an order as finished
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: id
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         description: Order ID
-	 *     responses:
-	 *       200:
-	 *         description: Order marked as finished
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/handover/{id}:
-	 *   patch:
-	 *     summary: Get an order for handover
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: id
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         description: Order ID
-	 *     responses:
-	 *       200:
-	 *         description: Order ready for handover
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/time/{from}/{to}:
-	 *   get:
-	 *     summary: Get all orders within a time range
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: from
-	 *         schema:
-	 *           type: string
-	 *           format: date
-	 *         required: true
-	 *         description: Start date of the time range
-	 *       - in: path
-	 *         name: to
-	 *         schema:
-	 *           type: string
-	 *           format: date
-	 *         description: End date of the time range
-	 *     responses:
-	 *       200:
-	 *         description: List of orders within the time range
-	 *       400:
-	 *         description: Bad request
-	 *
-	 * /order/finished/{id}:
-	 *   get:
-	 *     summary: Get finished orders by user id
-	 *     tags: [Orders]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     parameters:
-	 *       - in: path
-	 *         name: id
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         description: User ID
-	 *     responses:
-	 *       200:
-	 *         description: List of finished orders for the user
-	 *       400:
-	 *         description: Bad request
-	 */
 
 	constructor() {
 		this.router.post('/new', authenticateToken, this.newOrder);
@@ -287,10 +98,10 @@ export default class orderController implements IController {
 							if (orderedFood) {
 								for (
 									let index = 0;
-									index < orderedFood.material.length;
+									index < orderedFood.materials.length;
 									index++
 								) {
-									const orderedFoodMaterials = orderedFood.material[index];
+									const orderedFoodMaterials = orderedFood.materials[index];
 									const materialChange = {
 										name: orderedFoodMaterials.name,
 										quantity:
@@ -354,7 +165,7 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order: IOrder[] = await this.order.find({ isFinished: false });
+			const order: IOrder[] = await this.order.find({ finishedTole: null });
 			if (order) {
 				res.json(order);
 			} else {

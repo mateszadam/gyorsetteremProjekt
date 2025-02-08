@@ -9,49 +9,6 @@ export default class categoryController implements IController {
 	private category = categoryModel;
 	public endPoint = '/category';
 
-	/**
-	 * @swagger
-	 * /category/add:
-	 *   post:
-	 *     summary: Add a new category
-	 *     tags: [Category]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             type: object
-	 *             required:
-	 *               - name
-	 *               - icon
-	 *             properties:
-	 *               name:
-	 *                 type: string
-	 *                 description: Name of the item
-	 *               icon:
-	 *                 type: string
-	 *                 description: Icon of the category
-	 *     responses:
-	 *       200:
-	 *         description: Category added successfully
-	 *       400:
-	 *         description: Bad request
-	 * /category/all:
-	 *   get:
-	 *     summary: Get all categories
-	 *     tags: [Category]
-	 *     security:
-	 *       - bearerAuth: []
-	 *     responses:
-	 *       200:
-	 *         description: A list of categories
-
-	 *       400:
-	 *         description: Bad request
-	 */
-
 	constructor() {
 		this.router.post('/add', authenticateAdminToken, this.add);
 		this.router.get('/all', authenticateAdminToken, this.getAll);

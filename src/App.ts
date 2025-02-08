@@ -23,6 +23,7 @@ import categoryController from './controllers/categoryController';
 import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
+import YAML from 'yamljs';
 const { Worker } = require('worker_threads');
 
 require('dotenv').config();
@@ -81,50 +82,12 @@ export default class App {
 	}
 
 	public listen(): void {
-		const optionsForSwagger = {
-			definition: {
-				openapi: '3.0.0',
-				info: {
-					title: 'Gyors éttermi rendszer API dokumentáció',
-					description:
-						'A /user/login tól kapott tokent kell be másolni az autentikációhoz',
-					version: '0.0.2',
-				},
-				servers: [
-					{
-						url: 'https://mateszadam.koyeb.app/',
-					},
-					{
-						url: 'http://localhost:5005/',
-					},
-				],
-				components: {
-					securitySchemes: {
-						bearerAuth: {
-							type: 'http',
-							scheme: 'bearer',
-							bearerFormat: 'JWT',
-							description:
-								'Enter your bearer token in the format **Bearer &lt;token>**',
-						},
-					},
-				},
-				security: [
-					{
-						bearerAuth: [],
-					},
-				],
-			},
-			apis: [
-				'./src/documentation/swagger.ts',
-				'./src/App.ts',
-				'./src/controllers/*.ts',
-			],
-		};
 		this.app.use(
 			'/',
 			this.swagger.serve,
-			this.swagger.setup(this.swaggerjsdoc(optionsForSwagger))
+			this.swagger.setup(
+				this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
+			)
 		);
 
 		this.app.listen(5005, () => {
