@@ -1,12 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { IFood, IController, ICategory } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
-import {
-	authenticateAdminToken,
-	authenticateToken,
-} from '../services/tokenService';
+import { authAdminToken, authToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
+import { ERROR } from 'sqlite3';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -15,30 +13,20 @@ export default class foodController implements IController {
 	private category = categoryModel;
 
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.addFood);
-		this.router.get('/allEnabled', authenticateToken, this.getAllEnabledFood);
-		this.router.get('/all', authenticateToken, this.getFood);
+		this.router.post('/add', authAdminToken, this.addFood);
+		this.router.get('/allEnabled', authToken, this.getAllEnabledFood);
+		this.router.get('/all', authToken, this.getFood);
 
-		this.router.get('/allToOrder', authenticateToken, this.getFoodToOrder);
-		this.router.get('/name/:name', authenticateToken, this.getFoodByName);
-		this.router.get(
-			'/category/:category',
-			authenticateToken,
-			this.getFoodByCategory
-		);
+		this.router.get('/allToOrder', authToken, this.getFoodToOrder);
+		this.router.get('/name/:name', authToken, this.getFoodByName);
+		this.router.get('/category/:category', authToken, this.getFoodByCategory);
 
-		this.router.put('/update/:id', authenticateAdminToken, this.updateFood);
+		this.router.put('/update/:id', authAdminToken, this.updateFood);
 
-		this.router.patch(
-			'/disable/:name',
-			authenticateAdminToken,
-			this.disableByName
-		);
-		this.router.patch(
-			'/enable/:name',
-			authenticateAdminToken,
-			this.enableByName
-		);
+		this.router.patch('/disable/:name', authAdminToken, this.disableByName);
+		this.router.patch('/enable/:name', authAdminToken, this.enableByName);
+
+		this.router.delete('/name/:name', authAdminToken, this.deleteFood);
 	}
 
 	private addFood = async (req: Request, res: Response) => {
@@ -69,6 +57,25 @@ export default class foodController implements IController {
 				res.send(foods);
 			} else {
 				throw Error('Error in database');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
+	private deleteFood = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+
+			if (name) {
+				const foodDeleteResponse = await this.food.deleteOne({ name: name });
+				if (foodDeleteResponse && foodDeleteResponse.deletedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('Name not found in database');
+				}
+			} else {
+				throw Error('Name is not in the request');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

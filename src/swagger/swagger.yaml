@@ -59,6 +59,57 @@ paths:
           description: A list of categories
         400:
           description: Bad request
+  /category/{name}:
+    delete:
+      summary: Delete category by name
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Category deleted
+        401:
+          description: Unauthorized
+  /category/{id}:
+    put:
+      summary: Modify category
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - icon
+              properties:
+                name:
+                  type: string
+                  description: Name of the item
+                icon:
+                  type: string
+                  description: Icon of the category
+                  default: no-image.svg
+      responses:
+        200:
+          description: Category modifyed
+        401:
+          description: Unauthorized
   # Food Paths
   /food/add:
     post:
@@ -138,7 +189,6 @@ paths:
                       type: number
         401:
           description: Unauthorized
-
   /food/name/{name}:
     get:
       summary: Get food by name
@@ -160,7 +210,22 @@ paths:
                 $ref: '#/components/schemas/Food'
         401:
           description: Unauthorized
-
+    delete:
+      summary: Delete food by name
+      tags: [Food]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Food deleted
+        401:
+          description: Unauthorized
   /food/category/{category}:
     get:
       summary: Get food by category
@@ -333,8 +398,8 @@ paths:
 # Material
 /material/add:
   post:
-    summary: Add new materials to inventory
-    tags: [Material]
+    summary: Add new material change to inventory
+    tags: [Material changes]
     security:
       - bearerAuth: []
     requestBody:
@@ -363,7 +428,7 @@ paths:
 /material/stock:
   get:
     summary: Get current material stock levels
-    tags: [Material]
+    tags: [Material changes]
     security:
       - bearerAuth: []
     responses:
@@ -387,7 +452,7 @@ paths:
 /material/all:
   get:
     summary: Get all materials from recipes and stock
-    tags: [Material]
+    tags: [Material changes]
     security:
       - bearerAuth: []
     responses:

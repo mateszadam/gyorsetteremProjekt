@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel } from '../models/mongooseSchema';
-import { authenticateAdminToken } from '../services/tokenService';
+import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class materialController implements IController {
@@ -10,13 +10,9 @@ export default class materialController implements IController {
 	private material = materialModel;
 	private food = foodModel;
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.addMaterial);
-		this.router.get('/stock', authenticateAdminToken, this.getAllMaterial);
-		this.router.get(
-			'/all',
-			authenticateAdminToken,
-			this.getAllMaterialFromRecipe
-		);
+		this.router.post('/add', authAdminToken, this.addMaterial);
+		this.router.get('/stock', authAdminToken, this.getAllMaterial);
+		this.router.get('/all', authAdminToken, this.getAllMaterialFromRecipe);
 	}
 
 	private addMaterial = async (req: Request, res: Response) => {

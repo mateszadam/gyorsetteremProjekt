@@ -12,26 +12,8 @@ export default class tokenValidationController implements IController {
 	bcrypt = require('bcrypt');
 
 	constructor() {
-		// this.router.get('/admin', this.isAdminTokenValid);
-		// this.router.get('/customer', this.isCustomerTokenValid);
-		// this.router.get('/kitchen', this.isKitchenTokenValid);
-		// this.router.get('/kiosk', this.isKioskTokenValid);
 		this.router.get('/validate', this.isTokenValid);
 	}
-
-	private isAdminTokenValid = async (req: Request, res: Response) => {
-		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-
-			if (token && (await isAuthValid(token!, ['admin']))) {
-				defaultAnswers.ok(res);
-			} else {
-				defaultAnswers.badRequest(res);
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
-		}
-	};
 	private isTokenValid = async (req: Request, res: Response) => {
 		try {
 			const token = req.headers.authorization?.replace('Bearer ', '');

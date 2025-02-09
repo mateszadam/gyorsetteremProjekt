@@ -7,9 +7,9 @@ import {
 	userModel,
 } from '../models/mongooseSchema';
 import {
-	authenticateKioskToken,
-	authenticateKitchenToken,
-	authenticateToken,
+	authKioskToken,
+	authKitchenToken,
+	authToken,
 } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { log } from 'console';
@@ -25,34 +25,18 @@ export default class orderController implements IController {
 	private mongoose = require('mongoose');
 
 	constructor() {
-		this.router.post('/new', authenticateToken, this.newOrder);
-		this.router.get(
-			'/ongoing',
-			authenticateKioskToken,
-			this.getAllOngoingOrder
-		);
-		this.router.get('/ongoing/:id', authenticateToken, this.getOngoingById);
-		this.router.get('/finished/:id', authenticateToken, this.getFinishedById);
-		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
+		this.router.post('/new', authToken, this.newOrder);
+		this.router.get('/ongoing', authKioskToken, this.getAllOngoingOrder);
+		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
+		this.router.get('/finished/:id', authToken, this.getFinishedById);
+		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
 
-		this.router.patch(
-			'/finish/:id',
-			authenticateKitchenToken,
-			this.kitchenFinishOrder
-		);
+		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
 
-		this.router.get(
-			'/kitchen',
-			authenticateKitchenToken,
-			this.getAllForKitchen
-		);
+		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
 
-		this.router.get('/:id', authenticateToken, this.getById);
-		this.router.patch(
-			'/handover/:id',
-			authenticateKioskToken,
-			this.receivedOrder
-		);
+		this.router.get('/:id', authToken, this.getById);
+		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
 	}
 
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9

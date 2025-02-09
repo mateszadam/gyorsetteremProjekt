@@ -3,10 +3,7 @@ import fileUpload, { UploadedFile } from 'express-fileupload';
 import { IController } from '../models/models';
 import fs from 'fs';
 
-import {
-	authenticateAdminToken,
-	authenticateToken,
-} from '../services/tokenService';
+import { authAdminToken, authToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
 import fileHandler from '../helpers/fileHandlingHelper';
@@ -17,18 +14,14 @@ export default class imagesController implements IController {
 	constructor() {
 		this.router.use(fileUpload());
 
-		this.router.get('/name/:imageName', authenticateToken, this.getImage);
-		this.router.get('/all', authenticateToken, this.listAllFiles);
+		this.router.get('/name/:imageName', authToken, this.getImage);
+		this.router.get('/all', authToken, this.listAllFiles);
 
-		// this.router.delete('/:imageName', authenticateToken, this.deleteImage);
+		// this.router.delete('/:imageName', authToken, this.deleteImage);
 
-		this.router.post('/', authenticateAdminToken, this.uploadImage);
-		this.router.get('/profile', authenticateToken, this.listAllProfilePictures);
-		this.router.get(
-			'/profile/:name',
-			authenticateToken,
-			this.getProfiePictureByName
-		);
+		this.router.post('/', authAdminToken, this.uploadImage);
+		this.router.get('/profile', authToken, this.listAllProfilePictures);
+		this.router.get('/profile/:name', authToken, this.getProfiePictureByName);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/

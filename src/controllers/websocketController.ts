@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { IController, IOrder } from '../models/models';
-import { authenticateToken } from '../services/tokenService';
+import { authToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 const express = require('express');
 import { v4 as uuidv4 } from 'uuid';

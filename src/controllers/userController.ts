@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
-	authenticateAdminToken,
+	authAdminToken,
+	authToken,
 	generateToken,
 	getDataFromToken,
 } from '../services/tokenService';
@@ -18,11 +19,7 @@ export default class userController implements IController {
 	bcrypt = require('bcrypt');
 	constructor() {
 		this.router.post('/register/customer', this.registerUser);
-		this.router.post(
-			'/register/admin',
-			authenticateAdminToken,
-			this.registerAdmin
-		);
+		this.router.post('/register/admin', authAdminToken, this.registerAdmin);
 
 		this.router.post('/login', this.loginUser);
 		this.router.get('/all', this.getAll);
@@ -30,6 +27,7 @@ export default class userController implements IController {
 		this.router.post('/logout', this.logoutUser);
 		this.router.post(
 			'/picture/change/:newImageName',
+			authToken,
 			this.changeProfilePicture
 		);
 	}
@@ -37,8 +35,9 @@ export default class userController implements IController {
 
 	private changeProfilePicture = async (req: Request, res: Response) => {
 		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-			const data = getDataFromToken(token!);
+			const data = getDataFromToken(
+				req.headers.authorization?.replace('Bearer ', '')!
+			);
 			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
 				if (

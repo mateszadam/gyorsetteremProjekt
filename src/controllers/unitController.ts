@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { IController, IUnit } from '../models/models';
 import { unitOfMeasureModel } from '../models/mongooseSchema';
-import { authenticateAdminToken } from '../services/tokenService';
+import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 
 export default class unitController implements IController {
@@ -10,8 +10,8 @@ export default class unitController implements IController {
 	public endPoint = '/unit';
 
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.add);
-		this.router.get('/all', authenticateAdminToken, this.getAll);
+		this.router.post('/add', authAdminToken, this.add);
+		this.router.get('/all', authAdminToken, this.getAll);
 	}
 
 	private add = async (req: Request, res: Response) => {
