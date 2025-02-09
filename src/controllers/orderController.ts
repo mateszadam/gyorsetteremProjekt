@@ -14,6 +14,8 @@ import {
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
+const validate = require('validate.js');
+
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
@@ -26,16 +28,15 @@ export default class orderController implements IController {
 
 	constructor() {
 		this.router.post('/new', authToken, this.newOrder);
+
 		this.router.get('/ongoing', authKioskToken, this.getAllOngoingOrder);
 		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
 		this.router.get('/finished/:id', authToken, this.getFinishedById);
 		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
+		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
+		this.router.get('/:id', authToken, this.getById);
 
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
-
-		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
-
-		this.router.get('/:id', authToken, this.getById);
 		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
 	}
 
@@ -43,84 +44,91 @@ export default class orderController implements IController {
 	private newOrder = async (req: Request, res: Response) => {
 		try {
 			const newOrder: IOrder = req.body;
+			const validation = validate(newOrder, this.orderConstraints);
+
 			const userExists = await this.user.find({
 				_id: newOrder.costumerId,
 			});
-			if (userExists.length > 0) {
-				const insertedOrders = await this.order.insertMany([newOrder], {
-					rawResult: true,
-				});
-				if (insertedOrders.acknowledged) {
-					const newOrderId = insertedOrders.insertedIds[0];
+			if (!validation) {
+				if (userExists.length > 0) {
+					const insertedOrders = await this.order.insertMany([newOrder], {
+						rawResult: true,
+					});
+					if (insertedOrders.acknowledged) {
+						const newOrderId = insertedOrders.insertedIds[0];
 
-					if (newOrder && newOrderId) {
-						for (
-							let index = 0;
-							index < newOrder.orderedProducts.length;
-							index++
-						) {
-							const orderedProducts = newOrder.orderedProducts[index];
+						if (newOrder && newOrderId) {
+							for (
+								let index = 0;
+								index < newOrder.orderedProducts.length;
+								index++
+							) {
+								const orderedProducts = newOrder.orderedProducts[index];
 
-							const orderedFood: IFood | null = await this.food.findOne({
-								name: orderedProducts.name,
-							});
-							const materialsInStock = await this.material
-								.aggregate([
-									{
-										$group: {
-											_id: '$name',
-											inStock: { $sum: '$quantity' },
-										},
-									},
-								])
-								.then((result) => {
-									const stock: { [key: string]: number } = {};
-									result.forEach((item: any) => {
-										stock[item._id] = item.inStock;
-									});
-									return stock;
+								const orderedFood: IFood | null = await this.food.findOne({
+									name: orderedProducts.name,
 								});
-							if (orderedFood) {
-								for (
-									let index = 0;
-									index < orderedFood.materials.length;
-									index++
-								) {
-									const orderedFoodMaterials = orderedFood.materials[index];
-									const materialChange = {
-										name: orderedFoodMaterials.name,
-										quantity:
-											0 -
-											orderedFoodMaterials.quantity * orderedProducts.quantity,
-										message: 'Rendelés ' + newOrderId,
-									};
-									if (
-										materialsInStock[orderedFoodMaterials.name] >=
-										orderedFoodMaterials.quantity * orderedProducts.quantity
-									) {
-										await this.material.insertMany([materialChange]);
-									} else {
-										await this.material.deleteMany({
-											message: { $regex: newOrderId },
+								const materialsInStock = await this.material
+									.aggregate([
+										{
+											$group: {
+												_id: '$name',
+												inStock: { $sum: '$quantity' },
+											},
+										},
+									])
+									.then((result) => {
+										const stock: { [key: string]: number } = {};
+										result.forEach((item: any) => {
+											stock[item._id] = item.inStock;
 										});
-										await this.order.deleteOne({ _id: newOrderId });
-										throw Error('Nincs elegendő alapanyag');
+										return stock;
+									});
+								if (orderedFood) {
+									for (
+										let index = 0;
+										index < orderedFood.materials.length;
+										index++
+									) {
+										const orderedFoodMaterials = orderedFood.materials[index];
+										const materialChange = {
+											name: orderedFoodMaterials.name,
+											quantity:
+												0 -
+												orderedFoodMaterials.quantity *
+													orderedProducts.quantity,
+											message: 'Rendelés ' + newOrderId,
+										};
+										if (
+											materialsInStock[orderedFoodMaterials.name] >=
+											orderedFoodMaterials.quantity * orderedProducts.quantity
+										) {
+											await this.material.insertMany([materialChange]);
+										} else {
+											await this.material.deleteMany({
+												message: { $regex: newOrderId },
+											});
+											await this.order.deleteOne({ _id: newOrderId });
+											throw Error('Nincs elegendő alapanyag');
+										}
 									}
+								} else {
+									throw Error('Order food is not a valid food');
 								}
-							} else {
-								throw Error('Order food is not a valid food');
 							}
+						} else {
+							throw Error('The order in body is not defined');
 						}
 					} else {
-						throw Error('The order in body is not defined');
+						throw Error('User with this id not found');
 					}
+					webSocetController.sendStateChange();
+					defaultAnswers.created(res);
 				} else {
-					throw Error('User with this id not found');
+					throw Error('Error in insert into database');
 				}
-				webSocetController.sendStateChange();
-				defaultAnswers.created(res);
 			} else {
-				throw Error('Error in insert into database');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -294,5 +302,20 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
+	};
+	orderConstraints = {
+		costumerId: {
+			presence: { message: '^A vásárló azonosító megadása kötelező' },
+			type: 'string',
+		},
+		orderedProducts: {
+			presence: { message: '^A rendelt termékek megadása kötelező' },
+			type: 'array',
+			length: {
+				minimum: 1,
+				message: '^Legalább egy terméket meg kell adni',
+			},
+		},
+
 	};
 }

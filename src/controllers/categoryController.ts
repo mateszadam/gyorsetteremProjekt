@@ -19,7 +19,8 @@ export default class categoryController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newCategory: ICategory = req.body;
-			if (newCategory) {
+			const validation = validate(newCategory, this.categoryConstraints);
+			if (!validation) {
 				const response = await this.category.insertMany([newCategory]);
 				if (response) {
 					defaultAnswers.ok(res);
@@ -27,7 +28,7 @@ export default class categoryController implements IController {
 					throw Error('Failed to insert database');
 				}
 			} else {
-				throw Error('No body found');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -67,8 +68,9 @@ export default class categoryController implements IController {
 		try {
 			const inputCategory: ICategory = req.body;
 			const id = req.params.id;
-
-			if (id && validate(inputCategory, this.categoryConstraints)) {
+			const validation = validate(inputCategory, this.categoryConstraints);
+			console.log(validation);
+			if (id && !validation) {
 				const response = await this.category.updateOne(
 					{ _id: id },
 					{
@@ -84,9 +86,7 @@ export default class categoryController implements IController {
 					throw Error('Id is not found in database');
 				}
 			} else {
-				throw Error(
-					`Validation failed: ${validate(inputCategory, this.categoryConstraints)}`
-				);
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -95,18 +95,19 @@ export default class categoryController implements IController {
 
 	private categoryConstraints = {
 		name: {
-			presence: true,
+			presence: { message: '^A név mező kitöltése kötelező.' },
 			length: {
 				minimum: 3,
+				message: '^A név mező karakterszámának 3 és 30 között kell lennie.',
 				maximum: 30,
 			},
 			format: {
 				pattern: '[a-zA-Z0-9]+',
-				message: 'can only contain alphanumeric characters',
+				message: '^A név mező csak betűket és számokat tartalmazhat',
 			},
 		},
 		icon: {
-			presence: true,
+			presence: { message: '^Az ikon mező kitöltése kötelező.' },
 		},
 	};
 }

@@ -5,13 +5,13 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
 import { ERROR } from 'sqlite3';
+const validate = require('validate.js');
 
 export default class foodController implements IController {
 	public router = Router();
 	public endPoint = '/food';
 	private food = foodModel;
 	private category = categoryModel;
-
 	constructor() {
 		this.router.post('/add', authAdminToken, this.addFood);
 		this.router.get('/allEnabled', authToken, this.getAllEnabledFood);
@@ -32,7 +32,8 @@ export default class foodController implements IController {
 	private addFood = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IFood = req.body;
-			if (inputMaterials) {
+			const validation = validate(inputMaterials, this.foodConstraints);
+			if (!validation) {
 				if (await this.category.findOne({ _id: inputMaterials.categoryId })) {
 					const inserted = await this.food.insertMany(inputMaterials);
 					if (inserted) {
@@ -44,7 +45,7 @@ export default class foodController implements IController {
 					throw Error('Input category not in categories');
 				}
 			} else {
-				throw Error('Food in the body is not found in the request');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -100,13 +101,8 @@ export default class foodController implements IController {
 		try {
 			const newFood: IFood = req.body;
 			const id = req.params.id;
-			if (
-				newFood.name &&
-				newFood.materials &&
-				newFood.price &&
-				newFood.isEnabled &&
-				id
-			) {
+			const validation = validate(newFood, this.foodConstraints);
+			if (id && !validation) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						_id: id,
@@ -127,7 +123,7 @@ export default class foodController implements IController {
 					throw Error('The id is the request is not found is database');
 				}
 			} else {
-				throw Error('Food in the body is not found in the request');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -229,5 +225,40 @@ export default class foodController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
+	};
+	private foodConstraints = {
+		name: {
+			presence: {
+				allowEmpty: false,
+				message: '^A név mező kitöltése kötelező.',
+			},
+			format: {
+				pattern: '[a-zA-Z0-9]+',
+				message: '^A név mező csak betűket és számokat tartalmazhat',
+			},
+		},
+		materials: {
+			presence: {
+				allowEmpty: false,
+				message: '^Legalább 1 alapanyagot meg kell adni.',
+			},
+		},
+		price: {
+			presence: {
+				allowEmpty: false,
+				message: '^Az ár megadása kötelező.',
+			},
+			numericality: {
+				greaterThan: 0,
+				message: '^Az ár nem lehet kisebb mint 0-a.',
+			},
+		},
+
+		categoryId: {
+			presence: {
+				allowEmpty: false,
+				message: '^A név kategória kitöltése kötelező.',
+			},
+		},
 	};
 }

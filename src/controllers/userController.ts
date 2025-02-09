@@ -10,6 +10,7 @@ import {
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import fileHandler from '../helpers/fileHandlingHelper';
+import validate from 'validate.js';
 
 export default class userController implements IController {
 	public router = Router();
@@ -18,6 +19,7 @@ export default class userController implements IController {
 
 	bcrypt = require('bcrypt');
 	constructor() {
+		// TODO: Validáció a user name létezésére
 		this.router.post('/register/customer', this.registerUser);
 		this.router.post('/register/admin', authAdminToken, this.registerAdmin);
 
@@ -78,18 +80,8 @@ export default class userController implements IController {
 	private registerUser = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const passwordRegex =
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-			const emailRegex =
-				/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
-			if (
-				userInput.name &&
-				userInput.password &&
-				userInput.email &&
-				passwordRegex.test(userInput.password) &&
-				emailRegex.test(userInput.email) &&
-				userInput.name.length > 4
-			) {
+			const validation = validate(userInput, this.userConstraints);
+			if (!validation) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 				const userData: IUser = {
 					...userInput,
@@ -103,7 +95,7 @@ export default class userController implements IController {
 					throw Error('Unknown error!');
 				}
 			} else {
-				throw Error('Invalid json');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -160,19 +152,8 @@ export default class userController implements IController {
 	private registerAdmin = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const passwordRegex =
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-			const emailRegex =
-				/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
-
-			if (
-				userInput.name &&
-				userInput.password &&
-				userInput.email &&
-				passwordRegex.test(userInput.password) &&
-				emailRegex.test(userInput.email) &&
-				userInput.name.length > 4
-			) {
+			const validation = validate(userInput, this.userConstraints);
+			if (!validation) {
 				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 				const userData: IUser = {
 					...userInput,
@@ -186,10 +167,37 @@ export default class userController implements IController {
 					throw Error('Unknown error!');
 				}
 			} else {
-				throw Error('Invalid json');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
+	};
+
+	private userConstraints = {
+		name: {
+			presence: { allowEmpty: false, message: '^A név megadása kötelező' },
+			length: {
+				minimum: 4,
+				message: '^A névnek legalább 4 karakter hosszúnak kell lennie',
+			},
+		},
+		password: {
+			presence: { allowEmpty: false, message: '^A jelszó megadása kötelező' },
+			format: {
+				pattern:
+					/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+				message:
+					'^A jelszónak tartalmaznia kell legalább egy nagybetűt, egy kisbetűt, egy számot és egy speciális karaktert, és legalább 8 karakter hosszúnak kell lennie',
+			},
+		},
+		email: {
+			presence: { allowEmpty: false, message: '^Az email megadása kötelező' },
+			format: {
+				pattern:
+					/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+				message: '^Nem megfelelő email formátum!',
+			},
+		},
 	};
 }

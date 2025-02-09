@@ -5,21 +5,21 @@ const userSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: true,
-			unique: true,
+			required: [true, 'A név kitöltése kötelező'],
+			unique: [true, 'A felhasználónév már foglalt'],
 		},
 		password: {
 			type: String,
-			required: true,
+			required: [true, 'A jelszó kitöltése kötelező'],
 		},
 		role: {
 			type: String,
-			required: true,
+			required: [true, 'A név kitöltése kötelező'],
 			default: 'customer',
 		},
 		email: {
 			type: String,
-			required: true,
+			required: [true, 'A név kitöltése kötelező'],
 		},
 		profilePicture: {
 			type: String,
@@ -40,12 +40,12 @@ const categorySchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: true,
-			unique: true,
+			required: [true, 'A név kitöltése kötelező'],
+			unique: [true, 'A  kategória név már létezik'],
 		},
 		icon: {
 			type: String,
-			required: true,
+			required: [true, 'Az ikon kitöltése kötelező'],
 		},
 	},
 	{
@@ -62,14 +62,13 @@ const foodSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: true,
-			unique: true,
+			required: [true, 'A név kitöltése kötelező'],
+			unique: [true, 'Az étel neve már foglalt'],
 		},
 		materials: [
 			{
 				name: {
 					type: String,
-					unique: true,
 					required: true,
 					lowercase: true,
 				},
@@ -81,16 +80,15 @@ const foodSchema = new Schema<SchemaDefinition>(
 		],
 		price: {
 			type: Number,
-			required: true,
+			required: [true, 'Az ár megadása kötelező'],
 		},
 		isEnabled: {
 			type: Boolean,
-			required: true,
 			default: true,
 		},
 		categoryId: {
 			type: Schema.Types.ObjectId,
-			required: true,
+			required: [true, 'Az kategória megadása kötelező'],
 			ref: 'categoryId',
 		},
 		image: {
@@ -111,17 +109,17 @@ const materialSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: true,
+			required: [true, 'A név kitöltése kötelező'],
 			lowercase: true,
 			trim: true,
 		},
 		quantity: {
 			type: Number,
-			required: true,
+			required: [true, 'A mennyiség megadása kötelező'],
 		},
 		message: {
 			type: String,
-			required: true,
+			default: '',
 		},
 		date: {
 			type: Date,
@@ -148,14 +146,14 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		materialName: {
 			type: String,
-			required: true,
-			unique: true,
+			required: [true, 'A név megadása kötelező'],
+			unique: [true, 'Az alapanyagnak már van mennyisége'],
 			lowercase: true,
 			trim: true,
 		},
 		unit: {
 			type: String,
-			required: true,
+			required: [true, 'A mértékegység megadása kötelező'],
 		},
 	},
 	{
@@ -171,7 +169,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		costumerId: {
 			type: Schema.Types.ObjectId,
-			required: true,
+			required: [true, 'A vásárló megadása kötelező'],
 			ref: 'userId',
 		},
 		orderedTime: {

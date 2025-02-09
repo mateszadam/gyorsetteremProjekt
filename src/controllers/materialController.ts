@@ -3,6 +3,7 @@ import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { validate } from 'validate.js';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -18,7 +19,8 @@ export default class materialController implements IController {
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IMaterial[] = req.body;
-			if (inputMaterials) {
+			const validation = validate(inputMaterials, this.materialConstraints);
+			if (!validation) {
 				const databaseAnswer = await this.material.insertMany(inputMaterials);
 
 				if (databaseAnswer) {
@@ -27,7 +29,7 @@ export default class materialController implements IController {
 					throw Error('Error in database');
 				}
 			} else {
-				throw Error('No materials found to insert');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -156,5 +158,29 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
+	};
+
+	materialConstraints = {
+		name: {
+			presence: {
+				allowEmpty: false,
+				message: '^A név mező kitöltése kötelező.',
+			},
+			format: {
+				pattern: '[a-zA-Z0-9]+',
+				message: '^A név mező csak betűket és számokat tartalmazhat',
+			},
+		},
+		quantity: {
+			presence: {
+				allowEmpty: false,
+				message: '^A mennyiség megadása kötelező.',
+			},
+			numericality: {
+				greaterThan: 0,
+				message: '^A a mennyigégnek 0 nál nagyobbnak kell lennie.',
+			},
+		},
+		message: {},
 	};
 }

@@ -3,6 +3,7 @@ import { IController, IUnit } from '../models/models';
 import { unitOfMeasureModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
+import validate from 'validate.js';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -17,7 +18,8 @@ export default class unitController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newUnit: IUnit = req.body;
-			if (newUnit) {
+			const validation = validate(newUnit, this.unitConstraints);
+			if (!validation) {
 				const response = await this.unit.insertMany([newUnit]);
 				if (response) {
 					defaultAnswers.ok(res);
@@ -25,7 +27,7 @@ export default class unitController implements IController {
 					throw Error('Failed to insert database');
 				}
 			} else {
-				throw Error('No body found');
+				res.status(400).json(validation);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -42,5 +44,24 @@ export default class unitController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
+	};
+	private unitConstraints = {
+		materialName: {
+			presence: {
+				allowEmpty: false,
+				message: '^A név megadása kötelező.',
+			},
+			length: {
+				minimum: 1,
+				maximum: 50,
+				message: '^A név hossza 1 és 30 karakter között kell legyen.',
+			},
+		},
+		unit: {
+			presence: {
+				allowEmpty: false,
+				message: '^A mértékegység megadása kötelező.',
+			},
+		},
 	};
 }
