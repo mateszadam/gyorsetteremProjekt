@@ -6,6 +6,7 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
 import { ERROR } from 'sqlite3';
 const validate = require('validate.js');
+import Joi from 'joi';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -32,8 +33,9 @@ export default class foodController implements IController {
 	private addFood = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IFood = req.body;
-			const validation = validate(inputMaterials, this.foodConstraints);
-			if (!validation) {
+			const validation =
+				await this.foodConstraints.validateAsync(inputMaterials);
+			if (validation) {
 				if (await this.category.findOne({ _id: inputMaterials.categoryId })) {
 					const inserted = await this.food.insertMany(inputMaterials);
 					if (inserted) {
@@ -101,8 +103,8 @@ export default class foodController implements IController {
 		try {
 			const newFood: IFood = req.body;
 			const id = req.params.id;
-			const validation = validate(newFood, this.foodConstraints);
-			if (id && !validation) {
+			const validation = await this.foodConstraints.validateAsync(newFood);
+			if (id && validation) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						_id: id,
@@ -226,39 +228,29 @@ export default class foodController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private foodConstraints = {
-		name: {
-			presence: {
-				allowEmpty: false,
-				message: '^A név mező kitöltése kötelező.',
-			},
-			format: {
-				pattern: '[a-zA-Z0-9]+',
-				message: '^A név mező csak betűket és számokat tartalmazhat',
-			},
-		},
-		materials: {
-			presence: {
-				allowEmpty: false,
-				message: '^Legalább 1 alapanyagot meg kell adni.',
-			},
-		},
-		price: {
-			presence: {
-				allowEmpty: false,
-				message: '^Az ár megadása kötelező.',
-			},
-			numericality: {
-				greaterThan: 0,
-				message: '^Az ár nem lehet kisebb mint 0-a.',
-			},
-		},
-
-		categoryId: {
-			presence: {
-				allowEmpty: false,
-				message: '^A név kategória kitöltése kötelező.',
-			},
-		},
-	};
+	private foodConstraints = Joi.object({
+		name: Joi.string()
+			.pattern(new RegExp('^[a-zA-Z0-9]+$'))
+			.required()
+			.messages({
+				'string.empty': '^A név mező kitöltése kötelező.',
+				'string.pattern.base':
+					'^A név mező csak betűket és számokat tartalmazhat',
+			}),
+		materials: Joi.array()
+			.items(Joi.string().required())
+			.min(1)
+			.required()
+			.messages({
+				'array.min': '^Legalább 1 alapanyagot meg kell adni.',
+				'string.empty': '^Az alapanyaf mező kitöltése kötelező.',
+			}),
+		price: Joi.number().greater(0).required().messages({
+			'number.base': '^Az ár megadása kötelező.',
+			'number.greater': '^Az ár nem lehet kisebb mint 0-a.',
+		}),
+		categoryId: Joi.string().required().messages({
+			'any.required': '^A név kategória kitöltése kötelező.',
+		}),
+	});
 }

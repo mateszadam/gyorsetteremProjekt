@@ -3,7 +3,8 @@ import { IController, IUnit } from '../models/models';
 import { unitOfMeasureModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
-import validate from 'validate.js';
+
+import Joi from 'joi';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -18,8 +19,8 @@ export default class unitController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newUnit: IUnit = req.body;
-			const validation = validate(newUnit, this.unitConstraints);
-			if (!validation) {
+			const validation = await this.unitConstraints.validateAsync(newUnit);
+			if (validation) {
 				const response = await this.unit.insertMany([newUnit]);
 				if (response) {
 					defaultAnswers.ok(res);
@@ -45,23 +46,16 @@ export default class unitController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	private unitConstraints = {
-		materialName: {
-			presence: {
-				allowEmpty: false,
-				message: '^A név megadása kötelező.',
-			},
-			length: {
-				minimum: 1,
-				maximum: 50,
-				message: '^A név hossza 1 és 30 karakter között kell legyen.',
-			},
-		},
-		unit: {
-			presence: {
-				allowEmpty: false,
-				message: '^A mértékegység megadása kötelező.',
-			},
-		},
-	};
+	private unitConstraints = Joi.object({
+		materialName: Joi.string().min(1).max(30).required().messages({
+			'any.required': '^A név megadása kötelező.',
+			'string.empty': '^A név megadása kötelező.',
+			'string.min': '^A név hossza 1 és 30 karakter között kell legyen.',
+			'string.max': '^A név hossza 1 és 30 karakter között kell legyen.',
+		}),
+		unit: Joi.string().required().messages({
+			'any.required': '^A mértékegység megadása kötelező.',
+			'string.empty': '^A mértékegység megadása kötelező.',
+		}),
+	});
 }

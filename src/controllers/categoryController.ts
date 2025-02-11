@@ -4,6 +4,7 @@ import { categoryModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
 const validate = require('validate.js');
+import Joi from 'joi';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -19,7 +20,8 @@ export default class categoryController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newCategory: ICategory = req.body;
-			const validation = validate(newCategory, this.categoryConstraints);
+			const validation =
+				await this.categoryConstraints.validateAsync(newCategory);
 			if (!validation) {
 				const response = await this.category.insertMany([newCategory]);
 				if (response) {
@@ -68,9 +70,10 @@ export default class categoryController implements IController {
 		try {
 			const inputCategory: ICategory = req.body;
 			const id = req.params.id;
-			const validation = validate(inputCategory, this.categoryConstraints);
+			const validation =
+				await this.categoryConstraints.validateAsync(inputCategory);
 			console.log(validation);
-			if (id && !validation) {
+			if (id && validation) {
 				const response = await this.category.updateOne(
 					{ _id: id },
 					{
@@ -93,21 +96,23 @@ export default class categoryController implements IController {
 		}
 	};
 
-	private categoryConstraints = {
-		name: {
-			presence: { message: '^A név mező kitöltése kötelező.' },
-			length: {
-				minimum: 3,
-				message: '^A név mező karakterszámának 3 és 30 között kell lennie.',
-				maximum: 30,
-			},
-			format: {
-				pattern: '[a-zA-Z0-9]+',
-				message: '^A név mező csak betűket és számokat tartalmazhat',
-			},
-		},
-		icon: {
-			presence: { message: '^Az ikon mező kitöltése kötelező.' },
-		},
-	};
+	private categoryConstraints = Joi.object({
+		name: Joi.string()
+			.min(3)
+			.max(30)
+			.pattern(/^[a-zA-Z0-9]+$/)
+			.required()
+			.messages({
+				'string.empty': '^A név mező kitöltése kötelező.',
+				'string.min':
+					'^A név mező karakterszámának 3 és 30 között kell lennie.',
+				'string.max':
+					'^A név mező karakterszámának 3 és 30 között kell lennie.',
+				'string.pattern.base':
+					'^A név mező csak betűket és számokat tartalmazhat',
+			}),
+		icon: Joi.string().required().messages({
+			'string.empty': '^Az ikon mező kitöltése kötelező.',
+		}),
+	});
 }

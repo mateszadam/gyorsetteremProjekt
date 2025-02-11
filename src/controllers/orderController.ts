@@ -15,6 +15,7 @@ import { defaultAnswers } from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 const validate = require('validate.js');
+import Joi from 'joi';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -44,12 +45,12 @@ export default class orderController implements IController {
 	private newOrder = async (req: Request, res: Response) => {
 		try {
 			const newOrder: IOrder = req.body;
-			const validation = validate(newOrder, this.orderConstraints);
+			const validation = await this.orderConstraints.validateAsync(newOrder);
 
 			const userExists = await this.user.find({
 				_id: newOrder.costumerId,
 			});
-			if (!validation) {
+			if (validation) {
 				if (userExists.length > 0) {
 					const insertedOrders = await this.order.insertMany([newOrder], {
 						rawResult: true,
@@ -303,19 +304,38 @@ export default class orderController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
-	orderConstraints = {
-		costumerId: {
-			presence: { message: '^A vásárló azonosító megadása kötelező' },
-			type: 'string',
-		},
-		orderedProducts: {
-			presence: { message: '^A rendelt termékek megadása kötelező' },
-			type: 'array',
-			length: {
-				minimum: 1,
-				message: '^Legalább egy terméket meg kell adni',
-			},
-		},
-
-	};
+	private orderConstraints = Joi.object({
+		costumerId: Joi.string().required().messages({
+			'string.base': 'A costumerId mezőnek szövegnek kell lennie',
+			'any.required': 'A costumerId mező kitöltése kötelező',
+		}),
+		orderedTime: Joi.date().required().messages({
+			'date.base': 'Az orderedTime mezőnek dátumnak kell lennie',
+			'any.required': 'Az orderedTime mező kitöltése kötelező',
+		}),
+		finishedTime: Joi.date().optional().allow(null).messages({
+			'date.base': 'A finishedTime mezőnek dátumnak kell lennie',
+		}),
+		finishedCokingTime: Joi.date().optional().allow(null).messages({
+			'date.base': 'A finishedCokingTime mezőnek dátumnak kell lennie',
+		}),
+		orderedProducts: Joi.array()
+			.items(
+				Joi.object({
+					name: Joi.string().required().messages({
+						'string.base': 'A name mezőnek szövegnek kell lennie',
+						'any.required': 'A name mező kitöltése kötelező',
+					}),
+					quantity: Joi.number().required().messages({
+						'number.base': 'A quantity mezőnek számnak kell lennie',
+						'any.required': 'A quantity mező kitöltése kötelező',
+					}),
+				})
+			)
+			.required()
+			.messages({
+				'array.base': 'Az orderedProducts mezőnek tömbnek kell lennie',
+				'any.required': 'Az orderedProducts mező kitöltése kötelező',
+			}),
+	});
 }

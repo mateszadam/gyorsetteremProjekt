@@ -3,7 +3,7 @@ import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import { defaultAnswers } from '../helpers/statusCodeHelper';
-import { validate } from 'validate.js';
+import Joi from 'joi';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -19,8 +19,9 @@ export default class materialController implements IController {
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IMaterial[] = req.body;
-			const validation = validate(inputMaterials, this.materialConstraints);
-			if (!validation) {
+			const validation =
+				await this.materialConstraints.validateAsync(inputMaterials);
+			if (validation) {
 				const databaseAnswer = await this.material.insertMany(inputMaterials);
 
 				if (databaseAnswer) {
@@ -160,27 +161,21 @@ export default class materialController implements IController {
 		}
 	};
 
-	materialConstraints = {
-		name: {
-			presence: {
-				allowEmpty: false,
-				message: '^A név mező kitöltése kötelező.',
-			},
-			format: {
-				pattern: '[a-zA-Z0-9]+',
-				message: '^A név mező csak betűket és számokat tartalmazhat',
-			},
-		},
-		quantity: {
-			presence: {
-				allowEmpty: false,
-				message: '^A mennyiség megadása kötelező.',
-			},
-			numericality: {
-				greaterThan: 0,
-				message: '^A a mennyigégnek 0 nál nagyobbnak kell lennie.',
-			},
-		},
-		message: {},
-	};
+	private materialConstraints = Joi.object({
+		name: Joi.string()
+			.pattern(/^[a-zA-Z0-9]+$/)
+			.required()
+			.messages({
+				'string.pattern.base':
+					'^A név mező csak betűket és számokat tartalmazhat',
+				'any.required': '^A név mező kitöltése kötelező.',
+			}),
+		quantity: Joi.number().greater(0).required().messages({
+			'number.greater': '^A a mennyigégnek 0 nál nagyobbnak kell lennie.',
+			'any.required': '^A mennyiség megadása kötelező.',
+		}),
+		message: Joi.string().required().messages({
+			'any.required': '^Az uzenet mező kitöltése kötelező.',
+		}),
+	});
 }
