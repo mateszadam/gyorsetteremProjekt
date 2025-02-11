@@ -6,19 +6,31 @@ const jsonValidator = function (
 	res: Response,
 	next: NextFunction
 ) {
+	console.log(req.path);
+
 	console.log('4');
-
+	let allowedRoutes = [
+		'/',
+		'/swagger-ui.css',
+		'/swagger-ui-bundle.js',
+		'/swagger-ui-standalone-preset.js',
+		'/swagger-ui-init.js',
+		'/favicon-32x32.png',
+		'/favicon-16x16.png',
+		'/favicon.ico',
+	];
 	try {
-		console.log('1');
+		if (!allowedRoutes.includes(req.path)) {
+			console.log('1');
 
-		const data = JSON.parse(req.body);
-		console.log('2');
+			const data = JSON.stringify(req.body);
 
-		if (data) {
-			throw Error();
+			if (!data) {
+				throw Error();
+			}
 		}
 		next();
-	} catch (err: any) {
+	} catch (e: any) {
 		defaultAnswers.badRequest(res, 'Not valid json!');
 	}
 };
