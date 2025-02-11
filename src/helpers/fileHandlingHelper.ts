@@ -1,10 +1,10 @@
 import fs from 'fs';
 import { Router, Request, Response } from 'express';
-import { defaultAnswers } from './statusCodeHelper';
+import defaultAnswers from './statusCodeHelper';
 import { UploadedFile } from 'express-fileupload';
 import GoogleDriveManager from './googleDriveHelper';
 
-class fileHandler {
+export default class fileHandler {
 	public static listDictionary(path: string, res: Response) {
 		try {
 			res.status(200).send(fs.readdirSync(path));
@@ -60,5 +60,3 @@ class fileHandler {
 		}
 	}
 }
-
-export default fileHandler;

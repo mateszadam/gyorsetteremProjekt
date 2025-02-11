@@ -7,7 +7,7 @@ import {
 	generateToken,
 	getDataFromToken,
 } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
 

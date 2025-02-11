@@ -11,7 +11,7 @@ import {
 	authKitchenToken,
 	authToken,
 } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 const validate = require('validate.js');

@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { IController, IUnit } from '../models/models';
 import { unitOfMeasureModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 

@@ -4,7 +4,7 @@ import { IController } from '../models/models';
 import fs from 'fs';
 
 import { authAdminToken, authToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
 import fileHandler from '../helpers/fileHandlingHelper';
 export default class imagesController implements IController {

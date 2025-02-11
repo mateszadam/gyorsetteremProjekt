@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 const validate = require('validate.js');
 import Joi from 'joi';
 export default class categoryController implements IController {

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 
-class defaultAnswers {
+export default class defaultAnswers {
 	static async ok(res: Response, message: string = '') {
 		if (message == '') {
 			res.sendStatus(200);
@@ -31,5 +31,3 @@ class defaultAnswers {
 		}
 	}
 }
-
-export { defaultAnswers };

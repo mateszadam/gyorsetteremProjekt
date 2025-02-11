@@ -4,7 +4,7 @@ import { log } from 'console';
 const { google } = require('googleapis');
 require('dotenv').config();
 
-class GoogleDriveManager {
+export default class GoogleDriveManager {
 	private static SCOPES = ['https://www.googleapis.com/auth/drive'];
 	public static authClient: any;
 	public static bearerToken: any;
@@ -185,5 +185,3 @@ class GoogleDriveManager {
 		}, msToMidnight);
 	}
 }
-
-export default GoogleDriveManager;

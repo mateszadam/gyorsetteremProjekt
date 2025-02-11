@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { isAuthValid } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 
 export default class tokenValidationController implements IController {
 	public router = Router();

@@ -1,7 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { IController } from './models/models';
-import { Router, Request, Response } from 'express';
 import {
 	categoryModel,
 	foodModel,
@@ -23,20 +22,14 @@ import categoryController from './controllers/categoryController';
 import { rateLimit } from 'express-rate-limit';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
-
 import webSocetController from './controllers/websocketController';
-
 import YAML from 'yamljs';
-
-const { Worker } = require('worker_threads');
-
 require('dotenv').config();
-export default class App {
+
+class App {
 	public app: express.Application;
 	private swaggerjsdoc = require('swagger-jsdoc');
 	private swagger = require('swagger-ui-express');
-	private http = require('http');
-	private WebSocket = require('ws');
 	constructor(controllers: IController[]) {
 		this.app = express();
 		this.connectToTheDatabase();

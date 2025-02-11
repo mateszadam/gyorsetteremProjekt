@@ -1,11 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController, ICategory } from '../models/models';
+import { IFood, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
-import { UpdateOneModel, UpdateWriteOpResult } from 'mongoose';
-import { ERROR } from 'sqlite3';
-const validate = require('validate.js');
+import defaultAnswers from '../helpers/statusCodeHelper';
+import { UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
 
 export default class foodController implements IController {
