@@ -83,12 +83,6 @@ class App {
 			console.log('Connected to MongoDB server.');
 			this.listen();
 		});
-		userModel.init();
-		foodModel.init();
-		orderModel.init();
-		materialModel.init();
-		categoryModel.init();
-		unitOfMeasureModel.init();
 	}
 }
 

@@ -524,6 +524,24 @@ paths:
         description: List of ongoing orders
       400:
         description: Bad request
+/order/page/{page}:
+  get:
+    summary: Get all ongoing orders
+    tags: [Orders]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: page
+        schema:
+          type: string
+        required: true
+        description: User ID
+    responses:
+      200:
+        description: List of ongoing orders
+      400:
+        description: Bad request
 /order/ongoing/{id}:
   get:
     summary: Get ongoing orders by user id

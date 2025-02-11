@@ -14,7 +14,6 @@ import {
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
-const validate = require('validate.js');
 import Joi from 'joi';
 
 export default class orderController implements IController {
@@ -24,8 +23,6 @@ export default class orderController implements IController {
 	private user = userModel;
 	private material = materialModel;
 	private food = foodModel;
-
-	private mongoose = require('mongoose');
 
 	constructor() {
 		this.router.post('/new', authToken, this.newOrder);
@@ -39,6 +36,7 @@ export default class orderController implements IController {
 
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
 		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
+		this.router.get('/page/:number', authKioskToken, this.getAllByPage);
 	}
 
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
@@ -304,6 +302,28 @@ export default class orderController implements IController {
 			defaultAnswers.badRequest(res, error.message);
 		}
 	};
+
+	private getAllByPage = async (req: Request, res: Response) => {
+		try {
+			const number = Number(req.params.number);
+			if (number) {
+				const order = await this.order.aggregate([
+					{ $skip: number * 10 },
+					{ $limit: (number + 1) * 10 },
+				]);
+				if (order) {
+					res.json(order);
+				} else {
+					throw Error('Error in database');
+				}
+			} else {
+				throw Error('Id is not found in the request');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(res, error.message);
+		}
+	};
+
 	private orderConstraints = Joi.object({
 		costumerId: Joi.string().required().messages({
 			'string.base': 'A costumerId mezőnek szövegnek kell lennie',
