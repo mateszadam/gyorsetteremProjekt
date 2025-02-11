@@ -22,7 +22,7 @@ export default class categoryController implements IController {
 			const newCategory: ICategory = req.body;
 			const validation =
 				await this.categoryConstraints.validateAsync(newCategory);
-			if (!validation) {
+			if (validation) {
 				const response = await this.category.insertMany([newCategory]);
 				if (response) {
 					defaultAnswers.ok(res);
@@ -103,16 +103,16 @@ export default class categoryController implements IController {
 			.pattern(/^[a-zA-Z0-9]+$/)
 			.required()
 			.messages({
-				'string.empty': '^A név mező kitöltése kötelező.',
-				'string.min':
-					'^A név mező karakterszámának 3 és 30 között kell lennie.',
-				'string.max':
-					'^A név mező karakterszámának 3 és 30 között kell lennie.',
+				'any.required': 'A név mező kitöltése kötelező.',
+				'string.empty': 'A név mező kitöltése kötelező.',
+				'string.min': 'A név mező karakterszámának 3 és 30 között kell lennie.',
+				'string.max': 'A név mező karakterszámának 3 és 30 között kell lennie.',
 				'string.pattern.base':
-					'^A név mező csak betűket és számokat tartalmazhat',
+					'A név mező csak betűket és számokat tartalmazhat',
 			}),
 		icon: Joi.string().required().messages({
-			'string.empty': '^Az ikon mező kitöltése kötelező.',
+			'string.empty': 'Az ikon mező kitöltése kötelező.',
+			'any.required': 'Az ikon mező kitöltése kötelező.',
 		}),
 	});
 }

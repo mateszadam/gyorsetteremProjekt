@@ -231,24 +231,44 @@ export default class foodController implements IController {
 			.pattern(new RegExp('^[a-zA-Z0-9]+$'))
 			.required()
 			.messages({
-				'string.empty': '^A név mező kitöltése kötelező.',
+				'string.empty': 'A név mező kitöltése kötelező.',
 				'string.pattern.base':
-					'^A név mező csak betűket és számokat tartalmazhat',
+					'A név mező csak betűket és számokat tartalmazhat',
 			}),
+		price: Joi.number().greater(0).required().messages({
+			'number.base': 'Az ár megadása kötelező.',
+			'number.greater': 'Az ár nem lehet kisebb mint 0-a.',
+		}),
 		materials: Joi.array()
-			.items(Joi.string().required())
+			.items(
+				Joi.object({
+					name: Joi.string().required().messages({
+						'string.empty': 'Az alapanyag név mező kitöltése kötelező.',
+						'any.required': 'Az alapanyag név mező kitöltése kötelező.',
+					}),
+					quantity: Joi.number().greater(0).required().messages({
+						'number.base': 'Az alapanyag mennyiség megadása kötelező.',
+						'number.greater':
+							'Az alapanyag mennyiség nem lehet kisebb mint 0-a.',
+					}),
+				})
+			)
 			.min(1)
 			.required()
 			.messages({
-				'array.min': '^Legalább 1 alapanyagot meg kell adni.',
-				'string.empty': '^Az alapanyaf mező kitöltése kötelező.',
+				'array.min': 'Legalább 1 alapanyagot meg kell adni.',
 			}),
-		price: Joi.number().greater(0).required().messages({
-			'number.base': '^Az ár megadása kötelező.',
-			'number.greater': '^Az ár nem lehet kisebb mint 0-a.',
+		isEnabled: Joi.boolean().required().messages({
+			'string.empty': 'Az engedélyezés mező kitöltése kötelező.',
+			'any.required': 'Az engedélyezés mező kitöltése kötelező.',
 		}),
 		categoryId: Joi.string().required().messages({
-			'any.required': '^A név kategória kitöltése kötelező.',
+			'string.empty': 'A kategória kitöltése kötelező.',
+			'any.required': 'A kategória kitöltése kötelező.',
+		}),
+		image: Joi.string().required().messages({
+			'string.empty': 'A kép mező kitöltése kötelező.',
+			'any.required': 'Az kép mező kitöltése kötelező.',
 		}),
 	});
 }
