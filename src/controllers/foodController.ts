@@ -31,27 +31,23 @@ export default class foodController implements IController {
 
 	private addFood = async (req: Request, res: Response) => {
 		try {
-			const inputMaterials: IFood = req.body;
-			const validation =
-				await this.foodConstraints.validateAsync(inputMaterials);
-			if (validation) {
-				if (await this.category.findOne({ _id: inputMaterials.categoryId })) {
-					const inserted = await this.food.insertMany(inputMaterials);
-					if (inserted) {
-						defaultAnswers.ok(res);
-					} else {
-						throw Error(languageBasedErrorMessage.getError(req, '02'));
-					}
+			const foodInput: IFood = req.body;
+			await this.foodConstraints.validateAsync(foodInput);
+			if (await this.category.findOne({ _id: foodInput.categoryId })) {
+				const inserted = await this.food.insertMany([foodInput]);
+				if (inserted) {
+					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '44'));
+					throw Error('02');
 				}
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('44');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getFood = async (req: Request, res: Response) => {
@@ -60,10 +56,13 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -73,16 +72,19 @@ export default class foodController implements IController {
 
 			if (name) {
 				const foodDeleteResponse = await this.food.deleteOne({ name: name });
-				if (foodDeleteResponse && foodDeleteResponse.deletedCount > 0) {
+				if (foodDeleteResponse.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '43'));
+					throw Error('43');
 				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '43'));
+				throw Error('43');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -94,27 +96,28 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private updateFood = async (req: Request, res: Response) => {
 		try {
 			const newFood: IFood = req.body;
 			const id = req.params.id;
-			const validation = await this.foodConstraints.validateAsync(newFood);
-			if (id && validation) {
+			await this.foodConstraints.validateAsync(newFood);
+			if (id) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						_id: id,
 					},
 					{
 						name: newFood.name,
-
 						materials: newFood.materials,
-
 						price: newFood.price,
 						isEnabled: newFood.isEnabled,
 						categoryId: newFood.categoryId,
@@ -123,15 +126,16 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '45'));
+					throw Error('45');
 				}
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				res.status(400).json('07');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -150,13 +154,16 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '43'));
+					throw Error('43');
 				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '42'));
+				throw Error('42');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private enableByName = async (req: Request, res: Response) => {
@@ -174,13 +181,16 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '43'));
+					throw Error('43');
 				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '42'));
+				throw Error('42');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getFoodToOrder = async (req: Request, res: Response) => {
@@ -194,22 +204,29 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getFoodByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			const foods = await this.food
-				.findOne({ name: name })
-				.populate('categoryId', '-_id');
-			if (foods) {
-				res.send(foods);
+			if (name) {
+				const foods = await this.food
+					.findOne({ name: name })
+					.populate('categoryId', '-_id');
+				if (foods) {
+					res.send(foods);
+				} else {
+					throw Error('02');
+				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('42');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -218,17 +235,26 @@ export default class foodController implements IController {
 	private getFoodByCategory = async (req: Request, res: Response) => {
 		try {
 			const category = req.params.category;
-			const selectedCategory = await this.category.findOne({ name: category });
-			const foods: IFood[] = await this.food.find({
-				category: selectedCategory?._id,
-			});
-			if (foods) {
-				res.send(foods);
+			if (category) {
+				const selectedCategory = await this.category.findOne({
+					name: category,
+				});
+				const foods: IFood[] = await this.food.find({
+					category: selectedCategory?._id,
+				});
+				if (foods) {
+					res.send(foods);
+				} else {
+					throw Error('02');
+				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('50');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private foodConstraints = Joi.object({

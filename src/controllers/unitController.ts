@@ -20,21 +20,19 @@ export default class unitController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newUnit: IUnit = req.body;
-			const validation = await this.unitConstraints.validateAsync(newUnit);
-			if (validation) {
-				const response = await this.unit.insertMany([newUnit]);
-				if (response) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Failed to insert database');
-				}
+			await this.unitConstraints.validateAsync(newUnit);
+
+			const response = await this.unit.insertMany([newUnit]);
+			if (response) {
+				defaultAnswers.ok(res);
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAll = async (req: Request, res: Response) => {
@@ -43,10 +41,13 @@ export default class unitController implements IController {
 			if (response) {
 				res.send(response);
 			} else {
-				throw Error('Failed to get from database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private unitConstraints = Joi.object({

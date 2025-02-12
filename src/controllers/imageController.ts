@@ -31,12 +31,15 @@ export default class imagesController implements IController {
 		try {
 			const image = req.params.imageName;
 			if (image) {
-				fileHandler.getImageByName(`./src/images/other/${image}`, res);
+				fileHandler.getImageByName(`./src/images/other/${image}`, req, res);
 			} else {
-				throw Error('No image name found');
+				throw Error('47');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -46,13 +49,17 @@ export default class imagesController implements IController {
 			if (image) {
 				fileHandler.getImageByName(
 					`./src/images/profilePictures/${image}`,
+					req,
 					res
 				);
 			} else {
-				throw Error('Image name not found in request');
+				throw Error('48');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -61,12 +68,15 @@ export default class imagesController implements IController {
 		try {
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
-				await fileHandler.saveImage(image, './src/images/other/', res);
+				await fileHandler.saveImage(image, './src/images/other/', req, res);
 			} else {
-				throw new Error(languageBasedErrorMessage.getError(req, '46'));
+				throw new Error('46');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private deleteImage = async (req: Request, res: Response) => {
@@ -90,24 +100,33 @@ export default class imagesController implements IController {
 						res.status(200).send(languageBasedErrorMessage.getError(req, '47'));
 				}
 			} else {
-				throw new Error(languageBasedErrorMessage.getError(req, '48'));
+				throw new Error('48');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private listAllFiles = async (req: Request, res: Response) => {
 		try {
-			fileHandler.listDictionary('./src/images/other/', res);
+			fileHandler.listDictionary('./src/images/other/', req, res);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private listAllProfilePictures = async (req: Request, res: Response) => {
 		try {
-			fileHandler.listDictionary('./src/images/profilePictures/', res);
+			fileHandler.listDictionary('./src/images/profilePictures/', req, res);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 }

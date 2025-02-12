@@ -20,23 +20,18 @@ export default class materialController implements IController {
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IMaterial[] = req.body;
-			const validation =
-				await this.materialConstraints.validateAsync(inputMaterials);
-			if (validation) {
-				const databaseAnswer = await this.material.insertMany(inputMaterials);
-
-				if (databaseAnswer) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '02'));
-				}
+			await this.materialConstraints.validateAsync(inputMaterials);
+			const databaseAnswer = await this.material.insertMany(inputMaterials);
+			if (databaseAnswer) {
+				defaultAnswers.ok(res);
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -73,10 +68,13 @@ export default class materialController implements IController {
 			if (materials) {
 				res.status(200).send(materials);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAllMaterialFromRecipe = async (req: Request, res: Response) => {
@@ -157,10 +155,13 @@ export default class materialController implements IController {
 			if (materialsInStock) {
 				res.status(200).send(materialsInStock);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 

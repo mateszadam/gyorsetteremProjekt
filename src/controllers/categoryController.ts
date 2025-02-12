@@ -21,22 +21,18 @@ export default class categoryController implements IController {
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newCategory: ICategory = req.body;
-			const validation =
-				await this.categoryConstraints.validateAsync(newCategory);
-			if (validation) {
-				const response = await this.category.insertMany([newCategory]);
-				if (response) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '02'));
-				}
+			await this.categoryConstraints.validateAsync(newCategory);
+			const response = await this.category.insertMany([newCategory]);
+			if (response) {
+				defaultAnswers.ok(res);
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAll = async (req: Request, res: Response) => {
@@ -45,10 +41,13 @@ export default class categoryController implements IController {
 			if (response) {
 				res.send(response);
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '02'));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private deleteOne = async (req: Request, res: Response) => {
@@ -60,23 +59,25 @@ export default class categoryController implements IController {
 				if (response.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '43'));
+					throw Error('43');
 				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '42'));
+				throw Error('42');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private modifyOne = async (req: Request, res: Response) => {
 		try {
 			const inputCategory: ICategory = req.body;
 			const id = req.params.id;
-			const validation =
-				await this.categoryConstraints.validateAsync(inputCategory);
-			console.log(validation);
-			if (id && validation) {
+			await this.categoryConstraints.validateAsync(inputCategory);
+
+			if (id) {
 				const response = await this.category.updateOne(
 					{ _id: id },
 					{
@@ -89,15 +90,16 @@ export default class categoryController implements IController {
 				if (response.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '06'));
+					throw Error('06');
 				}
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('07');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 

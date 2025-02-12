@@ -19,7 +19,7 @@ definition:
         name: Accept-Language
         in: header
         default: hu
-        description: Language preference for response (supported = hu, en-GB)
+        description: Language preference for response (hu, en-GB)
         required: false
         schema:
           type: string

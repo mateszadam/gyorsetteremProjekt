@@ -55,16 +55,19 @@ export default class userController implements IController {
 					if (updateResult.modifiedCount > 0) {
 						defaultAnswers.ok(res);
 					} else {
-						throw Error(languageBasedErrorMessage.getError(req, '06'));
+						throw Error('06');
 					}
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '08'));
+					throw Error('08');
 				}
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '07'));
+				throw Error('07');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -73,34 +76,38 @@ export default class userController implements IController {
 			const data = await this.user.find({}, { password: 0, token: 0 });
 			res.send(data);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
 	private registerUser = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const validation = await this.userConstraints.validateAsync(userInput);
-			if (validation) {
-				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: IUser = {
-					...userInput,
-					password: hashedPassword,
-					role: 'customer',
-				};
-				const user = await this.user.insertMany([userData]);
-				if (user) {
-					defaultAnswers.created(res);
-				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '02'));
-				}
+			await this.userConstraints.validateAsync(userInput);
+
+			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
+			const userData: IUser = {
+				...userInput,
+				password: hashedPassword,
+				role: 'customer',
+			};
+			const user = await this.user.insertMany([userData]);
+			if (user) {
+				defaultAnswers.created(res);
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(
+					req,
+					languageBasedErrorMessage.getError(req, error.message)
+				)
+			);
 		}
 	};
 	private loginUser = async (req: Request, res: Response) => {
@@ -112,7 +119,7 @@ export default class userController implements IController {
 			if (!userInput || !databaseUser) {
 				defaultAnswers.notFound(res);
 			} else if (!userInput.name || !userInput.password) {
-				throw Error(languageBasedErrorMessage.getError(req, '13'));
+				throw Error('13');
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
@@ -123,10 +130,13 @@ export default class userController implements IController {
 					role: databaseUser.role,
 				});
 			} else {
-				throw Error(languageBasedErrorMessage.getError(req, '14'));
+				throw Error('14');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private logoutUser = async (req: Request, res: Response) => {
@@ -155,27 +165,25 @@ export default class userController implements IController {
 	private registerAdmin = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const validation = await this.userConstraints.validateAsync(userInput);
-			if (validation) {
-				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: IUser = {
-					...userInput,
-					password: hashedPassword,
-					role: 'admin',
-				};
-				const user = await this.user.insertMany([userData]);
-				if (user) {
-					defaultAnswers.created(res);
-				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '02'));
-				}
+			await this.userConstraints.validateAsync(userInput);
+
+			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
+			const userData: IUser = {
+				...userInput,
+				password: hashedPassword,
+				role: 'admin',
+			};
+			const user = await this.user.insertMany([userData]);
+			if (user) {
+				defaultAnswers.created(res);
 			} else {
-				res
-					.status(400)
-					.json(languageBasedErrorMessage.getError(req, validation.message));
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
