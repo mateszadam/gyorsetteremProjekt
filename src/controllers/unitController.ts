@@ -5,6 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -28,7 +29,9 @@ export default class unitController implements IController {
 					throw Error('Failed to insert database');
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -47,15 +50,15 @@ export default class unitController implements IController {
 		}
 	};
 	private unitConstraints = Joi.object({
-		materialName: Joi.string().min(1).max(30).required().messages({
-			'any.required': '^A név megadása kötelező.',
-			'string.empty': '^A név megadása kötelező.',
-			'string.min': '^A név hossza 1 és 30 karakter között kell legyen.',
-			'string.max': '^A név hossza 1 és 30 karakter között kell legyen.',
+		materialName: Joi.string().min(3).max(30).required().messages({
+			'any.required': '17',
+			'string.empty': '17',
+			'string.min': '18',
+			'string.max': '17',
 		}),
 		unit: Joi.string().required().messages({
-			'any.required': '^A mértékegység megadása kötelező.',
-			'string.empty': '^A mértékegység megadása kötelező.',
+			'any.required': '32',
+			'string.empty': '32',
 		}),
 	});
 }

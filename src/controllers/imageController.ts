@@ -7,6 +7,7 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
 import fileHandler from '../helpers/fileHandlingHelper';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 export default class imagesController implements IController {
 	public router = Router();
 	public endPoint = '/images';
@@ -62,7 +63,7 @@ export default class imagesController implements IController {
 				const image = req.files.image as UploadedFile;
 				await fileHandler.saveImage(image, './src/images/other/', res);
 			} else {
-				throw new Error('No files were uploaded.');
+				throw new Error(languageBasedErrorMessage.getError(req, '46'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -86,10 +87,10 @@ export default class imagesController implements IController {
 					if (
 						(await GoogleDriveManager.deleteFile(fileIdToDelete)) == 'Success'
 					)
-						res.status(200).send('Image deleted successfully');
+						res.status(200).send(languageBasedErrorMessage.getError(req, '47'));
 				}
 			} else {
-				throw new Error('Image not found');
+				throw new Error(languageBasedErrorMessage.getError(req, '48'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);

@@ -14,6 +14,15 @@ definition:
         scheme: bearer
         bearerFormat: JWT
         description: 'Enter your bearer token in the format **Bearer <token>**'
+    parameters:
+      AcceptLanguage:
+        name: Accept-Language
+        in: header
+        default: hu
+        description: Language preference for response (supported = hu, en-GB)
+        required: false
+        schema:
+          type: string
   security:
     - bearerAuth: []
 apis: [./src/swagger/swagger.yaml]
@@ -23,6 +32,8 @@ paths:
   /category/add:
     post:
       summary: Add a new category
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Category]
       security:
         - bearerAuth: []
@@ -51,6 +62,8 @@ paths:
   /category/all:
     get:
       summary: Get all categories
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Category]
       security:
         - bearerAuth: []
@@ -66,6 +79,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -83,6 +97,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: id
           in: path
           required: true
@@ -117,6 +132,8 @@ paths:
       tags: [Food]
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       requestBody:
         required: true
         content:
@@ -137,6 +154,8 @@ paths:
       tags: [Food]
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: List of enabled food items
@@ -152,6 +171,8 @@ paths:
   /food/all:
     get:
       summary: Get all enabled food items
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Food]
       security:
         - bearerAuth: []
@@ -170,6 +191,8 @@ paths:
   /food/allToOrder:
     get:
       summary: Get food items for ordering (name and price only)
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Food]
       security:
         - bearerAuth: []
@@ -196,6 +219,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -216,6 +240,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -233,6 +258,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: category
           in: path
           required: true
@@ -261,6 +287,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Food'
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -281,6 +308,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -301,6 +329,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
           in: path
           required: true
@@ -320,6 +349,7 @@ paths:
     summary: Retrieve an image
     tags: [Images]
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: imageName
         required: true
@@ -340,6 +370,8 @@ paths:
   post:
     summary: Upload an image
     tags: [Images]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
@@ -359,6 +391,8 @@ paths:
   get:
     summary: List all images
     tags: [Images]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     responses:
       200:
         description: A list of all images
@@ -367,6 +401,8 @@ paths:
 /images/profile:
   get:
     summary: List all profile pictures
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Images]
     responses:
       200:
@@ -378,6 +414,7 @@ paths:
     summary: Get profile picture by name
     tags: [Images]
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: name
         required: true
@@ -399,6 +436,8 @@ paths:
 /material/add:
   post:
     summary: Add new material change to inventory
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Material changes]
     security:
       - bearerAuth: []
@@ -429,6 +468,8 @@ paths:
   get:
     summary: Get current material stock levels
     tags: [Material changes]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     responses:
@@ -453,6 +494,8 @@ paths:
   get:
     summary: Get all materials from recipes and stock
     tags: [Material changes]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     responses:
@@ -481,6 +524,8 @@ paths:
     tags: [Orders]
     security:
       - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
@@ -516,6 +561,8 @@ paths:
 /order/ongoing:
   get:
     summary: Get all ongoing orders
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Orders]
     security:
       - bearerAuth: []
@@ -549,6 +596,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: id
         schema:
@@ -567,6 +615,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: id
         schema:
@@ -582,6 +631,8 @@ paths:
   get:
     summary: Get all orders for kitchen
     tags: [Orders]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     responses:
@@ -596,6 +647,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: id
         schema:
@@ -614,6 +666,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: id
         schema:
@@ -632,6 +685,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: from
         schema:
@@ -657,6 +711,7 @@ paths:
     security:
       - bearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: id
         schema:
@@ -674,6 +729,8 @@ paths:
   get:
     summary: Validate token
     tags: [Token validation]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     responses:
       200:
         description: Token is valid
@@ -687,6 +744,8 @@ paths:
     tags: [Units]
     security:
       - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
@@ -715,6 +774,8 @@ paths:
   get:
     summary: Get all units of measure
     tags: [Units]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     responses:
@@ -730,6 +791,8 @@ paths:
   get:
     tags: [User handling]
     summary: Get all users
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     responses:
       201:
         description: User registered successfully
@@ -743,6 +806,8 @@ paths:
     tags: [User handling]
     summary: Register a new user
     security: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
@@ -771,6 +836,8 @@ paths:
   post:
     tags: [User handling]
     summary: Register a new admin
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     requestBody:
@@ -803,6 +870,8 @@ paths:
   post:
     tags: [User handling]
     summary: Login a user
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security: []
     requestBody:
       required: true
@@ -828,6 +897,8 @@ paths:
   post:
     tags: [User handling]
     summary: Logout a user
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - bearerAuth: []
     responses:
@@ -839,6 +910,7 @@ paths:
     tags: [User handling]
     summary: Change profile picture
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: newImageName
         required: true

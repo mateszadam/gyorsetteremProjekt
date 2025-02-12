@@ -4,6 +4,7 @@ import { foodModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -27,10 +28,12 @@ export default class materialController implements IController {
 				if (databaseAnswer) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Error in database');
+					throw Error(languageBasedErrorMessage.getError(req, '02'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -70,7 +73,7 @@ export default class materialController implements IController {
 			if (materials) {
 				res.status(200).send(materials);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -154,7 +157,7 @@ export default class materialController implements IController {
 			if (materialsInStock) {
 				res.status(200).send(materialsInStock);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -166,16 +169,15 @@ export default class materialController implements IController {
 			.pattern(/^[a-zA-Z0-9]+$/)
 			.required()
 			.messages({
-				'string.pattern.base':
-					'^A név mező csak betűket és számokat tartalmazhat',
-				'any.required': '^A név mező kitöltése kötelező.',
+				'string.pattern.base': '19',
+				'any.required': '17',
 			}),
 		quantity: Joi.number().greater(0).required().messages({
-			'number.greater': '^A a mennyigégnek 0 nál nagyobbnak kell lennie.',
-			'any.required': '^A mennyiség megadása kötelező.',
+			'number.greater': '38',
+			'any.required': '37',
 		}),
 		message: Joi.string().required().messages({
-			'any.required': '^Az uzenet mező kitöltése kötelező.',
+			'any.required': '39',
 		}),
 	});
 }

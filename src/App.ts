@@ -24,7 +24,8 @@ import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
 import webSocetController from './controllers/websocketController';
 import YAML from 'yamljs';
-import { jsonValidator } from './helpers/middleware';
+import { jsonErrorHandler } from './helpers/middleware';
+
 require('dotenv').config();
 
 class App {
@@ -44,7 +45,8 @@ class App {
 			legacyHeaders: false,
 		});
 		this.app.use(limiter);
-		this.app.use(jsonValidator);
+
+		this.app.use(jsonErrorHandler);
 
 		// TODO: Implement helmet
 

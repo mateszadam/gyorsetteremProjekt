@@ -5,6 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -27,10 +28,12 @@ export default class categoryController implements IController {
 				if (response) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Failed to insert database');
+					throw Error(languageBasedErrorMessage.getError(req, '02'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -42,7 +45,7 @@ export default class categoryController implements IController {
 			if (response) {
 				res.send(response);
 			} else {
-				throw Error('Failed to get from database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -57,10 +60,10 @@ export default class categoryController implements IController {
 				if (response.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Name not found in database');
+					throw Error(languageBasedErrorMessage.getError(req, '43'));
 				}
 			} else {
-				throw Error('Name not found in request');
+				throw Error(languageBasedErrorMessage.getError(req, '42'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -86,10 +89,12 @@ export default class categoryController implements IController {
 				if (response.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Id is not found in database');
+					throw Error(languageBasedErrorMessage.getError(req, '06'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -103,16 +108,15 @@ export default class categoryController implements IController {
 			.pattern(/^[a-zA-Z0-9]+$/)
 			.required()
 			.messages({
-				'any.required': 'A név mező kitöltése kötelező.',
-				'string.empty': 'A név mező kitöltése kötelező.',
-				'string.min': 'A név mező karakterszámának 3 és 30 között kell lennie.',
-				'string.max': 'A név mező karakterszámának 3 és 30 között kell lennie.',
-				'string.pattern.base':
-					'A név mező csak betűket és számokat tartalmazhat',
+				'any.required': '17',
+				'string.empty': '17',
+				'string.min': '18',
+				'string.max': '18',
+				'string.pattern.base': '19',
 			}),
 		icon: Joi.string().required().messages({
-			'string.empty': 'Az ikon mező kitöltése kötelező.',
-			'any.required': 'Az ikon mező kitöltése kötelező.',
+			'string.empty': '20',
+			'any.required': '20',
 		}),
 	});
 }

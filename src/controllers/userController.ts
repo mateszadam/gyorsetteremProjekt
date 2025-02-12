@@ -10,6 +10,7 @@ import {
 import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 
 export default class userController implements IController {
 	public router = Router();
@@ -23,9 +24,9 @@ export default class userController implements IController {
 		this.router.post('/register/admin', authAdminToken, this.registerAdmin);
 
 		this.router.post('/login', this.loginUser);
-		this.router.get('/all', this.getAll);
+		this.router.get('/all', authAdminToken, this.getAll);
 
-		this.router.post('/logout', this.logoutUser);
+		this.router.post('/logout', authToken, this.logoutUser);
 		this.router.post(
 			'/picture/change/:newImageName',
 			authToken,
@@ -54,13 +55,13 @@ export default class userController implements IController {
 					if (updateResult.modifiedCount > 0) {
 						defaultAnswers.ok(res);
 					} else {
-						throw Error('Id not valid in token');
+						throw Error(languageBasedErrorMessage.getError(req, '06'));
 					}
 				} else {
-					throw Error('New image name not found');
+					throw Error(languageBasedErrorMessage.getError(req, '08'));
 				}
 			} else {
-				throw Error('Token not found in the header');
+				throw Error(languageBasedErrorMessage.getError(req, '07'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -91,10 +92,12 @@ export default class userController implements IController {
 				if (user) {
 					defaultAnswers.created(res);
 				} else {
-					throw Error('Unknown error!');
+					throw Error(languageBasedErrorMessage.getError(req, '02'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -109,7 +112,7 @@ export default class userController implements IController {
 			if (!userInput || !databaseUser) {
 				defaultAnswers.notFound(res);
 			} else if (!userInput.name || !userInput.password) {
-				throw Error('Invalid JSON');
+				throw Error(languageBasedErrorMessage.getError(req, '13'));
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
@@ -120,7 +123,7 @@ export default class userController implements IController {
 					role: databaseUser.role,
 				});
 			} else {
-				throw Error('Password is not correct');
+				throw Error(languageBasedErrorMessage.getError(req, '14'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -128,22 +131,23 @@ export default class userController implements IController {
 	};
 	private logoutUser = async (req: Request, res: Response) => {
 		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-			if (token) {
-				const updateResult = await this.user.updateOne(
-					{
-						token: token,
-					},
-					{ $set: { token: null } }
-				);
-				if (updateResult.modifiedCount > 0) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Token not found in database');
-				}
-			} else {
-				throw Error('Token not found in the header');
-			}
+			defaultAnswers.notImplemented(res);
+			// const token = req.headers.authorization?.replace('Bearer ', '');
+			// if (token) {
+			// 	const updateResult = await this.user.updateOne(
+			// 		{
+			// 			token: token,
+			// 		},
+			// 		{ $set: { token: null } }
+			// 	);
+			// 	if (updateResult.modifiedCount > 0) {
+			// 		defaultAnswers.ok(res);
+			// 	} else {
+			// 		throw Error('Token not found in database');
+			// 	}
+			// } else {
+			// 	throw Error('Token not found in the header');
+			// }
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
 		}
@@ -163,10 +167,12 @@ export default class userController implements IController {
 				if (user) {
 					defaultAnswers.created(res);
 				} else {
-					throw Error('Unknown error!');
+					throw Error(languageBasedErrorMessage.getError(req, '02'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -174,11 +180,11 @@ export default class userController implements IController {
 	};
 
 	private userConstraints = Joi.object({
-		name: Joi.string().min(4).required().messages({
-			'string.base': 'A névnek szövegnek kell lennie',
-			'string.empty': 'A név megadása kötelező',
-			'string.min': 'A névnek legalább 4 karakter hosszúnak kell lennie',
-			'any.required': 'A név megadása kötelező',
+		name: Joi.string().min(3).required().messages({
+			'string.base': '17',
+			'string.empty': '17',
+			'string.min': '18',
+			'any.required': '17',
 		}),
 		password: Joi.string()
 			.pattern(
@@ -186,15 +192,14 @@ export default class userController implements IController {
 			)
 			.required()
 			.messages({
-				'string.empty': 'A jelszó megadása kötelező',
-				'string.pattern.base':
-					'A jelszónak tartalmaznia kell legalább egy nagybetűt, egy kisbetűt, egy számot és egy speciális karaktert, és legalább 8 karakter hosszúnak kell lennie',
-				'any.required': 'A jelszó megadása kötelező',
+				'string.empty': '15',
+				'string.pattern.base': '216',
+				'any.required': '15',
 			}),
 		email: Joi.string().email().required().messages({
-			'string.empty': 'Az email megadása kötelező',
-			'string.email': 'Nem megfelelő email formátum!',
-			'any.required': 'Az email megadása kötelező',
+			'string.empty': '30',
+			'string.email': '31',
+			'any.required': '30',
 		}),
 	});
 }

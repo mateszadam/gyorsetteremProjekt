@@ -5,6 +5,7 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -39,13 +40,15 @@ export default class foodController implements IController {
 					if (inserted) {
 						defaultAnswers.ok(res);
 					} else {
-						throw Error('Error in database');
+						throw Error(languageBasedErrorMessage.getError(req, '02'));
 					}
 				} else {
-					throw Error('Input category not in categories');
+					throw Error(languageBasedErrorMessage.getError(req, '44'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -57,7 +60,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -73,10 +76,10 @@ export default class foodController implements IController {
 				if (foodDeleteResponse && foodDeleteResponse.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Name not found in database');
+					throw Error(languageBasedErrorMessage.getError(req, '43'));
 				}
 			} else {
-				throw Error('Name is not in the request');
+				throw Error(languageBasedErrorMessage.getError(req, '43'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -91,7 +94,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -120,10 +123,12 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					res.send(foods);
 				} else {
-					throw Error('The id is the request is not found is database');
+					throw Error(languageBasedErrorMessage.getError(req, '45'));
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -145,10 +150,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('The name in the request is not found is database');
+					throw Error(languageBasedErrorMessage.getError(req, '43'));
 				}
 			} else {
-				throw Error('The name is not found in the request');
+				throw Error(languageBasedErrorMessage.getError(req, '42'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -169,10 +174,10 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('The name in the request is not found is database');
+					throw Error(languageBasedErrorMessage.getError(req, '43'));
 				}
 			} else {
-				throw Error('The name is not found in the request');
+				throw Error(languageBasedErrorMessage.getError(req, '42'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -189,7 +194,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -204,7 +209,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -220,7 +225,7 @@ export default class foodController implements IController {
 			if (foods) {
 				res.send(foods);
 			} else {
-				throw Error('Error in database');
+				throw Error(languageBasedErrorMessage.getError(req, '02'));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -231,44 +236,38 @@ export default class foodController implements IController {
 			.pattern(new RegExp('^[a-zA-Z0-9]+$'))
 			.required()
 			.messages({
-				'string.empty': 'A név mező kitöltése kötelező.',
-				'string.pattern.base':
-					'A név mező csak betűket és számokat tartalmazhat',
+				'string.empty': '17',
+				'string.pattern.base': '19',
 			}),
 		price: Joi.number().greater(0).required().messages({
-			'number.base': 'Az ár megadása kötelező.',
-			'number.greater': 'Az ár nem lehet kisebb mint 0-a.',
+			'number.base': '21',
+			'number.greater': '22',
 		}),
 		materials: Joi.array()
 			.items(
 				Joi.object({
 					name: Joi.string().required().messages({
-						'string.empty': 'Az alapanyag név mező kitöltése kötelező.',
-						'any.required': 'Az alapanyag név mező kitöltése kötelező.',
+						'string.empty': '41',
+						'any.required': '41',
 					}),
 					quantity: Joi.number().greater(0).required().messages({
-						'number.base': 'Az alapanyag mennyiség megadása kötelező.',
-						'number.greater':
-							'Az alapanyag mennyiség nem lehet kisebb mint 0-a.',
+						'number.base': '24',
+						'number.greater': '25',
 					}),
 				})
 			)
 			.min(1)
 			.required()
 			.messages({
-				'array.min': 'Legalább 1 alapanyagot meg kell adni.',
+				'array.min': '23',
 			}),
-		isEnabled: Joi.boolean().required().messages({
-			'string.empty': 'Az engedélyezés mező kitöltése kötelező.',
-			'any.required': 'Az engedélyezés mező kitöltése kötelező.',
-		}),
 		categoryId: Joi.string().required().messages({
-			'string.empty': 'A kategória kitöltése kötelező.',
-			'any.required': 'A kategória kitöltése kötelező.',
+			'string.empty': '27',
+			'any.required': '27',
 		}),
 		image: Joi.string().required().messages({
-			'string.empty': 'A kép mező kitöltése kötelező.',
-			'any.required': 'Az kép mező kitöltése kötelező.',
+			'string.empty': '29',
+			'any.required': '29',
 		}),
 	});
 }

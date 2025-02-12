@@ -15,6 +15,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/laguageHelper';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -127,7 +128,9 @@ export default class orderController implements IController {
 					throw Error('Error in insert into database');
 				}
 			} else {
-				res.status(400).json(validation);
+				res
+					.status(400)
+					.json(languageBasedErrorMessage.getError(req, validation.message));
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(res, error.message);
@@ -325,37 +328,28 @@ export default class orderController implements IController {
 	};
 
 	private orderConstraints = Joi.object({
-		costumerId: Joi.string().required().messages({
-			'string.base': 'A costumerId mezőnek szövegnek kell lennie',
-			'any.required': 'A costumerId mező kitöltése kötelező',
-		}),
-		orderedTime: Joi.date().required().messages({
-			'date.base': 'Az orderedTime mezőnek dátumnak kell lennie',
-			'any.required': 'Az orderedTime mező kitöltése kötelező',
-		}),
-		finishedTime: Joi.date().optional().allow(null).messages({
-			'date.base': 'A finishedTime mezőnek dátumnak kell lennie',
-		}),
-		finishedCokingTime: Joi.date().optional().allow(null).messages({
-			'date.base': 'A finishedCokingTime mezőnek dátumnak kell lennie',
+		costumerId: Joi.required().messages({
+			'any.required': '40',
 		}),
 		orderedProducts: Joi.array()
 			.items(
 				Joi.object({
 					name: Joi.string().required().messages({
-						'string.base': 'A name mezőnek szövegnek kell lennie',
-						'any.required': 'A name mező kitöltése kötelező',
+						'string.base': '34',
+						'any.required': '34',
 					}),
 					quantity: Joi.number().required().messages({
-						'number.base': 'A quantity mezőnek számnak kell lennie',
-						'any.required': 'A quantity mező kitöltése kötelező',
+						'number.base': '36',
+						'any.required': '37',
 					}),
 				})
 			)
 			.required()
+			.min(1)
 			.messages({
-				'array.base': 'Az orderedProducts mezőnek tömbnek kell lennie',
-				'any.required': 'Az orderedProducts mező kitöltése kötelező',
+				'array.base': '33',
+				'any.required': '33',
+				'number.greater': '35',
 			}),
 	});
 }
