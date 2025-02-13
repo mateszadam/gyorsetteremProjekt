@@ -50,13 +50,13 @@ export default class GoogleDriveManager {
 
 		const folderId = '1fGZ42ZFdgGLBCKMcKuIRwk3hFXIgbEPm';
 		const fileMetadata = {
-			name: filePath.split('/').pop(), // Extract file name from path
-			parents: [folderId], // Folder ID to upload the file into
+			name: filePath.split('/').pop(),
+			parents: [folderId],
 		};
 
 		const media = {
 			mimeType: 'application/octet-stream',
-			body: fs.createReadStream(filePath), // Readable stream for file upload
+			body: fs.createReadStream(filePath),
 		};
 
 		try {

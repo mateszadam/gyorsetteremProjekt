@@ -201,7 +201,7 @@ export default class userController implements IController {
 			.required()
 			.messages({
 				'string.empty': '15',
-				'string.pattern.base': '216',
+				'string.pattern.base': '16',
 				'any.required': '15',
 			}),
 		email: Joi.string().email().required().messages({
