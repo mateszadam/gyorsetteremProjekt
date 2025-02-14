@@ -29,6 +29,10 @@ class App {
 
 		this.connectToTheDatabase();
 
+		controllers.forEach((controller) => {
+			this.app.use(`${controller.endPoint}`, controller.router);
+		});
+
 		this.app.use(
 			'/',
 			this.swagger.serve,
@@ -36,10 +40,6 @@ class App {
 				this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
 			)
 		);
-
-		controllers.forEach((controller) => {
-			this.app.use(`${controller.endPoint}`, controller.router);
-		});
 	}
 
 	public listen(): void {
