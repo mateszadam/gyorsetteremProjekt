@@ -229,7 +229,10 @@ export default class foodController implements IController {
 				throw Error('42');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getFoodByCategory = async (req: Request, res: Response) => {

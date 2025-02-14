@@ -88,7 +88,7 @@
 			"06": "User ID not found in the database!",
 			"07": "User ID not found in the URL!",
 			"08": "Image name not found in the URL!",
-			"09": "{value} not found in the database!",
+			"09": "",
 			"10": "No image found in the request!",
 			"12": "The sent food is not among the foods!",
 			"13": "Incorrect password or username!",

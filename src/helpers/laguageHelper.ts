@@ -17,6 +17,7 @@ class languageBasedErrorMessage {
 			message = this.errorMessages[language][0][errorCode];
 		}
 		if (!message) {
+			// Custom error messages on errors
 			if (errorCode.includes('E11000'))
 				message = this.errorMessages[language][0][60];
 			if (errorCode.includes('Cast to ObjectId failed for value'))

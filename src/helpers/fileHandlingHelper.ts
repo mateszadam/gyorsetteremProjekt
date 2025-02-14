@@ -54,13 +54,16 @@ export default class fileHandler {
 		if (!fs.existsSync(imagePath)) {
 			await image.mv(imagePath, async (err: any) => {
 				if (err) {
-					return defaultAnswers.badRequest(res, err.message);
+					defaultAnswers.badRequest(
+						res,
+						languageBasedErrorMessage.getError(req, err)
+					);
 				}
 				const message = await GoogleDriveManager.uploadFile(imagePath);
 				if (message) {
 					res.status(200).send('59');
 				} else {
-					throw Error(languageBasedErrorMessage.getError(req, '57'));
+					throw Error('57');
 				}
 			});
 		} else {

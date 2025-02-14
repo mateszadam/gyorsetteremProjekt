@@ -159,7 +159,10 @@ export default class userController implements IController {
 			// 	throw Error('Token not found in the header');
 			// }
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private registerAdmin = async (req: Request, res: Response) => {

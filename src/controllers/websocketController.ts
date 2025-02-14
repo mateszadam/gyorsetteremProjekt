@@ -9,7 +9,7 @@ export default class webSocetController {
 	private static order = orderModel;
 
 	// ws://localhost:5006/ws
-	public static initializeWebSocket(): void {
+	public static init(): void {
 		wss.on('connection', (ws: any) => {
 			const id = uuidv4();
 			const metadata = { id };
