@@ -5,7 +5,7 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/laguageHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 
 export default class foodController implements IController {
 	public router = Router();

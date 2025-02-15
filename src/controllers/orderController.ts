@@ -15,7 +15,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/laguageHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 
 export default class orderController implements IController {
 	public router = Router();

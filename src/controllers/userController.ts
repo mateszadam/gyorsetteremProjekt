@@ -10,7 +10,8 @@ import {
 import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/laguageHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
+import { ObjectId } from 'mongoose';
 
 export default class userController implements IController {
 	public router = Router();
@@ -25,6 +26,9 @@ export default class userController implements IController {
 
 		this.router.post('/login', this.loginUser);
 		this.router.get('/all', authAdminToken, this.getAll);
+
+		this.router.delete('/delete/admin/:id', authAdminToken, this.deleteAdmin);
+		this.router.delete('/delete/customer/:id', authToken, this.deleteCostumer);
 
 		this.router.post('/logout', authToken, this.logoutUser);
 		this.router.post(
@@ -141,6 +145,7 @@ export default class userController implements IController {
 	};
 	private logoutUser = async (req: Request, res: Response) => {
 		try {
+			// TODO: Implement logout
 			defaultAnswers.notImplemented(res);
 			// const token = req.headers.authorization?.replace('Bearer ', '');
 			// if (token) {
@@ -190,8 +195,50 @@ export default class userController implements IController {
 		}
 	};
 
+	private deleteCostumer = async (req: Request, res: Response) => {
+		try {
+			let userId: string = req.params.id;
+			if (userId) {
+				const user = await this.user.findByIdAndDelete(userId);
+				if (user) {
+					defaultAnswers.created(res);
+				} else {
+					throw Error('06');
+				}
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private deleteAdmin = async (req: Request, res: Response) => {
+		try {
+			let userId: string = req.params.id;
+			if (userId) {
+				const user = await this.user.findByIdAndDelete(userId);
+				if (user) {
+					defaultAnswers.created(res);
+				} else {
+					throw Error('06');
+				}
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
 	private userConstraints = Joi.object({
-		name: Joi.string().min(3).required().messages({
+		name: Joi.string().min(4).required().messages({
 			'string.base': '17',
 			'string.empty': '17',
 			'string.min': '18',

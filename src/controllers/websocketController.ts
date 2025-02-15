@@ -10,6 +10,8 @@ export default class webSocetController {
 
 	// ws://localhost:5006/ws
 	public static init(): void {
+		console.log('Websocket is listening on ws://localhost:5006/ws');
+
 		wss.on('connection', (ws: any) => {
 			const id = uuidv4();
 			const metadata = { id };

@@ -5,21 +5,21 @@ const userSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
-			unique: [true, 'A felhasználónév már foglalt'],
+			required: [true, 'Name is required'],
+			unique: [true, 'Username is already taken'],
 		},
 		password: {
 			type: String,
-			required: [true, 'A jelszó kitöltése kötelező'],
+			required: [true, 'Password is required'],
 		},
 		role: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
+			required: [true, 'Role is required'],
 			default: 'customer',
 		},
 		email: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
+			required: [true, 'Email is required'],
 		},
 		profilePicture: {
 			type: String,
@@ -40,12 +40,12 @@ const categorySchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
-			unique: [true, 'A  kategória név már létezik'],
+			required: [true, 'Name is required'],
+			unique: [true, 'Category name already exists'],
 		},
 		icon: {
 			type: String,
-			required: [true, 'Az ikon kitöltése kötelező'],
+			required: [true, 'Icon is required'],
 		},
 	},
 	{
@@ -62,8 +62,8 @@ const foodSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
-			unique: [true, 'Az étel neve már foglalt'],
+			required: [true, 'Name is required'],
+			unique: [true, 'Food name is already taken'],
 		},
 		materials: [
 			{
@@ -80,17 +80,19 @@ const foodSchema = new Schema<SchemaDefinition>(
 		],
 		price: {
 			type: Number,
-			required: [true, 'Az ár megadása kötelező'],
+			required: [true, 'Price is required'],
 		},
 		isEnabled: {
 			type: Boolean,
 			default: true,
 		},
-		categoryId: {
-			type: Schema.Types.ObjectId,
-			required: [true, 'Az kategória megadása kötelező'],
-			ref: 'categoryId',
-		},
+		categoryId: [
+			{
+				type: Schema.Types.ObjectId,
+				required: [true, 'Category is required'],
+				ref: 'categoryId',
+			},
+		],
 		image: {
 			type: String,
 			default: 'no-image.svg',
@@ -109,13 +111,13 @@ const materialSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		name: {
 			type: String,
-			required: [true, 'A név kitöltése kötelező'],
+			required: [true, 'Name is required'],
 			lowercase: true,
 			trim: true,
 		},
 		quantity: {
 			type: Number,
-			required: [true, 'A mennyiség megadása kötelező'],
+			required: [true, 'Quantity is required'],
 		},
 		message: {
 			type: String,
@@ -128,7 +130,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 				validator: function (v: Date) {
 					return v <= new Date();
 				},
-				message: `Az aktuális dátumnál nem adhat meg későbbi dátumot!`,
+				message: 'You cannot specify a date later than the current date!',
 			},
 		},
 	},
@@ -146,14 +148,14 @@ const unitOfMeasure = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		materialName: {
 			type: String,
-			required: [true, 'A név megadása kötelező'],
-			unique: [true, 'Az alapanyagnak már van mennyisége'],
+			required: [true, 'Name is required'],
+			unique: [true, 'The material already has a unit of measure'],
 			lowercase: true,
 			trim: true,
 		},
 		unit: {
 			type: String,
-			required: [true, 'A mértékegység megadása kötelező'],
+			required: [true, 'Unit of measure is required'],
 		},
 	},
 	{
@@ -169,7 +171,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		costumerId: {
 			type: Schema.Types.ObjectId,
-			required: [true, 'A vásárló megadása kötelező'],
+			required: [true, 'Customer is required'],
 			ref: 'userId',
 		},
 		orderedTime: {
@@ -179,7 +181,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 				validator: function (v: Date) {
 					return v <= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg későbbi dátumot!',
+				message: 'You cannot specify a date later than the current date!',
 			},
 		},
 		finishedCokingTime: {
@@ -188,7 +190,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 				validator: function (v: Date) {
 					return v <= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg későbbi dátumot!',
+				message: 'You cannot specify a date later than the current date!',
 			},
 		},
 		finishedTime: {
@@ -197,7 +199,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 				validator: function (v: Date) {
 					return v >= new Date();
 				},
-				message: 'Az aktuális dátumnál nem adhat meg korábbi dátumot!',
+				message: 'You cannot specify a date earlier than the current date!',
 			},
 		},
 		orderedProducts: [

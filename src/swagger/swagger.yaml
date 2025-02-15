@@ -866,6 +866,46 @@ paths:
       400:
         description: Bad request
 
+/user/delete/admin/{id}:
+  delete:
+    tags: [User handling]
+    summary: Delete users with admin roles (only admin can access)
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: The id of the user
+    security:
+      - bearerAuth: []
+    responses:
+      201:
+        description: Deleted successfully
+      400:
+        description: Bad request
+
+/user/delete/customer/{id}:
+  delete:
+    tags: [User handling]
+    summary: Delete costumers.
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: The id of the user
+    security:
+      - bearerAuth: []
+    responses:
+      201:
+        description: Deleted successfully
+      400:
+        description: Bad request
+
 /user/login:
   post:
     tags: [User handling]

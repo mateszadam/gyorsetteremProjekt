@@ -1,5 +1,5 @@
 import morgan from 'morgan';
-import languageBasedErrorMessage from './laguageHelper';
+import languageBasedErrorMessage from './languageHelper';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';

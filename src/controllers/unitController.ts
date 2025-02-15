@@ -5,7 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/laguageHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -51,11 +51,11 @@ export default class unitController implements IController {
 		}
 	};
 	private unitConstraints = Joi.object({
-		materialName: Joi.string().min(3).max(30).required().messages({
+		materialName: Joi.string().min(2).max(30).required().messages({
 			'any.required': '17',
 			'string.empty': '17',
-			'string.min': '18',
-			'string.max': '17',
+			'string.min': '09',
+			'string.max': '09',
 		}),
 		unit: Joi.string().required().messages({
 			'any.required': '32',

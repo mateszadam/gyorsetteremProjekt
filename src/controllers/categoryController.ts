@@ -5,7 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/laguageHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -105,15 +105,15 @@ export default class categoryController implements IController {
 
 	private categoryConstraints = Joi.object({
 		name: Joi.string()
-			.min(3)
+			.min(2)
 			.max(30)
 			.pattern(/^[a-zA-Z0-9]+$/)
 			.required()
 			.messages({
 				'any.required': '17',
 				'string.empty': '17',
-				'string.min': '18',
-				'string.max': '18',
+				'string.min': '09',
+				'string.max': '09',
 				'string.pattern.base': '19',
 			}),
 		icon: Joi.string().required().messages({
