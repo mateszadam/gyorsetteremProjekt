@@ -1,7 +1,6 @@
-import { error, log } from 'console';
 import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 const jwt = require('jsonwebtoken');
 
 function generateToken(user: IUser) {
@@ -27,20 +26,28 @@ async function isAuthValid(
 	try {
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
-		console.log(data);
 
-		if (roles.includes(data.role)) {
-			return true;
+		const databaseUser: IUser | null = await userModel.findById(data._id);
+
+		if (databaseUser) {
+			if (roles.includes(databaseUser.role)) {
+				return true;
+			}
 		}
 		return false;
-	} catch (err) {
-		console.log(error);
+	} catch (err: any) {
+		console.log(err.message);
 
 		return false;
 	}
 }
 
-const authenticateToken = async (req: any, res: any, next: any) => {
+function getDataFromToken(token: string): IUser | undefined {
+	try {
+		return jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
+	} catch (error) {}
+}
+const authToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 
 	if (token == null) return res.sendStatus(401);
@@ -52,7 +59,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
 	}
 };
 
-const authenticateKitchenToken = async (req: any, res: any, next: any) => {
+const authKitchenToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 
 	if (token == null) return res.sendStatus(401);
@@ -64,7 +71,7 @@ const authenticateKitchenToken = async (req: any, res: any, next: any) => {
 	}
 };
 
-const authenticateAdminToken = async (req: any, res: any, next: any) => {
+const authAdminToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 	if (token == null) return res.sendStatus(401);
 	if (!(await isAuthValid(token, ['admin']))) {
@@ -74,7 +81,7 @@ const authenticateAdminToken = async (req: any, res: any, next: any) => {
 	}
 };
 
-const authenticateKioskToken = async (req: any, res: any, next: any) => {
+const authKioskToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 	if (token == null) return res.sendStatus(401);
 
@@ -88,8 +95,9 @@ const authenticateKioskToken = async (req: any, res: any, next: any) => {
 export {
 	generateToken,
 	isAuthValid,
-	authenticateToken,
-	authenticateAdminToken,
-	authenticateKitchenToken,
-	authenticateKioskToken,
+	authToken,
+	authAdminToken,
+	authKitchenToken,
+	authKioskToken,
+	getDataFromToken,
 };

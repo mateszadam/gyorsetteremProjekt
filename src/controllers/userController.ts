@@ -1,14 +1,17 @@
-import { Router, Request, Response } from 'express';
+import e, { Router, Request, Response } from 'express';
 import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
-	authenticateAdminToken,
+	authAdminToken,
+	authToken,
 	generateToken,
+	getDataFromToken,
 } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
-import fileHandler from '../helpers/fileHandlingHelper';
-import { log } from 'console';
+import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/languageHelper';
+import { ObjectId } from 'mongoose';
 
 export default class userController implements IController {
 	public router = Router();
@@ -17,150 +20,20 @@ export default class userController implements IController {
 
 	bcrypt = require('bcrypt');
 	constructor() {
-		/**
-		 * @openapi
-		 * /user/all:
-		 *   get:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Get all users
-		 *     responses:
-		 *       201:
-		 *         description: User registered successfully
-		 *       400:
-		 *         description: Bad request
-		 *       401:
-		 *         description: Not authorized
-		 *
-		 * /user/register/customer:
-		 *   post:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Register a new user
-		 *     security: []
-		 *     requestBody:
-		 *       required: true
-		 *       content:
-		 *         application/json:
-		 *           schema:
-		 *             type: object
-		 *             required:
-		 *               - name
-		 *               - password
-		 *               - email
-		 *             properties:
-		 *               name:
-		 *                 type: string
-		 *                 default: customerUser
-		 *               password:
-		 *                 type: string
-		 *                 default: customerUser!1
-		 *               email:
-		 *                 type: string
-		 *                 default: admin@gmail.hu
-		 *     responses:
-		 *       201:
-		 *         description: User registered successfully
-		 *
-		 * /user/register/admin:
-		 *   post:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Register a new admin
-		 *     security:
-		 *       - bearerAuth: []
-		 *     requestBody:
-		 *       required: true
-		 *       content:
-		 *         application/json:
-		 *           schema:
-		 *             type: object
-		 *             required:
-		 *               - name
-		 *               - password
-		 *               - email
-		 *             properties:
-		 *               name:
-		 *                 type: string
-		 *                 default: adminUser
-		 *               password:
-		 *                 type: string
-		 *                 default: adminUser!1
-		 *               email:
-		 *                 type: string
-		 *                 default: admin@gmail.com
-		 *     responses:
-		 *       201:
-		 *         description: Admin registered successfully
-		 *       400:
-		 *         description: Bad request
-		 *
-		 * /user/login:
-		 *   post:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Login a user
-		 *     security: []
-		 *     requestBody:
-		 *       required: true
-		 *       content:
-		 *         application/json:
-		 *           schema:
-		 *             type: object
-		 *             required:
-		 *               - name
-		 *               - password
-		 *             properties:
-		 *               name:
-		 *                 type: string
-		 *                 default: admin
-		 *               password:
-		 *                 type: string
-		 *                 default: admin
-		 *     responses:
-		 *       200:
-		 *         description: User logged in successfully
-		 *
-		 * /user/logout:
-		 *   post:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Logout a user
-		 *     security:
-		 *       - bearerAuth: []
-		 *     responses:
-		 *       200:
-		 *         description: User logged out successfully
-		 *
-		 * /user/picture/change/{newImageName}:
-		 *   post:
-		 *     tags:
-		 *       - User handling
-		 *     summary: Change profile picture
-		 *     parameters:
-		 *       - in: path
-		 *         name: newImageName
-		 *         required: true
-		 *         schema:
-		 *           type: string
-		 *         description: The new image name for the profile picture
-		 *     responses:
-		 *       200:
-		 *         description: Profile picture changed successfully
-		 */
+		// TODO: Validáció a user name létezésére
 		this.router.post('/register/customer', this.registerUser);
-		this.router.post(
-			'/register/admin',
-			authenticateAdminToken,
-			this.registerAdmin
-		);
+		this.router.post('/register/admin', authAdminToken, this.registerAdmin);
 
 		this.router.post('/login', this.loginUser);
-		this.router.get('/all', this.getAll);
+		this.router.get('/all', authAdminToken, this.getAll);
 
-		this.router.post('/logout', this.logoutUser);
+		this.router.delete('/delete/admin/:id', authAdminToken, this.deleteAdmin);
+		this.router.delete('/delete/customer/:id', authToken, this.deleteCostumer);
+
+		this.router.post('/logout', authToken, this.logoutUser);
 		this.router.post(
 			'/picture/change/:newImageName',
+			authToken,
 			this.changeProfilePicture
 		);
 	}
@@ -168,32 +41,38 @@ export default class userController implements IController {
 
 	private changeProfilePicture = async (req: Request, res: Response) => {
 		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-			if (token) {
+			const data = getDataFromToken(
+				req.headers.authorization?.replace('Bearer ', '')!
+			);
+			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
-				if (
-					newImageName &&
-					(await fs.existsSync(`./src/images/profilePictures/${newImageName}`))
-				) {
-					const updateResult = await this.user.updateOne(
-						{
-							token: token,
-						},
-						{ $set: { profilePicture: newImageName } }
-					);
-					if (updateResult.modifiedCount > 0) {
-						defaultAnswers.ok(res);
+				if (newImageName) {
+					if (fs.existsSync(`./src/images/profilePictures/${newImageName}`)) {
+						const updateResult = await this.user.updateOne(
+							{
+								_id: data._id,
+							},
+							{ $set: { profilePicture: newImageName } }
+						);
+						if (updateResult.modifiedCount > 0) {
+							defaultAnswers.ok(res);
+						} else {
+							throw Error('06');
+						}
 					} else {
-						throw Error('Token not found in database');
+						throw Error('62');
 					}
 				} else {
-					throw Error('New image name not found');
+					throw Error('08');
 				}
 			} else {
-				throw Error('Token not found in the header');
+				throw Error('07');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -202,42 +81,38 @@ export default class userController implements IController {
 			const data = await this.user.find({}, { password: 0, token: 0 });
 			res.send(data);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
 	private registerUser = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const passwordRegex =
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-			const emailRegex =
-				/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
-			if (
-				userInput.name &&
-				userInput.password &&
-				userInput.email &&
-				passwordRegex.test(userInput.password) &&
-				emailRegex.test(userInput.email) &&
-				userInput.name.length > 4
-			) {
-				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: IUser = {
-					...userInput,
-					password: hashedPassword,
-					role: 'customer',
-				};
-				const user = await this.user.insertMany([userData]);
-				if (user) {
-					defaultAnswers.created(res);
-				} else {
-					throw Error('Unknown error!');
-				}
+			await this.userConstraints.validateAsync(userInput);
+
+			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
+			const userData: IUser = {
+				...userInput,
+				password: hashedPassword,
+				role: 'customer',
+			};
+			const user = await this.user.insertMany([userData]);
+			if (user) {
+				defaultAnswers.created(res);
 			} else {
-				throw Error('Invalid json');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(
+					req,
+					languageBasedErrorMessage.getError(req, error.message)
+				)
+			);
 		}
 	};
 	private loginUser = async (req: Request, res: Response) => {
@@ -249,83 +124,150 @@ export default class userController implements IController {
 			if (!userInput || !databaseUser) {
 				defaultAnswers.notFound(res);
 			} else if (!userInput.name || !userInput.password) {
-				throw Error('Invalid JSON');
+				throw Error('13');
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
 				const token: string = await generateToken(databaseUser);
-				await this.user.updateOne(
-					{
-						_id: databaseUser._id,
-					},
-					{ $set: { token: token } }
-				);
+				console.log(`User ${databaseUser.name} logged in`);
 				res.send({
 					token: token,
 					role: databaseUser.role,
 				});
 			} else {
-				throw Error('Password is not correct');
+				throw Error('14');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private logoutUser = async (req: Request, res: Response) => {
 		try {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-			if (token) {
-				const updateResult = await this.user.updateOne(
-					{
-						token: token,
-					},
-					{ $set: { token: null } }
-				);
-				if (updateResult.modifiedCount > 0) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Token not found in database');
-				}
-			} else {
-				throw Error('Token not found in the header');
-			}
+			// TODO: Implement logout
+			defaultAnswers.notImplemented(res);
+			// const token = req.headers.authorization?.replace('Bearer ', '');
+			// if (token) {
+			// 	const updateResult = await this.user.updateOne(
+			// 		{
+			// 			token: token,
+			// 		},
+			// 		{ $set: { token: null } }
+			// 	);
+			// 	if (updateResult.modifiedCount > 0) {
+			// 		defaultAnswers.ok(res);
+			// 	} else {
+			// 		throw Error('Token not found in database');
+			// 	}
+			// } else {
+			// 	throw Error('Token not found in the header');
+			// }
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private registerAdmin = async (req: Request, res: Response) => {
 		try {
 			let userInput: IUser = req.body;
-			const passwordRegex =
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-			const emailRegex =
-				/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+			await this.userConstraints.validateAsync(userInput);
 
-			if (
-				userInput.name &&
-				userInput.password &&
-				userInput.email &&
-				passwordRegex.test(userInput.password) &&
-				emailRegex.test(userInput.email) &&
-				userInput.name.length > 4
-			) {
-				const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
-				const userData: IUser = {
-					...userInput,
-					password: hashedPassword,
-					role: 'admin',
-				};
-				const user = await this.user.insertMany([userData]);
-				if (user) {
-					defaultAnswers.created(res);
-				} else {
-					throw Error('Unknown error!');
-				}
+			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
+			const userData: IUser = {
+				...userInput,
+				password: hashedPassword,
+				role: 'admin',
+			};
+			const user = await this.user.insertMany([userData]);
+			if (user) {
+				defaultAnswers.created(res);
 			} else {
-				throw Error('Invalid json');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
+
+	private deleteCostumer = async (req: Request, res: Response) => {
+		try {
+			let userId: string = req.params.id;
+			if (userId) {
+				const user = await this.user.findById(userId);
+				if (user) {
+					if (user.role === 'customer') {
+						const deletedUser = await this.user.findByIdAndDelete(userId);
+						if (deletedUser) {
+							defaultAnswers.ok(res);
+						} else {
+							throw Error('02');
+						}
+					} else {
+						throw Error('63');
+					}
+				} else {
+					throw Error('06');
+				}
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private deleteAdmin = async (req: Request, res: Response) => {
+		try {
+			let userId: string = req.params.id;
+			if (userId) {
+				const user = await this.user.findByIdAndDelete(userId);
+				if (user) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('06');
+				}
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private userConstraints = Joi.object({
+		name: Joi.string().min(4).required().messages({
+			'string.base': '17',
+			'string.empty': '17',
+			'string.min': '18',
+			'any.required': '17',
+		}),
+		password: Joi.string()
+			.pattern(
+				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+			)
+			.required()
+			.messages({
+				'string.empty': '15',
+				'string.pattern.base': '16',
+				'any.required': '15',
+			}),
+		email: Joi.string().email().required().messages({
+			'string.empty': '30',
+			'string.email': '31',
+			'any.required': '30',
+		}),
+	});
 }
