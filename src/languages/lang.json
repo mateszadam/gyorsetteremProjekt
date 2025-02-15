@@ -142,7 +142,7 @@
 			"61": "The provided ID is invalid!",
 			"62": "Image does not exist!",
 			"63": "Only customer deletion is possible!",
-			"64": "",
+			"64": "The order ID was not found in the database!",
 			"65": "",
 			"66": "",
 			"67": "",
