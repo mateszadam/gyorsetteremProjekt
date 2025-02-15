@@ -198,7 +198,7 @@ export default class foodController implements IController {
 			const foods = await this.food
 				.find(
 					{ isEnabled: true },
-					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 0 }
+					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 1 }
 				)
 				.populate('categoryId', '-_id');
 			if (foods) {
@@ -262,7 +262,7 @@ export default class foodController implements IController {
 	};
 	private foodConstraints = Joi.object({
 		name: Joi.string()
-			.pattern(new RegExp('^[a-zA-Z0-9]+$'))
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
 			.required()
 			.messages({
 				'string.empty': '17',

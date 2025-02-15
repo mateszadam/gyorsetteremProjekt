@@ -107,7 +107,7 @@ export default class categoryController implements IController {
 		name: Joi.string()
 			.min(2)
 			.max(30)
-			.pattern(/^[a-zA-Z0-9]+$/)
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
 			.required()
 			.messages({
 				'any.required': '17',

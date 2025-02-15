@@ -30,4 +30,7 @@ export default class defaultAnswers {
 			res.status(400).json({ message: message });
 		}
 	}
+	static async noContent(res: Response) {
+		res.sendStatus(204);
+	}
 }

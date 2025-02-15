@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import e, { Router, Request, Response } from 'express';
 import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import {
@@ -46,20 +46,21 @@ export default class userController implements IController {
 			);
 			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
-				if (
-					newImageName &&
-					fs.existsSync(`./src/images/profilePictures/${newImageName}`)
-				) {
-					const updateResult = await this.user.updateOne(
-						{
-							_id: data._id,
-						},
-						{ $set: { profilePicture: newImageName } }
-					);
-					if (updateResult.modifiedCount > 0) {
-						defaultAnswers.ok(res);
+				if (newImageName) {
+					if (fs.existsSync(`./src/images/profilePictures/${newImageName}`)) {
+						const updateResult = await this.user.updateOne(
+							{
+								_id: data._id,
+							},
+							{ $set: { profilePicture: newImageName } }
+						);
+						if (updateResult.modifiedCount > 0) {
+							defaultAnswers.ok(res);
+						} else {
+							throw Error('06');
+						}
 					} else {
-						throw Error('06');
+						throw Error('62');
 					}
 				} else {
 					throw Error('08');
@@ -199,9 +200,18 @@ export default class userController implements IController {
 		try {
 			let userId: string = req.params.id;
 			if (userId) {
-				const user = await this.user.findByIdAndDelete(userId);
+				const user = await this.user.findById(userId);
 				if (user) {
-					defaultAnswers.created(res);
+					if (user.role === 'customer') {
+						const deletedUser = await this.user.findByIdAndDelete(userId);
+						if (deletedUser) {
+							defaultAnswers.ok(res);
+						} else {
+							throw Error('02');
+						}
+					} else {
+						throw Error('63');
+					}
 				} else {
 					throw Error('06');
 				}
@@ -222,7 +232,7 @@ export default class userController implements IController {
 			if (userId) {
 				const user = await this.user.findByIdAndDelete(userId);
 				if (user) {
-					defaultAnswers.created(res);
+					defaultAnswers.ok(res);
 				} else {
 					throw Error('06');
 				}

@@ -9,7 +9,12 @@ definition:
     - url: http://localhost:5005/
   components:
     securitySchemes:
-      bearerAuth:
+      adminBearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+        description: 'Enter your bearer token in the format **Bearer <token>**'
+      customerBearerAuth:
         type: http
         scheme: bearer
         bearerFormat: JWT
@@ -24,7 +29,8 @@ definition:
         schema:
           type: string
   security:
-    - bearerAuth: []
+    - adminBearerAuth: []
+    - customerBearerAuth: []
 apis: [./src/swagger/swagger.yaml]
 
 paths:
@@ -36,7 +42,7 @@ paths:
         - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Category]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       requestBody:
         required: true
         content:
@@ -66,7 +72,8 @@ paths:
         - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Category]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
+        - customerBearerAuth: []
       responses:
         200:
           description: A list of categories
@@ -77,7 +84,7 @@ paths:
       summary: Delete category by name
       tags: [Category]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
@@ -95,7 +102,7 @@ paths:
       summary: Modify category
       tags: [Category]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: id
@@ -131,7 +138,7 @@ paths:
       summary: Add new food items
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
       requestBody:
@@ -153,7 +160,8 @@ paths:
       summary: Get all enabled food items
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
+        - customerBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -170,12 +178,12 @@ paths:
 
   /food/all:
     get:
-      summary: Get all enabled food items
+      summary: Get all food
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       responses:
         200:
           description: List of enabled food items
@@ -195,7 +203,8 @@ paths:
         - $ref: '#/components/parameters/AcceptLanguage'
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
+        - customerBearerAuth: []
       responses:
         200:
           description: List of food items
@@ -217,7 +226,8 @@ paths:
       summary: Get food by name
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
+        - customerBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
@@ -238,7 +248,7 @@ paths:
       summary: Delete food by name
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
@@ -256,7 +266,8 @@ paths:
       summary: Get food by category
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
+        - customerBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: category
@@ -279,7 +290,7 @@ paths:
       summary: Update food item
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       requestBody:
         required: true
         content:
@@ -306,7 +317,7 @@ paths:
       summary: Disable food item
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
@@ -327,7 +338,7 @@ paths:
       summary: Enable food item
       tags: [Food]
       security:
-        - bearerAuth: []
+        - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - name: name
@@ -348,6 +359,9 @@ paths:
   get:
     summary: Retrieve an image
     tags: [Images]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -370,6 +384,9 @@ paths:
   post:
     summary: Upload an image
     tags: [Images]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
@@ -391,6 +408,9 @@ paths:
   get:
     summary: List all images
     tags: [Images]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     responses:
@@ -401,6 +421,9 @@ paths:
 /images/profile:
   get:
     summary: List all profile pictures
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Images]
@@ -413,6 +436,9 @@ paths:
   get:
     summary: Get profile picture by name
     tags: [Images]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -440,7 +466,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Material changes]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     requestBody:
       required: true
       content:
@@ -471,7 +497,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: List of materials with stock levels
@@ -497,7 +523,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: Combined list of materials from recipes and stock
@@ -523,7 +549,8 @@ paths:
     summary: Create a new order
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
@@ -565,7 +592,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: List of ongoing orders
@@ -576,7 +603,7 @@ paths:
     summary: Get all ongoing orders
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - in: path
         name: page
@@ -594,7 +621,8 @@ paths:
     summary: Get ongoing orders by user id
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -613,7 +641,8 @@ paths:
     summary: Get an order by id
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -634,7 +663,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: List of orders for kitchen
@@ -645,7 +674,7 @@ paths:
     summary: Mark an order as finished
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -664,7 +693,7 @@ paths:
     summary: Get an order for handover
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -683,7 +712,7 @@ paths:
     summary: Get all orders within a time range
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -709,7 +738,8 @@ paths:
     summary: Get finished orders by user id
     tags: [Orders]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -743,7 +773,7 @@ paths:
     summary: Add a new unit of measure
     tags: [Units]
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
@@ -777,7 +807,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: List of all units retrieved successfully
@@ -790,6 +820,8 @@ paths:
 /user/all:
   get:
     tags: [User handling]
+    security:
+      - adminBearerAuth: []
     summary: Get all users
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -839,7 +871,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     requestBody:
       required: true
       content:
@@ -869,6 +901,8 @@ paths:
 /user/delete/admin/{id}:
   delete:
     tags: [User handling]
+    security:
+      - adminBearerAuth: []
     summary: Delete users with admin roles (only admin can access)
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -878,8 +912,6 @@ paths:
         schema:
           type: string
         description: The id of the user
-    security:
-      - bearerAuth: []
     responses:
       201:
         description: Deleted successfully
@@ -899,7 +931,8 @@ paths:
           type: string
         description: The id of the user
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     responses:
       201:
         description: Deleted successfully
@@ -940,7 +973,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
     responses:
       200:
         description: User logged out successfully
@@ -949,6 +982,9 @@ paths:
   post:
     tags: [User handling]
     summary: Change profile picture
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path

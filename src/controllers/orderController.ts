@@ -255,7 +255,7 @@ export default class orderController implements IController {
 					webSocetController.sendStateChange();
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('06');
+					throw Error('64');
 				}
 			} else {
 				defaultAnswers.badRequest(res);

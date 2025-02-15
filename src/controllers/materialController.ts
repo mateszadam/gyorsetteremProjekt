@@ -167,7 +167,7 @@ export default class materialController implements IController {
 
 	private materialConstraints = Joi.object({
 		name: Joi.string()
-			.pattern(/^[a-zA-Z0-9]+$/)
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
 			.required()
 			.messages({
 				'string.pattern.base': '19',
