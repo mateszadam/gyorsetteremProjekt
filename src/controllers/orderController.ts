@@ -133,7 +133,7 @@ export default class orderController implements IController {
 				} else {
 					throw Error('User with this id not found');
 				}
-				webSocetController.sendStateChange();
+				webSocetController.sendStateChangeToDisplay();
 				defaultAnswers.created(res);
 			} else {
 				throw Error('Error in insert into database');
@@ -248,7 +248,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChange(id);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('Id from request is not in database');
@@ -298,7 +298,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChange(id);
 
 					defaultAnswers.ok(res);
 				} else {
