@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 5006 });
 export default class webSocetController {
 	static clientsToNotifyOnStateChange = new Map();
+
 	private static order = orderModel;
 
 	// ws://localhost:5006/ws
@@ -13,13 +14,23 @@ export default class webSocetController {
 		console.log('Websocket is listening on ws://localhost:5006/ws');
 
 		wss.on('connection', (ws: any) => {
-			const id = uuidv4();
-			const metadata = { id };
-			console.log(ws.header);
-
 			console.log('New connection!');
 
-			this.clientsToNotifyOnStateChange.set(ws, metadata);
+			ws.on('message', (message: any) => {
+				const id = uuidv4();
+
+				message = JSON.parse(message);
+
+				const metadata = {
+					id: id,
+					header: message.header,
+					orderId: message.id,
+				};
+				console.log(ws.header);
+				this.clientsToNotifyOnStateChange.set(ws, metadata);
+
+				console.log(`Received message => ${message}`);
+			});
 
 			ws.on('close', () => {
 				console.log('Closed');
@@ -29,16 +40,37 @@ export default class webSocetController {
 		});
 	}
 
-	public static async sendStateChange() {
+	public static async sendStateChange(id: string) {
+		const order: IOrder[] = await this.order.find({ orderId: id });
+		console.log(order);
+		const message = JSON.stringify(order);
+		if (order) {
+			[...this.clientsToNotifyOnStateChange].forEach((client) => {
+				let data = client[1];
+
+				if (data.header === 'order' && data.orderId === id) {
+					client[0].send(message);
+				}
+			});
+		} else {
+			throw Error('Error in database');
+		}
+	}
+
+	public static async sendStateChangeToDisplay() {
 		const order: IOrder[] = await this.order.find(
 			{ isFinished: false },
-			{ 'orderedProducts._id': 0 }
+			{ costumerId: 1, orderedTime: 1, orderedProducts: 1 }
 		);
 		console.log(order);
 		const message = JSON.stringify(order);
 		if (order) {
-			[...this.clientsToNotifyOnStateChange.keys()].forEach((client) => {
-				client.send(message);
+			[...this.clientsToNotifyOnStateChange].forEach((client) => {
+				let data = client[1];
+
+				if (data.header === 'display') {
+					client[0].send(message);
+				}
 			});
 		} else {
 			throw Error('Error in database');
