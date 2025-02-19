@@ -45,6 +45,6 @@ jobs:
       - name: Run Tests
         run: npm test
         env:
-          MONGO_URI: mongodb://root:example@localhost:27017/
+          MONGO_URI: mongodb://root:example@services:27017/
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
