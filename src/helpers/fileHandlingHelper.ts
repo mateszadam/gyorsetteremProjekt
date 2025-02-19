@@ -1,18 +1,22 @@
 import fs from 'fs';
 import { Router, Request, Response } from 'express';
-import { defaultAnswers } from './statusCodeHelper';
+import defaultAnswers from './statusCodeHelper';
 import { UploadedFile } from 'express-fileupload';
 import GoogleDriveManager from './googleDriveHelper';
+import languageBasedErrorMessage from './languageHelper';
 
-class fileHandler {
-	public static listDictionary(path: string, res: Response) {
+export default class fileHandler {
+	public static listDictionary(path: string, req: Request, res: Response) {
 		try {
 			res.status(200).send(fs.readdirSync(path));
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	}
-	public static getImageByName(imagePath: string, res: Response) {
+	public static getImageByName(imagePath: string, req: Request, res: Response) {
 		try {
 			var mime = {
 				jpg: 'image/jpeg',
@@ -27,18 +31,22 @@ class fileHandler {
 					});
 					fs.createReadStream(imagePath).pipe(res);
 				} else {
-					throw Error('Image not fount with the name');
+					throw Error('48');
 				}
 			} else {
-				throw Error('Image name not found in request');
+				throw Error('08');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	}
 	public static async saveImage(
 		image: UploadedFile,
 		uploadPath: string,
+		req: Request,
 		res: Response
 	) {
 		image.name = Buffer.from(image.name, 'ascii').toString('utf-8');
@@ -46,19 +54,20 @@ class fileHandler {
 		if (!fs.existsSync(imagePath)) {
 			await image.mv(imagePath, async (err: any) => {
 				if (err) {
-					return defaultAnswers.badRequest(res, err.message);
+					defaultAnswers.badRequest(
+						res,
+						languageBasedErrorMessage.getError(req, err)
+					);
 				}
 				const message = await GoogleDriveManager.uploadFile(imagePath);
 				if (message) {
-					res.status(200).send('Image uploaded successfully');
+					res.status(200).send('59');
 				} else {
-					throw Error(
-						'Failed to upload image to google drive (it is only uploaded to the server)'
-					);
+					throw Error('57');
 				}
 			});
+		} else {
+			throw Error('58');
 		}
 	}
 }
-
-export default fileHandler;

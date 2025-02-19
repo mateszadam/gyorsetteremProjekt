@@ -1,8 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { IController, IUnit } from '../models/models';
 import { unitOfMeasureModel } from '../models/mongooseSchema';
-import { authenticateAdminToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { authAdminToken } from '../services/tokenService';
+import defaultAnswers from '../helpers/statusCodeHelper';
+
+import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -10,25 +13,26 @@ export default class unitController implements IController {
 	public endPoint = '/unit';
 
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.add);
-		this.router.get('/all', authenticateAdminToken, this.getAll);
+		this.router.post('/add', authAdminToken, this.add);
+		this.router.get('/all', authAdminToken, this.getAll);
 	}
 
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newUnit: IUnit = req.body;
-			if (newUnit) {
-				const response = await this.unit.insertMany([newUnit]);
-				if (response) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Failed to insert database');
-				}
+			await this.unitConstraints.validateAsync(newUnit);
+
+			const response = await this.unit.insertMany([newUnit]);
+			if (response) {
+				defaultAnswers.ok(res);
 			} else {
-				throw Error('No body found');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAll = async (req: Request, res: Response) => {
@@ -37,10 +41,25 @@ export default class unitController implements IController {
 			if (response) {
 				res.send(response);
 			} else {
-				throw Error('Failed to get from database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
+	private unitConstraints = Joi.object({
+		materialName: Joi.string().min(2).max(30).required().messages({
+			'any.required': '17',
+			'string.empty': '17',
+			'string.min': '09',
+			'string.max': '09',
+		}),
+		unit: Joi.string().required().messages({
+			'any.required': '32',
+			'string.empty': '32',
+		}),
+	});
 }

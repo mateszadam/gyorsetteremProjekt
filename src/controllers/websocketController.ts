@@ -1,8 +1,4 @@
-import { Router, Request, Response } from 'express';
-import { IController, IOrder } from '../models/models';
-import { authenticateToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
-const express = require('express');
+import { IOrder } from '../models/models';
 import { v4 as uuidv4 } from 'uuid';
 import { orderModel } from '../models/mongooseSchema';
 
@@ -14,7 +10,9 @@ export default class webSocetController {
 	private static order = orderModel;
 
 	// ws://localhost:5006/ws
-	public static initializeWebSocket(): void {
+	public static init(): void {
+		console.log('Websocket is listening on ws://localhost:5006/ws');
+
 		wss.on('connection', (ws: any) => {
 			console.log('New connection!');
 

@@ -3,13 +3,11 @@ import fileUpload, { UploadedFile } from 'express-fileupload';
 import { IController } from '../models/models';
 import fs from 'fs';
 
-import {
-	authenticateAdminToken,
-	authenticateToken,
-} from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { authAdminToken, authToken } from '../services/tokenService';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
 import fileHandler from '../helpers/fileHandlingHelper';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 export default class imagesController implements IController {
 	public router = Router();
 	public endPoint = '/images';
@@ -17,18 +15,14 @@ export default class imagesController implements IController {
 	constructor() {
 		this.router.use(fileUpload());
 
-		this.router.get('/name/:imageName', authenticateToken, this.getImage);
-		this.router.get('/all', authenticateToken, this.listAllFiles);
+		this.router.get('/name/:imageName', authToken, this.getImage);
+		this.router.get('/all', authToken, this.listAllFiles);
 
-		// this.router.delete('/:imageName', authenticateToken, this.deleteImage);
+		// this.router.delete('/:imageName', authToken, this.deleteImage);
 
-		this.router.post('/', authenticateAdminToken, this.uploadImage);
-		this.router.get('/profile', authenticateToken, this.listAllProfilePictures);
-		this.router.get(
-			'/profile/:name',
-			authenticateToken,
-			this.getProfiePictureByName
-		);
+		this.router.post('/', authAdminToken, this.uploadImage);
+		this.router.get('/profile', authToken, this.listAllProfilePictures);
+		this.router.get('/profile/:name', authToken, this.getProfiePictureByName);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/
@@ -37,12 +31,15 @@ export default class imagesController implements IController {
 		try {
 			const image = req.params.imageName;
 			if (image) {
-				fileHandler.getImageByName(`./src/images/other/${image}`, res);
+				fileHandler.getImageByName(`./src/images/other/${image}`, req, res);
 			} else {
-				throw Error('No image name found');
+				throw Error('47');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -52,13 +49,17 @@ export default class imagesController implements IController {
 			if (image) {
 				fileHandler.getImageByName(
 					`./src/images/profilePictures/${image}`,
+					req,
 					res
 				);
 			} else {
-				throw Error('Image name not found in request');
+				throw Error('48');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -67,12 +68,15 @@ export default class imagesController implements IController {
 		try {
 			if (req.files && Object.keys(req.files).length > 0) {
 				const image = req.files.image as UploadedFile;
-				await fileHandler.saveImage(image, './src/images/other/', res);
+				await fileHandler.saveImage(image, './src/images/other/', req, res);
 			} else {
-				throw new Error('No files were uploaded.');
+				throw new Error('46');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private deleteImage = async (req: Request, res: Response) => {
@@ -93,27 +97,36 @@ export default class imagesController implements IController {
 					if (
 						(await GoogleDriveManager.deleteFile(fileIdToDelete)) == 'Success'
 					)
-						res.status(200).send('Image deleted successfully');
+						res.status(200).send(languageBasedErrorMessage.getError(req, '47'));
 				}
 			} else {
-				throw new Error('Image not found');
+				throw new Error('48');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private listAllFiles = async (req: Request, res: Response) => {
 		try {
-			fileHandler.listDictionary('./src/images/other/', res);
+			fileHandler.listDictionary('./src/images/other/', req, res);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private listAllProfilePictures = async (req: Request, res: Response) => {
 		try {
-			fileHandler.listDictionary('./src/images/profilePictures/', res);
+			fileHandler.listDictionary('./src/images/profilePictures/', req, res);
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 }

@@ -1,34 +1,38 @@
 import { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
-import { authenticateAdminToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { authAdminToken } from '../services/tokenService';
+import defaultAnswers from '../helpers/statusCodeHelper';
 
+import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
 	public endPoint = '/category';
 
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.add);
-		this.router.get('/all', authenticateAdminToken, this.getAll);
+		this.router.post('/add', authAdminToken, this.add);
+		this.router.get('/all', authAdminToken, this.getAll);
+		this.router.delete('/:name', authAdminToken, this.deleteOne);
+		this.router.put('/:id', authAdminToken, this.modifyOne);
 	}
 
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newCategory: ICategory = req.body;
-			if (newCategory) {
-				const response = await this.category.insertMany([newCategory]);
-				if (response) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Failed to insert database');
-				}
+			await this.categoryConstraints.validateAsync(newCategory);
+			const response = await this.category.insertMany([newCategory]);
+			if (response) {
+				defaultAnswers.ok(res);
 			} else {
-				throw Error('No body found');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAll = async (req: Request, res: Response) => {
@@ -37,10 +41,84 @@ export default class categoryController implements IController {
 			if (response) {
 				res.send(response);
 			} else {
-				throw Error('Failed to get from database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
+	private deleteOne = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+
+			if (name) {
+				const response = await this.category.deleteOne({ name: name });
+				if (response.deletedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('43');
+				}
+			} else {
+				throw Error('42');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+	private modifyOne = async (req: Request, res: Response) => {
+		try {
+			const inputCategory: ICategory = req.body;
+			const id = req.params.id;
+			await this.categoryConstraints.validateAsync(inputCategory);
+
+			if (id) {
+				const response = await this.category.updateOne(
+					{ _id: id },
+					{
+						$set: {
+							name: inputCategory.name,
+							icon: inputCategory.icon,
+						},
+					}
+				);
+				if (response.modifiedCount > 0) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('06');
+				}
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private categoryConstraints = Joi.object({
+		name: Joi.string()
+			.min(2)
+			.max(30)
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
+			.required()
+			.messages({
+				'any.required': '17',
+				'string.empty': '17',
+				'string.min': '09',
+				'string.max': '09',
+				'string.pattern.base': '19',
+			}),
+		icon: Joi.string().required().messages({
+			'string.empty': '20',
+			'any.required': '20',
+		}),
+	});
 }

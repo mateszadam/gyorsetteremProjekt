@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel } from '../models/mongooseSchema';
-import { authenticateAdminToken } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import { authAdminToken } from '../services/tokenService';
+import defaultAnswers from '../helpers/statusCodeHelper';
+import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/languageHelper';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -10,31 +12,26 @@ export default class materialController implements IController {
 	private material = materialModel;
 	private food = foodModel;
 	constructor() {
-		this.router.post('/add', authenticateAdminToken, this.addMaterial);
-		this.router.get('/stock', authenticateAdminToken, this.getAllMaterial);
-		this.router.get(
-			'/all',
-			authenticateAdminToken,
-			this.getAllMaterialFromRecipe
-		);
+		this.router.post('/add', authAdminToken, this.addMaterial);
+		this.router.get('/stock', authAdminToken, this.getAllMaterial);
+		this.router.get('/all', authAdminToken, this.getAllMaterialFromRecipe);
 	}
 
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IMaterial[] = req.body;
-			if (inputMaterials) {
-				const databaseAnswer = await this.material.insertMany(inputMaterials);
-
-				if (databaseAnswer) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('Error in database');
-				}
+			await this.materialConstraints.validateAsync(inputMaterials);
+			const databaseAnswer = await this.material.insertMany(inputMaterials);
+			if (databaseAnswer) {
+				defaultAnswers.ok(res);
 			} else {
-				throw Error('No materials found to insert');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -71,10 +68,13 @@ export default class materialController implements IController {
 			if (materials) {
 				res.status(200).send(materials);
 			} else {
-				throw Error('Error in database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAllMaterialFromRecipe = async (req: Request, res: Response) => {
@@ -155,10 +155,30 @@ export default class materialController implements IController {
 			if (materialsInStock) {
 				res.status(200).send(materialsInStock);
 			} else {
-				throw Error('Error in database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
+
+	private materialConstraints = Joi.object({
+		name: Joi.string()
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
+			.required()
+			.messages({
+				'string.pattern.base': '19',
+				'any.required': '17',
+			}),
+		quantity: Joi.number().greater(0).required().messages({
+			'number.greater': '38',
+			'any.required': '37',
+		}),
+		message: Joi.string().required().messages({
+			'any.required': '39',
+		}),
+	});
 }

@@ -7,13 +7,16 @@ import {
 	userModel,
 } from '../models/mongooseSchema';
 import {
-	authenticateKioskToken,
-	authenticateKitchenToken,
-	authenticateToken,
+	authKioskToken,
+	authKitchenToken,
+	authToken,
 } from '../services/tokenService';
-import { defaultAnswers } from '../helpers/statusCodeHelper';
+import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
+import Joi from 'joi';
+import languageBasedErrorMessage from '../helpers/languageHelper';
+
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
@@ -22,43 +25,27 @@ export default class orderController implements IController {
 	private material = materialModel;
 	private food = foodModel;
 
-	private mongoose = require('mongoose');
-
 	constructor() {
-		this.router.post('/new', authenticateToken, this.newOrder);
-		this.router.get(
-			'/ongoing',
-			authenticateKioskToken,
-			this.getAllOngoingOrder
-		);
-		this.router.get('/ongoing/:id', authenticateToken, this.getOngoingById);
-		this.router.get('/finished/:id', authenticateToken, this.getFinishedById);
-		this.router.get('/time/:from/:to', authenticateToken, this.getAllOrder);
+		this.router.post('/new', authToken, this.newOrder);
 
-		this.router.patch(
-			'/finish/:id',
-			authenticateKitchenToken,
-			this.kitchenFinishOrder
-		);
+		this.router.get('/ongoing', authKioskToken, this.getAllOngoingOrder);
+		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
+		this.router.get('/finished/:id', authToken, this.getFinishedById);
+		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
+		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
+		this.router.get('/:id', authToken, this.getById);
 
-		this.router.get(
-			'/kitchen',
-			authenticateKitchenToken,
-			this.getAllForKitchen
-		);
-
-		this.router.get('/:id', authenticateToken, this.getById);
-		this.router.patch(
-			'/handover/:id',
-			authenticateKioskToken,
-			this.receivedOrder
-		);
+		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
+		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
+		this.router.get('/page/:number', authKioskToken, this.getAllByPage);
 	}
 
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
 		try {
 			const newOrder: IOrder = req.body;
+			await this.orderConstraints.validateAsync(newOrder);
+
 			const userExists = await this.user.find({
 				_id: newOrder.costumerId,
 			});
@@ -69,7 +56,7 @@ export default class orderController implements IController {
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
 
-					if (newOrder && newOrderId) {
+					if (newOrderId) {
 						for (
 							let index = 0;
 							index < newOrder.orderedProducts.length;
@@ -120,26 +107,29 @@ export default class orderController implements IController {
 											message: { $regex: newOrderId },
 										});
 										await this.order.deleteOne({ _id: newOrderId });
-										throw Error('Nincs elegendő alapanyag');
+										throw Error('56');
 									}
 								}
 							} else {
-								throw Error('Order food is not a valid food');
+								throw Error('51');
 							}
 						}
 					} else {
-						throw Error('The order in body is not defined');
+						throw Error('02');
 					}
 				} else {
-					throw Error('User with this id not found');
+					throw Error('06');
 				}
 				webSocetController.sendStateChangeToDisplay();
 				defaultAnswers.created(res);
 			} else {
-				throw Error('Error in insert into database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -147,7 +137,6 @@ export default class orderController implements IController {
 		try {
 			const id = req.params.id;
 			if (id) {
-				log('Ez fut');
 				const order = await this.order
 					.find({
 						_id: id,
@@ -156,13 +145,16 @@ export default class orderController implements IController {
 				if (order.length > 0) {
 					res.json(order);
 				} else {
-					throw Error('Order id is not found is database');
+					throw Error('54');
 				}
 			} else {
-				defaultAnswers.created(res);
+				throw Error('52');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
@@ -171,10 +163,13 @@ export default class orderController implements IController {
 			if (order) {
 				res.json(order);
 			} else {
-				throw Error('Error in database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -186,10 +181,13 @@ export default class orderController implements IController {
 			if (order) {
 				res.json(order);
 			} else {
-				throw Error('Error in database');
+				throw Error('02');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -204,13 +202,16 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					throw Error('Error in database');
+					throw Error('02');
 				}
 			} else {
-				throw Error('Id is not found in the request');
+				throw Error('54');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -225,13 +226,16 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					throw Error('Error in database');
+					throw Error('02');
 				}
 			} else {
-				throw Error('Id is not found in the request');
+				throw Error('07');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 
@@ -251,13 +255,16 @@ export default class orderController implements IController {
 					webSocetController.sendStateChange(id);
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('Id from request is not in database');
+					throw Error('64');
 				}
 			} else {
 				defaultAnswers.badRequest(res);
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private getAllOrder = async (req: Request, res: Response) => {
@@ -276,13 +283,16 @@ export default class orderController implements IController {
 				if (order) {
 					res.json(order);
 				} else {
-					throw Error('Error in database');
+					throw Error('02');
 				}
 			} else {
-				throw Error('From date is not found in the request');
+				throw Error('53');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
 	private receivedOrder = async (req: Request, res: Response) => {
@@ -302,13 +312,66 @@ export default class orderController implements IController {
 
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('The id of the request is not in the database');
+					throw Error('54');
 				}
 			} else {
-				throw Error('Id is not found in the request');
+				throw Error('54');
 			}
 		} catch (error: any) {
-			defaultAnswers.badRequest(res, error.message);
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
 		}
 	};
+
+	private getAllByPage = async (req: Request, res: Response) => {
+		try {
+			const number = Number(req.params.number);
+			if (number) {
+				const order = await this.order.aggregate([
+					{ $skip: number * 10 },
+					{ $limit: (number + 1) * 10 },
+				]);
+				if (order) {
+					res.json(order);
+				} else {
+					throw Error('02');
+				}
+			} else {
+				throw Error('55');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private orderConstraints = Joi.object({
+		costumerId: Joi.required().messages({
+			'any.required': '40',
+		}),
+		orderedProducts: Joi.array()
+			.items(
+				Joi.object({
+					name: Joi.string().required().messages({
+						'string.base': '34',
+						'any.required': '34',
+					}),
+					quantity: Joi.number().required().messages({
+						'number.base': '36',
+						'any.required': '37',
+					}),
+				})
+			)
+			.required()
+			.min(1)
+			.messages({
+				'array.base': '33',
+				'any.required': '33',
+				'number.greater': '35',
+			}),
+	});
 }
