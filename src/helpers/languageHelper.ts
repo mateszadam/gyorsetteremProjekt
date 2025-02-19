@@ -29,6 +29,8 @@ class languageBasedErrorMessage {
 				message = errorCode;
 			}
 		}
+		console.log(message);
+
 		return message;
 	}
 }
