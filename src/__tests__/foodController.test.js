@@ -34,7 +34,7 @@ describe('foodController Integration Tests', () => {
 					categoryId: ['679f462818947c0fa463a88f'],
 					image: 'no-image',
 				});
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 		});
 	});
 
@@ -43,7 +43,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food/allEnabled')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			response.body.forEach((item) => {
 				expect(item).toEqual(expect.objectContaining({ isEnabled: true }));
 			});
@@ -55,7 +55,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food/all')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			expect(response.body).toEqual(
 				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
 			);
@@ -67,7 +67,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food/all')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			expect(response.body).toEqual(
 				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
 			);
@@ -79,7 +79,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food/name/TestFood')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			expect(response.body).toEqual({
 				_id: expect.any(String),
 				name: 'TestFood',
@@ -108,7 +108,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food/category/Hamburger')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 
 			response.body.forEach((item) => {
 				expect(item).toEqual({
@@ -141,7 +141,7 @@ describe('foodController Integration Tests', () => {
 					categoryId: ['679f462818947c0fa463a88f'],
 					image: 'no-image',
 				});
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			expect(
 				(
 					await request(baseUrl)
@@ -176,7 +176,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.patch('/food/disable/TestFood')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 
 			expect(
 				(
@@ -201,7 +201,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.patch('/food/enable/TestFood')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 
 			expect(
 				(
@@ -225,7 +225,7 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.delete('/food/name/TestFood')
 				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
+			expect(response).toBe(200);
 			expect(
 				(
 					await request(baseUrl)
