@@ -24,7 +24,8 @@ jobs:
       server:
         image: node:latest
         volumes:
-          - ./src:.
+          - ./src:/home/node/app
+          - node_modules:/home/node/app/node_modules
         ports:
           - 3000:3000
         env:
