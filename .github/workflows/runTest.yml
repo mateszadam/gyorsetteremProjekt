@@ -17,7 +17,7 @@ jobs:
       mongo:
         image: mongo:latest
         volumes:
-          - ./__tests__/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+          - ./src/__tests__/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
         ports:
           - 27017:27017
         env:
