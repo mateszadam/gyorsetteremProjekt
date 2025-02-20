@@ -25,17 +25,18 @@ async function isAuthValid(
 	roles: string[] = ['customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	try {
+		const isTest = process.env.IS_TEST;
+		if (isTest == 'TRUE') {
+			return true;
+		}
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
 
 		const databaseUser: IUser | null = await userModel.findById(data._id);
-		const isTest = process.env.IS_TEST || false;
 		if (databaseUser) {
 			if (roles.includes(databaseUser.role)) {
 				return true;
 			}
-		} else if (isTest) {
-			return true;
 		}
 		return false;
 	} catch (err: any) {

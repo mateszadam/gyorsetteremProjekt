@@ -6,7 +6,7 @@ let token = '';
 
 beforeAll(async () => {
 	const response = await request(baseUrl).post('/user/login').send({
-		name: 'admin',
+		name: 'ai',
 		password: 'admin',
 	});
 	token = response.body.token;
@@ -34,7 +34,6 @@ describe('foodController Integration Tests', () => {
 					categoryId: ['679f462818947c0fa463a88f'],
 					image: 'no-image',
 				});
-			expect(token).toBe(200);
 			expect(response.status).toBe(200);
 		});
 	});
