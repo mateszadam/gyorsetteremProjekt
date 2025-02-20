@@ -5,6 +5,13 @@ const baseUrl = process.env.BASE_URL;
 let token = '';
 
 describe('categoryController Integration Tests', () => {
+	beforeAll(async () => {
+		const response = await request(baseUrl).post('/user/login').send({
+			name: 'adminUser',
+			password: 'adminUser!1',
+		});
+		token = response.body.token;
+	});
 	describe('01 POST /category/add', () => {
 		it('should add a new category', async () => {
 			const response = await request(baseUrl)

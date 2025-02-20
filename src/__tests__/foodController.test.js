@@ -9,8 +9,8 @@ let catId = '';
 describe('foodController Integration Tests', () => {
 	beforeAll(async () => {
 		const response = await request(baseUrl).post('/user/login').send({
-			name: 'ai',
-			password: 'admin',
+			name: 'adminUser',
+			password: 'adminUser!1',
 		});
 		token = response.body.token;
 		const response1 = await request(baseUrl)

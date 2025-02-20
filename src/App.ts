@@ -13,6 +13,7 @@ import GoogleDriveManager from './helpers/googleDriveHelper';
 import webSocetController from './controllers/websocketController';
 import YAML from 'yamljs';
 import ImplementMiddleware from './helpers/middlewareHelper';
+import { userModel } from './models/mongooseSchema';
 
 require('dotenv').config();
 
@@ -30,6 +31,15 @@ class App {
 			console.log('Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
 			mongoose.connection.dropDatabase();
+			userModel.insertMany([
+				{
+					name: 'adminUser',
+					password:
+						'$2b$12$EfnHl3cYsaFgAQwFjv.Qee7vePCWWKloRoSRG3uiJOuEkkB0F7xBm',
+					role: 'admin',
+					email: 'admin@gmail.com',
+				},
+			]);
 		} else {
 			this.connectToTheDatabase(mongoUri);
 			GoogleDriveManager.init();

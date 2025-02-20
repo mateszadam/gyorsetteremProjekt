@@ -45,3 +45,5 @@ jobs:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
           IS_TEST: TRUE
+          TEST_USER_NAME: adminUser
+          TEST_USER_PWD: $2b$12$EfnHl3cYsaFgAQwFjv.Qee7vePCWWKloRoSRG3uiJOuEkkB0F7xBm

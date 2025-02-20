@@ -9,6 +9,13 @@ let catId = '';
 let costumerId = '';
 describe('orderController Integration Tests', () => {
 	beforeAll(async () => {
+		const response = await request(baseUrl).post('/user/login').send({
+			name: 'adminUser',
+			password: 'adminUser!1',
+		});
+		token = response.body.token;
+	});
+	beforeAll(async () => {
 		await request(baseUrl)
 			.post('/material/add')
 			.set('Authorization', `Bearer ${token}`)

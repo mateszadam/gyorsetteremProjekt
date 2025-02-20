@@ -25,10 +25,6 @@ async function isAuthValid(
 	roles: string[] = ['customer', 'kitchen', 'kiosk']
 ): Promise<boolean> {
 	try {
-		const isTest: string = process.env.IS_TEST?.toString() || '';
-		if (isTest == 'TRUE' || isTest == 'true') {
-			return true;
-		}
 		roles.push('admin');
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
 
