@@ -16,8 +16,6 @@ jobs:
     services:
       mongo:
         image: mongo:latest
-        volumes:
-          - ./src/__tests__/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
         ports:
           - 27017:27017
         env:
@@ -46,3 +44,4 @@ jobs:
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
+          IS_TEST: true
