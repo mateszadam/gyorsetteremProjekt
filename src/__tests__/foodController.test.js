@@ -1,6 +1,7 @@
 const request = require('supertest');
+require('dotenv').config();
 
-const baseUrl = 'http://localhost:5005';
+const baseUrl = process.env.BASE_URL;
 let token = '';
 
 beforeAll(async () => {

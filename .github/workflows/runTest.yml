@@ -21,16 +21,18 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: example
+      server:
+        image: node:latest
+        volumes:
+          - ./src:.
+        ports:
+          - 3000:3000
+        env:
+          MONGO_URI: mongodb://root:example@services:27017/
+          CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
     steps:
-      - name: Wait for MongoDB to start
-        run: |
-          for i in {1..30}; do
-          nc -z localhost 27017 && echo "MongoDB is up" && exit 0
-          echo "Waiting for MongoDB..."
-          sleep 2
-          done
-          echo "MongoDB did not start in time" && exit 1
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -44,10 +46,10 @@ jobs:
 
       - name: Run Server and Wait for it to start and start testing
         run: |
-          npm run dev &
           sleep 30
           npm test
         env:
           MONGO_URI: mongodb://root:example@services:27017/
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          BASE_URL: services:3000
