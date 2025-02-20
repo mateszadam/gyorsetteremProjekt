@@ -10,14 +10,12 @@ describe('materialController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.post('/material/add')
 				.set('Authorization', `Bearer ${token}`)
-				.send([
-					{
-						name: 'TestMaterial',
-						quantity: 10,
-						message: 'Test',
-					},
-				]);
-			expect(response).toBe(200);
+				.send({
+					name: 'TestMaterial',
+					quantity: 10,
+					message: 'Test',
+				});
+			expect(response.status).toBe(200);
 		});
 	});
 

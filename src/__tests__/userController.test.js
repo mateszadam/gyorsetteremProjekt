@@ -2,6 +2,7 @@ const request = require('supertest');
 require('dotenv').config();
 
 const baseUrl = process.env.BASE_URL;
+exports.baseUrl = baseUrl;
 let token = '';
 
 describe('userController Integration Tests', () => {

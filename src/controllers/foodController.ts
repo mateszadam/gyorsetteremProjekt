@@ -71,7 +71,7 @@ export default class foodController implements IController {
 			const name = req.params.name;
 
 			if (name) {
-				const foodDeleteResponse = await this.food.deleteOne({ name: name });
+				const foodDeleteResponse = await this.food.deleteMany({ name: name });
 				if (foodDeleteResponse.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {

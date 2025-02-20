@@ -107,8 +107,8 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				categoryId: [
 					{
-						name: 'TestCategory',
-						icon: 'test-icon.svg',
+						name: 'string',
+						icon: 'no-image.svg',
 					},
 				],
 				image: 'no-image',
@@ -175,8 +175,8 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				categoryId: [
 					{
-						name: 'TestCategory',
-						icon: 'test-icon.svg',
+						name: 'string',
+						icon: 'no-image.svg',
 					},
 				],
 				image: 'no-image',
