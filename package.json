@@ -6,7 +6,7 @@
 		"start": "node ./dist/App.js",
 		"compile": "tsc",
 		"compile:watch": "tsc --watch",
-		"t": "concurrently --kill-others \"npm run startTest\" \"npm run delayTest\"",
+		"t": "concurrently --kill-others --success = first \"npm run startTest\" \"npm run delayTest\"",
 		"test": "jest -i || ECHO.",
 		"delayTest": "node -e \"setTimeout(() => process.exit(0), 15000)\" && jest -i || ECHO.",
 		"startTest": "npm run compile &&  cross-env IS_TEST=TRUE node ./dist/App.js",
