@@ -1,18 +1,29 @@
+const { error } = require('console');
 const request = require('supertest');
 require('dotenv').config();
 
 const baseUrl = process.env.BASE_URL;
 let token = '';
 let catId = '';
-beforeAll(async () => {
-	const response = await request(baseUrl).post('/user/login').send({
-		name: 'ai',
-		password: 'admin',
-	});
-	token = response.body.token;
-});
 
 describe('foodController Integration Tests', () => {
+	beforeAll(async () => {
+		const response = await request(baseUrl).post('/user/login').send({
+			name: 'ai',
+			password: 'admin',
+		});
+		token = response.body.token;
+		const response1 = await request(baseUrl)
+			.get('/food/all')
+			.set('Authorization', `Bearer ${token}`);
+		if (response1.body.length > 0) {
+			response1.body.forEach(async (food) => {
+				await request(baseUrl)
+					.delete(`/food/name/${food.name}`)
+					.set('Authorization', `Bearer ${token}`);
+			});
+		}
+	});
 	describe('01 POST /food/add', () => {
 		it('should add a new food item', async () => {
 			await request(baseUrl)

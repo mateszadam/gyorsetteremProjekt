@@ -1,3 +1,4 @@
+const { error } = require('console');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -6,8 +7,21 @@ exports.baseUrl = baseUrl;
 let token = '';
 
 describe('userController Integration Tests', () => {
+	beforeAll(async () => {});
 	describe('01 POST /user/register/customer', () => {
 		it('should register a new customer', async () => {
+			const users = await request(baseUrl)
+				.post('/user/all')
+				.set('Authorization', `Bearer ${token}`);
+			error(users.body);
+			if (users.body.length > 0) {
+				response.body.forEach(async (user) => {
+					error(user);
+					await request(baseUrl)
+						.delete(`/user/delete/customer/${user._id}`)
+						.set('Authorization', `Bearer ${token}`);
+				});
+			}
 			const response = await request(baseUrl)
 				.post('/user/register/customer')
 				.send({
@@ -15,6 +29,7 @@ describe('userController Integration Tests', () => {
 					password: 'Test@1234',
 					email: 'testcustomer@example.com',
 				});
+			error(response.body);
 			expect(response.status).toBe(201);
 		});
 	});

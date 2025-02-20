@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { ObjectId } from 'mongoose';
 
 export default class defaultAnswers {
 	static async ok(res: Response, message: string = '') {
@@ -9,8 +10,12 @@ export default class defaultAnswers {
 		}
 	}
 
-	static async created(res: Response) {
-		res.sendStatus(201);
+	static async created(res: Response, message: string = '') {
+		if (message == '') {
+			res.sendStatus(201);
+		} else {
+			res.status(201).json({ message });
+		}
 	}
 
 	static async notAuthorized(res: Response) {

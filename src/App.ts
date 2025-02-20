@@ -22,12 +22,19 @@ class App {
 	private swagger = require('swagger-ui-express');
 	constructor(controllers: IController[]) {
 		this.app = express();
-
 		ImplementMiddleware.init(this.app);
-		GoogleDriveManager.init();
-		webSocetController.init();
 
-		this.connectToTheDatabase();
+		const mongoUri = process.env.MONGO_URI || '';
+		const isTest: string = process.env.IS_TEST?.toString() || '';
+		if (isTest == 'TRUE' || isTest == 'true') {
+			console.log('Test mode');
+			this.connectToTheDatabase(mongoUri + 'Test');
+			mongoose.connection.dropDatabase();
+		} else {
+			this.connectToTheDatabase(mongoUri);
+			GoogleDriveManager.init();
+			webSocetController.init();
+		}
 
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
@@ -48,9 +55,8 @@ class App {
 		});
 	}
 
-	private connectToTheDatabase() {
+	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
-		const mongoUri = process.env.MONGO_URI || '';
 		mongoose
 			.connect(mongoUri)
 			.catch(() =>

@@ -15,6 +15,13 @@ describe('unitController Integration Tests', () => {
 					unit: 'kg',
 				});
 			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get('/unit/all')
+						.set('Authorization', `Bearer ${token}`)
+				).body
+			).toEqual([{ materialName: 'testmaterial', unit: 'kg' }]);
 		});
 	});
 
@@ -24,6 +31,13 @@ describe('unitController Integration Tests', () => {
 				.get('/unit/all')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
+			expect(response.body.length).toBeGreaterThan(0);
+			response.body.forEach((item) => {
+				expect(item).toEqual({
+					materialName: expect.any(String),
+					unit: expect.any(String),
+				});
+			});
 		});
 	});
 });
