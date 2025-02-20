@@ -12,16 +12,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_ROOT_USERNAME: root
-          MONGO_INITDB_ROOT_PASSWORD: example
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -38,7 +28,7 @@ jobs:
         run: |
           npm run t
         env:
-          MONGO_URI: mongodb://root:example@localhost:27017/
+          MONGO_URI: mongodb+srv://m001-student:m001-student@main.0030e.mongodb.net/loginService
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
