@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const baseUrl = process.env.BASE_URL;
 let token = '';
-
+let catId = '';
 beforeAll(async () => {
 	const response = await request(baseUrl).post('/user/login').send({
 		name: 'ai',
@@ -23,6 +23,19 @@ describe('foodController Integration Tests', () => {
 					quantity: 3,
 					message: 'Test',
 				});
+			await request(baseUrl)
+				.post('/category/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'string',
+					icon: 'no-image.svg',
+				});
+
+			const category = await request(baseUrl)
+				.get('/category/all')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			catId = category.body[0]._id;
 
 			const response = await request(baseUrl)
 				.post('/food/add')
@@ -31,7 +44,7 @@ describe('foodController Integration Tests', () => {
 					name: 'TestFood',
 					price: 10,
 					materials: [{ name: 'liszt', quantity: 1 }],
-					categoryId: ['679f462818947c0fa463a88f'],
+					categoryId: [catId],
 					image: 'no-image',
 				});
 			expect(response).toBe(200);
@@ -94,7 +107,7 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				categoryId: [
 					{
-						name: 'Hamburger',
+						name: 'string',
 						icon: 'no-image.svg',
 					},
 				],
@@ -106,13 +119,13 @@ describe('foodController Integration Tests', () => {
 	describe('06 GET /food/category/:category', () => {
 		it('should get food items by category', async () => {
 			const response = await request(baseUrl)
-				.get('/food/category/Hamburger')
+				.get('/food/category/string')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response).toBe(200);
 
 			response.body.forEach((item) => {
 				expect(item).toEqual({
-					categoryId: ['679f462818947c0fa463a88f'],
+					categoryId: [catId],
 					_id: expect.any(String),
 					name: expect.any(String),
 					price: expect.any(Number),
@@ -138,7 +151,7 @@ describe('foodController Integration Tests', () => {
 					price: 12,
 					materials: [{ name: 'liszt', quantity: 2 }],
 					isEnabled: true,
-					categoryId: ['679f462818947c0fa463a88f'],
+					categoryId: [catId],
 					image: 'no-image',
 				});
 			expect(response).toBe(200);
@@ -162,7 +175,7 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				categoryId: [
 					{
-						name: 'Hamburger',
+						name: 'string',
 						icon: 'no-image.svg',
 					},
 				],
