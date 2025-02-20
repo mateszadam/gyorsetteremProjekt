@@ -42,12 +42,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Server
-        run: npm run dev
+      - name: Run Server and Wait for it to start and start testing
+        run: |
+          npm run dev &
+          sleep 30
+          npm test
         env:
           MONGO_URI: mongodb://root:example@services:27017/
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-
-      - name: Run Tests
-        run: npm test
