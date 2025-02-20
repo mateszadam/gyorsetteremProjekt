@@ -34,6 +34,7 @@ describe('foodController Integration Tests', () => {
 					categoryId: ['679f462818947c0fa463a88f'],
 					image: 'no-image',
 				});
+			expect(token).toBe(200);
 			expect(response.status).toBe(200);
 		});
 	});
