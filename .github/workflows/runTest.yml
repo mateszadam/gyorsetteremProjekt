@@ -23,6 +23,7 @@ jobs:
           MONGO_INITDB_ROOT_PASSWORD: example
       server:
         image: node:latest
+        runs: npm install
         volumes:
           - ./src:/home/node/app
           - node_modules:/home/node/app/node_modules
