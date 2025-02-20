@@ -21,18 +21,6 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: example
-      server:
-        image: node:latest
-        run: npm install
-        volumes:
-          - ./src:/home/node/app
-          - node_modules:/home/node/app/node_modules
-        ports:
-          - 3000:3000
-        env:
-          MONGO_URI: mongodb://root:example@services:27017/
-          CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
     steps:
       - name: Checkout repository
@@ -48,10 +36,11 @@ jobs:
 
       - name: Run Server and Wait for it to start and start testing
         run: |
+          npm run dev &
           sleep 30
-          npm test
+          npm run test
         env:
           MONGO_URI: mongodb://root:example@services:27017/
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          BASE_URL: services:3000
+          BASE_URL: http://localhost:3000
