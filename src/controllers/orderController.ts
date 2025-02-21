@@ -43,6 +43,7 @@ export default class orderController implements IController {
 
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
+		let newOrderId: ObjectId | null = null;
 		try {
 			const newOrder: IOrder = req.body;
 			await this.orderConstraints.validateAsync(newOrder);
@@ -52,10 +53,26 @@ export default class orderController implements IController {
 			});
 			if (userExists.length > 0) {
 				newOrder.orderNumber = await this.getNewOrderNumber();
+
+				const foodsFromOrder = await this.food.find({
+					name: { $in: newOrder.orderedProducts.map((item) => item.name) },
+				});
+
+				const totalPrice = newOrder.orderedProducts.reduce(
+					(acc, item) =>
+						acc +
+						Number(
+							foodsFromOrder.find((food) => food.name === item.name)?.price
+						) *
+							item.quantity,
+					0
+				);
+				log(totalPrice);
+				newOrder.totalPrice = totalPrice;
 				const insertedOrders = await this.order.insertMany([newOrder], {
 					rawResult: true,
 				});
-				const newOrderId = insertedOrders.insertedIds[0];
+				newOrderId = insertedOrders.insertedIds[0];
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
 
@@ -106,10 +123,6 @@ export default class orderController implements IController {
 									) {
 										await this.material.insertMany([materialChange]);
 									} else {
-										await this.material.deleteMany({
-											message: { $regex: newOrderId },
-										});
-										await this.order.deleteOne({ _id: newOrderId });
 										throw Error('56');
 									}
 								}
@@ -133,6 +146,11 @@ export default class orderController implements IController {
 				throw Error('02');
 			}
 		} catch (error: any) {
+			log('Rendelés ' + newOrderId);
+			await this.material.deleteMany({
+				message: { $regex: 'Rendelés ' + newOrderId },
+			});
+			await this.order.deleteOne({ _id: newOrderId });
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)
@@ -169,7 +187,6 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-
 			const order = await this.order
 				.find({ finishedTime: null }, { 'orderedProducts._id': 0 })
 				.sort({ orderedTime: -1 });

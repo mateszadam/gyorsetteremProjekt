@@ -52,7 +52,10 @@ export default class foodController implements IController {
 	};
 	private getFood = async (req: Request, res: Response) => {
 		try {
-			const foods = await this.food.find().populate('categoryId', '-_id');
+			const foods = await this.food
+				.find()
+				.populate('categoryId', '-_id')
+				.populate('subCategoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -92,7 +95,8 @@ export default class foodController implements IController {
 		try {
 			const foods = await this.food
 				.find({ isEnabled: true }, { 'material._id': 0 })
-				.populate('categoryId', '-_id');
+				.populate('categoryId', '-_id')
+				.populate('subCategoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -200,7 +204,8 @@ export default class foodController implements IController {
 					{ isEnabled: true },
 					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 1 }
 				)
-				.populate('categoryId', '-_id');
+				.populate('categoryId', '-_id')
+				.populate('subCategoryId', '-_id');
 			if (foods) {
 				res.send(foods);
 			} else {
@@ -219,7 +224,8 @@ export default class foodController implements IController {
 			if (name) {
 				const foods = await this.food
 					.findOne({ name: name }, { 'materials._id': 0 })
-					.populate('categoryId', '-_id');
+					.populate('categoryId', '-_id')
+					.populate('subCategoryId', '-_id');
 				if (foods) {
 					res.send(foods);
 				} else {
@@ -242,9 +248,12 @@ export default class foodController implements IController {
 				const selectedCategory = await this.category.findOne({
 					name: category,
 				});
-				const foods: IFood[] = await this.food.find({
-					categoryId: { $in: selectedCategory?._id },
-				});
+				const foods = await this.food
+					.find({
+						categoryId: { $in: selectedCategory?._id },
+					})
+					.populate('categoryId', '-_id')
+					.populate('subCategoryId', '-_id');
 				if (foods) {
 					res.send(foods);
 				} else {
@@ -290,8 +299,12 @@ export default class foodController implements IController {
 			.messages({
 				'array.min': '23',
 			}),
-		categoryId: Joi.array().required().messages({
+		subCategoryId: Joi.array().required().messages({
 			'array.empty': '27',
+			'any.required': '27',
+		}),
+		categoryId: Joi.string().required().messages({
+			'string.empty': '27',
 			'any.required': '27',
 		}),
 		image: Joi.string().required().messages({
