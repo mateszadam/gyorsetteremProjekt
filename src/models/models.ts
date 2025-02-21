@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongoose';
 
 interface IUser {
 	_id: ObjectId;
