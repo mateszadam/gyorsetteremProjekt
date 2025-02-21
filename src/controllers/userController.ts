@@ -12,6 +12,7 @@ import fs from 'fs';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { ObjectId } from 'mongoose';
+import { log } from 'console';
 
 export default class userController implements IController {
 	public router = Router();

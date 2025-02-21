@@ -2,6 +2,7 @@ import { IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import defaultAnswers from '../helpers/statusCodeHelper';
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 function generateToken(user: IUser) {
 	return jwt.sign(
@@ -28,7 +29,6 @@ async function isAuthValid(
 		const data: IUser = jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
 
 		const databaseUser: IUser | null = await userModel.findById(data._id);
-
 		if (databaseUser) {
 			if (roles.includes(databaseUser.role)) {
 				return true;

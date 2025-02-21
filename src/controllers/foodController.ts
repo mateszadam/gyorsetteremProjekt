@@ -71,7 +71,7 @@ export default class foodController implements IController {
 			const name = req.params.name;
 
 			if (name) {
-				const foodDeleteResponse = await this.food.deleteOne({ name: name });
+				const foodDeleteResponse = await this.food.deleteMany({ name: name });
 				if (foodDeleteResponse.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
@@ -218,7 +218,7 @@ export default class foodController implements IController {
 			const name = req.params.name;
 			if (name) {
 				const foods = await this.food
-					.findOne({ name: name })
+					.findOne({ name: name }, { 'materials._id': 0 })
 					.populate('categoryId', '-_id');
 				if (foods) {
 					res.send(foods);
@@ -243,7 +243,7 @@ export default class foodController implements IController {
 					name: category,
 				});
 				const foods: IFood[] = await this.food.find({
-					category: selectedCategory?._id,
+					categoryId: { $in: selectedCategory?._id },
 				});
 				if (foods) {
 					res.send(foods);
@@ -290,13 +290,17 @@ export default class foodController implements IController {
 			.messages({
 				'array.min': '23',
 			}),
-		categoryId: Joi.string().required().messages({
-			'string.empty': '27',
+		categoryId: Joi.array().required().messages({
+			'array.empty': '27',
 			'any.required': '27',
 		}),
 		image: Joi.string().required().messages({
 			'string.empty': '29',
 			'any.required': '29',
+		}),
+		isEnabled: Joi.boolean().messages({
+			'boolean.empty': '65',
+			'any.required': '65',
 		}),
 	});
 }

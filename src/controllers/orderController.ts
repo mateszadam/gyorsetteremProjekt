@@ -55,7 +55,6 @@ export default class orderController implements IController {
 				const insertedOrders = await this.order.insertMany([newOrder], {
 					rawResult: true,
 				});
-				log(insertedOrders.insertedIds[0]);
 				const newOrderId = insertedOrders.insertedIds[0];
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
@@ -124,6 +123,7 @@ export default class orderController implements IController {
 				} else {
 					throw Error('06');
 				}
+
 				webSocetController.sendStateChange('');
 				defaultAnswers.created(res, {
 					orderId: newOrderId,
@@ -169,9 +169,11 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
+
 			const order = await this.order
 				.find({ finishedTime: null }, { 'orderedProducts._id': 0 })
 				.sort({ orderedTime: -1 });
+
 			if (order) {
 				res.json(order);
 			} else {
