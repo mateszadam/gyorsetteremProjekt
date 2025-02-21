@@ -34,7 +34,6 @@ export default class webSocetController {
 			{ isFinished: false },
 			{ 'orderedProducts._id': 0 }
 		);
-		console.log(order);
 		const message = JSON.stringify(order);
 		if (order) {
 			[...this.clientsToNotifyOnStateChange.keys()].forEach((client) => {

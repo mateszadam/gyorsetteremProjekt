@@ -180,7 +180,6 @@ export default class userController implements IController {
 			const userData: IUser = {
 				...userInput,
 				password: hashedPassword,
-				role: 'admin',
 			};
 			const user = await this.user.insertMany([userData]);
 			if (user) {

@@ -50,6 +50,7 @@ interface IOrder {
 	orderedTime: Date;
 	finishedCokingTime: Date | undefined;
 	orderedProducts: IOrderedProducts[];
+	orderNumber?: Number;
 }
 interface IController {
 	router: Router;
