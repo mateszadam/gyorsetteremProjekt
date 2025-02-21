@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - add-tests
+      - make-endpoints
   pull_request:
     branches:
       - main
