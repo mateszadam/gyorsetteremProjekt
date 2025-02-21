@@ -141,6 +141,7 @@ export default class orderController implements IController {
 				defaultAnswers.created(res, {
 					orderId: newOrderId,
 					orderNumber: newOrder.orderNumber,
+					totalPrice: newOrder.totalPrice,
 				});
 			} else {
 				throw Error('02');
