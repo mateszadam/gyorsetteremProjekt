@@ -86,7 +86,12 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: Boolean,
 			default: true,
 		},
-		categoryId: [
+		categoryId: {
+			type: Schema.Types.ObjectId,
+			required: [true, 'Category is required'],
+			ref: 'categoryId',
+		},
+		subCategoryId: [
 			{
 				type: Schema.Types.ObjectId,
 				required: [true, 'Category is required'],
@@ -183,6 +188,11 @@ const orderSchema = new Schema<SchemaDefinition>(
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
+		},
+		totalPrice: {
+			type: Number,
+			required: [true, 'Total price is required'],
+			min: [0, 'Price cannot be negative'],
 		},
 		finishedCokingTime: {
 			type: Date,

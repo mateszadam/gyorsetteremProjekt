@@ -55,7 +55,8 @@ describe('foodController Integration Tests', () => {
 					name: 'TestFood',
 					price: 10,
 					materials: [{ name: 'liszt', quantity: 1 }],
-					categoryId: [catId],
+					categoryId: catId,
+					subCategoryId: [catId],
 					image: 'no-image',
 				});
 			expect(response.status).toBe(200);
@@ -116,7 +117,12 @@ describe('foodController Integration Tests', () => {
 				],
 				price: 10,
 				isEnabled: true,
-				categoryId: [
+				categoryId: {
+					name: 'string',
+					icon: 'no-image.svg',
+				},
+
+				subCategoryId: [
 					{
 						name: 'string',
 						icon: 'no-image.svg',
@@ -136,13 +142,22 @@ describe('foodController Integration Tests', () => {
 
 			response.body.forEach((item) => {
 				expect(item).toEqual({
-					categoryId: [catId],
+					subCategoryId: [
+						{
+							name: 'string',
+							icon: 'no-image.svg',
+						},
+					],
 					_id: expect.any(String),
 					name: expect.any(String),
 					price: expect.any(Number),
 					materials: expect.any(Array),
 					image: expect.any(String),
 					isEnabled: expect.any(Boolean),
+					categoryId: {
+						name: 'string',
+						icon: 'no-image.svg',
+					},
 				});
 			});
 		});
@@ -162,7 +177,8 @@ describe('foodController Integration Tests', () => {
 					price: 12,
 					materials: [{ name: 'liszt', quantity: 2 }],
 					isEnabled: true,
-					categoryId: [catId],
+					subCategoryId: [catId],
+					categoryId: catId,
 					image: 'no-image',
 				});
 			expect(response.status).toBe(200);
@@ -184,12 +200,16 @@ describe('foodController Integration Tests', () => {
 				],
 				price: 12,
 				isEnabled: true,
-				categoryId: [
+				subCategoryId: [
 					{
 						name: 'string',
 						icon: 'no-image.svg',
 					},
 				],
+				categoryId: {
+					name: 'string',
+					icon: 'no-image.svg',
+				},
 				image: 'no-image',
 			});
 		});
@@ -209,13 +229,14 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).body
 			).toEqual({
-				categoryId: expect.any(Array),
+				subCategoryId: expect.any(Array),
 				_id: expect.any(String),
 				name: expect.any(String),
 				price: expect.any(Number),
 				materials: expect.any(Array),
 				image: expect.any(String),
 				isEnabled: false,
+				categoryId: expect.any(Object),
 			});
 		});
 	});
@@ -234,7 +255,8 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).body
 			).toEqual({
-				categoryId: expect.any(Array),
+				subCategoryId: expect.any(Array),
+				categoryId: expect.any(Object),
 				_id: expect.any(String),
 				name: expect.any(String),
 				price: expect.any(Number),

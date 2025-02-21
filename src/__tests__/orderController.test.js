@@ -45,7 +45,8 @@ describe('orderController Integration Tests', () => {
 				name: 'TestFood3',
 				price: 10,
 				materials: [{ name: 'liszt', quantity: 1 }],
-				categoryId: [catId],
+				categoryId: catId,
+				subCategoryId: [catId],
 				image: 'no-image',
 			});
 
@@ -96,6 +97,7 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: [{ name: 'testfood3', quantity: 1, id: null }],
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
+						totalPrice: expect.any(Number),
 					},
 				])
 			);
@@ -117,6 +119,7 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: expect.any(Array),
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
+						totalPrice: expect.any(Number),
 					},
 				])
 			);
@@ -144,6 +147,7 @@ describe('orderController Integration Tests', () => {
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
 						finishedCokingTime: expect.any(String),
+						totalPrice: expect.any(Number),
 					},
 				])
 			);
@@ -173,6 +177,7 @@ describe('orderController Integration Tests', () => {
 						orderNumber: expect.any(Number),
 						finishedCokingTime: expect.any(String),
 						finishedTime: expect.any(String),
+						totalPrice: expect.any(Number),
 					},
 				])
 			);
@@ -233,7 +238,7 @@ describe('orderController Integration Tests', () => {
 
 	describe('08 GET /order/page/:number', () => {
 		beforeAll(async () => {
-			for (let i = 0; i < 8; i++) {
+			for (let i = 0; i < 9; i++) {
 				await request(baseUrl)
 					.post('/order/new')
 					.set('Authorization', `Bearer ${token}`)
@@ -242,7 +247,7 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 					});
 			}
-		}, 10000);
+		}, 15000);
 		it('should get orders by page number', async () => {
 			const pageNumber = 1;
 			const pageResponse = await request(baseUrl)

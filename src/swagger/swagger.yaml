@@ -1082,5 +1082,14 @@ components:
         categoryId:
           type: string
           default: 679f462818947c0fa463a88f
+        costumerId:
+          type: string
+          default: 6793b122d55c7354ff36be8f
+        subCategoryId:
+          type: array
+          items:
+            type: string
+            default: 679f462818947c0fa463a88f
+
         image:
           type: string
