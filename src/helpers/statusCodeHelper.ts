@@ -10,12 +10,13 @@ export default class defaultAnswers {
 		}
 	}
 
-	static async created(res: Response, message: string = '') {
+
+	static async created(res: Response, message: any = '') {
 		if (message == '') {
 			res.sendStatus(201);
-		} else {
-			res.status(201).json({ message });
 		}
+		res.status(201).json(message);
+
 	}
 
 	static async notAuthorized(res: Response) {

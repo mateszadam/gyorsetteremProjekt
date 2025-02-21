@@ -65,7 +65,7 @@
 			"62": "A kép nem létezik!",
 			"63": "Csak vásárló törlése lehetséges!",
 			"64": "A rendelés Id nem található az adatbázisban!",
-			"65": "Az engedélyezés mező kitöltése kötelező!",
+			"65": "Az oldalszámnak nagyobbnak kell lennie mint 0!",
 			"66": "",
 			"67": "",
 			"68": "",

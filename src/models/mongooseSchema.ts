@@ -216,6 +216,10 @@ const orderSchema = new Schema<SchemaDefinition>(
 				},
 			},
 		],
+		orderNumber: {
+			type: Number,
+			required: [true, 'Order number is required'],
+		},
 	},
 	{
 		versionKey: false,
