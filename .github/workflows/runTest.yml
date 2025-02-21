@@ -28,7 +28,7 @@ jobs:
         run: |
           npm run t
         env:
-          MONGO_URI: mongodb+srv://m001-student:m001-student@main.0030e.mongodb.net/loginService
+          MONGO_URI: ${{ secrets.MONGO_URI }}
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
