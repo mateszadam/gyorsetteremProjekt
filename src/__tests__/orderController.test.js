@@ -233,7 +233,7 @@ describe('orderController Integration Tests', () => {
 
 	describe('08 GET /order/page/:number', () => {
 		beforeAll(async () => {
-			for (let i = 0; i < 3; i++) {
+			for (let i = 0; i < 8; i++) {
 				await request(baseUrl)
 					.post('/order/new')
 					.set('Authorization', `Bearer ${token}`)
@@ -242,7 +242,7 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 					});
 			}
-		});
+		}, 10000);
 		it('should get orders by page number', async () => {
 			const pageNumber = 1;
 			const pageResponse = await request(baseUrl)
