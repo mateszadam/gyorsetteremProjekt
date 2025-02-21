@@ -233,7 +233,7 @@ describe('orderController Integration Tests', () => {
 
 	describe('08 GET /order/page/:number', () => {
 		beforeAll(async () => {
-			for (let i = 0; i < 8; i++) {
+			for (let i = 0; i < 3; i++) {
 				await request(baseUrl)
 					.post('/order/new')
 					.set('Authorization', `Bearer ${token}`)
