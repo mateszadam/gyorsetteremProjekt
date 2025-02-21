@@ -16,6 +16,7 @@ import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { ObjectId } from 'mongoose';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -33,7 +34,7 @@ export default class orderController implements IController {
 		this.router.get('/finished/:id', authToken, this.getFinishedById);
 		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
-		this.router.get('/:id', authToken, this.getById);
+		this.router.get('/all/:id', authToken, this.getById);
 
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
 		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
@@ -50,9 +51,11 @@ export default class orderController implements IController {
 				_id: newOrder.costumerId,
 			});
 			if (userExists.length > 0) {
+				newOrder.orderNumber = await this.getNewOrderNumber();
 				const insertedOrders = await this.order.insertMany([newOrder], {
 					rawResult: true,
 				});
+				const newOrderId = insertedOrders.insertedIds[0];
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
 
@@ -120,8 +123,12 @@ export default class orderController implements IController {
 				} else {
 					throw Error('06');
 				}
-				webSocetController.sendStateChange();
-				defaultAnswers.created(res);
+
+				webSocetController.sendStateChange('');
+				defaultAnswers.created(res, {
+					orderId: newOrderId,
+					orderNumber: newOrder.orderNumber,
+				});
 			} else {
 				throw Error('02');
 			}
@@ -138,17 +145,20 @@ export default class orderController implements IController {
 			const id = req.params.id;
 			if (id) {
 				const order = await this.order
-					.find({
-						_id: id,
-					})
-					.populate('costumerId');
+					.find(
+						{
+							costumerId: id,
+						},
+						{ 'orderedProducts._id': 0 }
+					)
+					.sort({ orderedTime: -1 });
 				if (order.length > 0) {
 					res.json(order);
 				} else {
-					throw Error('54');
+					throw Error('06');
 				}
 			} else {
-				throw Error('52');
+				throw Error('07');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -159,7 +169,11 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order: IOrder[] = await this.order.find({ finishedTole: null });
+
+			const order = await this.order
+				.find({ finishedTime: null }, { 'orderedProducts._id': 0 })
+				.sort({ orderedTime: -1 });
+
 			if (order) {
 				res.json(order);
 			} else {
@@ -175,9 +189,14 @@ export default class orderController implements IController {
 
 	private getAllForKitchen = async (req: Request, res: Response) => {
 		try {
-			const order: IOrder[] = await this.order.find({
-				finishedCokingTime: null,
-			});
+			const order = await this.order
+				.find(
+					{
+						finishedCokingTime: null,
+					},
+					{ 'orderedProducts._id': 0 }
+				)
+				.sort({ orderedTime: 1 });
 			if (order) {
 				res.json(order);
 			} else {
@@ -195,10 +214,15 @@ export default class orderController implements IController {
 		try {
 			const id = req.params.id;
 			if (id) {
-				const order = await this.order.find({
-					costumerId: id,
-					isFinished: false,
-				});
+				const order = await this.order
+					.find(
+						{
+							costumerId: id,
+							isFinished: false,
+						},
+						{ 'orderedProducts._id': 0 }
+					)
+					.sort({ orderedTime: -1 });
 				if (order) {
 					res.json(order);
 				} else {
@@ -219,10 +243,15 @@ export default class orderController implements IController {
 		try {
 			const id = req.params.id;
 			if (id) {
-				const order = await this.order.find({
-					costumerId: id,
-					finishedTime: { $ne: null },
-				});
+				const order = await this.order
+					.find(
+						{
+							costumerId: id,
+							finishedTime: { $ne: null },
+						},
+						{ 'orderedProducts._id': 0 }
+					)
+					.sort({ orderedTime: -1 });
 				if (order) {
 					res.json(order);
 				} else {
@@ -252,7 +281,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChange(id);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
@@ -277,9 +306,14 @@ export default class orderController implements IController {
 				to = toDate.toJSON().split('T')[0];
 			}
 			if (from) {
-				const order = await this.order.find({
-					finishedTime: { $gte: new Date(from), $lte: new Date(to) },
-				});
+				const order = await this.order
+					.find(
+						{
+							finishedTime: { $gte: new Date(from), $lte: new Date(to) },
+						},
+						{ 'orderedProducts._id': 0 }
+					)
+					.sort({ orderedTime: -1 });
 				if (order) {
 					res.json(order);
 				} else {
@@ -308,7 +342,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChange(id);
 
 					defaultAnswers.ok(res);
 				} else {
@@ -328,18 +362,27 @@ export default class orderController implements IController {
 	private getAllByPage = async (req: Request, res: Response) => {
 		try {
 			const number = Number(req.params.number);
-			if (number) {
-				const order = await this.order.aggregate([
-					{ $skip: number * 10 },
-					{ $limit: (number + 1) * 10 },
-				]);
-				if (order) {
-					res.json(order);
+			if (number > 0) {
+				if (number) {
+					const order = await this.order.aggregate([
+						{ $sort: { orderedTime: -1 } },
+						{ $skip: number * 10 },
+						{ $limit: (number + 1) * 10 },
+						{ $project: { 'orderedProducts._id': 0 } },
+					]);
+					if (order) {
+						res.json({
+							pageCount: Math.ceil((await this.order.find()).length / 10) - 1,
+							orders: order,
+						});
+					} else {
+						throw Error('02');
+					}
 				} else {
-					throw Error('02');
+					throw Error('55');
 				}
 			} else {
-				throw Error('55');
+				throw Error('65');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -374,4 +417,17 @@ export default class orderController implements IController {
 				'number.greater': '35',
 			}),
 	});
+
+	private getNewOrderNumber = async () => {
+		const order = await this.order
+			.find({ finishedTime: null })
+			.sort({ orderNumber: -1 })
+			.limit(1)
+			.select('orderNumber');
+		if (order.length > 0) {
+			return Number(order[0].orderNumber) + 1;
+		} else {
+			return 1000;
+		}
+	};
 }

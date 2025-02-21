@@ -5,6 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -20,14 +21,17 @@ export default class materialController implements IController {
 	private addMaterial = async (req: Request, res: Response) => {
 		try {
 			const inputMaterials: IMaterial[] = req.body;
+			log(inputMaterials);
 			await this.materialConstraints.validateAsync(inputMaterials);
 			const databaseAnswer = await this.material.insertMany(inputMaterials);
 			if (databaseAnswer) {
+				log(databaseAnswer);
 				defaultAnswers.ok(res);
 			} else {
 				throw Error('02');
 			}
 		} catch (error: any) {
+			log(error);
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)

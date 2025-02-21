@@ -1,0 +1,36 @@
+name: CI/CD Pipeline for MongoDB
+
+on:
+  push:
+    branches:
+      - main
+      - add-tests
+      - make-endpoints
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 21
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Server and Wait for it to start and start testing
+        run: |
+          npm run t
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          BASE_URL: http://localhost:5005
+          IS_TEST: TRUE

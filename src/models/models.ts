@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongoose';
 
 interface IUser {
 	_id: ObjectId;
@@ -50,6 +50,7 @@ interface IOrder {
 	orderedTime: Date;
 	finishedCokingTime: Date | undefined;
 	orderedProducts: IOrderedProducts[];
+	orderNumber?: Number;
 }
 interface IController {
 	router: Router;

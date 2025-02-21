@@ -33,6 +33,6 @@
     "include": [
         "src/**/*.ts",
         "**/test/**/*.ts",
-        "__tests__/categoryController.test.ts",
+        "src/__tests__/orderController.test.js",
     ]
 }

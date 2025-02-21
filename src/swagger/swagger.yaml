@@ -605,12 +605,13 @@ paths:
     security:
       - adminBearerAuth: []
     parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
         name: page
         schema:
           type: string
         required: true
-        description: User ID
+        description: Page number
     responses:
       200:
         description: List of ongoing orders
@@ -636,9 +637,9 @@ paths:
         description: List of ongoing orders for the user
       400:
         description: Bad request
-/order/{id}:
+/order/all/{id}:
   get:
-    summary: Get an order by id
+    summary: Get an order by user id
     tags: [Orders]
     security:
       - adminBearerAuth: []
@@ -650,10 +651,10 @@ paths:
         schema:
           type: string
         required: true
-        description: Order ID
+        description: User ID
     responses:
       200:
-        description: Received the order
+        description: Received the orders
       400:
         description: Bad request
 /order/kitchen:
@@ -806,6 +807,62 @@ paths:
     tags: [Units]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
+    security:
+      - adminBearerAuth: []
+    responses:
+      200:
+        description: List of all units retrieved successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/unit/delete/{name}:
+  delete:
+    summary: Delete unit of measure by name
+    tags: [Units]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: name
+        schema:
+          type: string
+          required: true
+          description: Unit name
+    security:
+      - adminBearerAuth: []
+    responses:
+      200:
+        description: List of all units retrieved successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/unit/update/{name}:
+  patch:
+    summary: Delete unit of measure by name
+    tags: [Units]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: name
+        schema:
+          type: string
+          required: true
+          description: Unit name
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - unit
+            properties:
+              unit:
+                type: string
+                default: db
     security:
       - adminBearerAuth: []
     responses:

@@ -6,6 +6,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
 
 export default class unitController implements IController {
 	public router = Router();
@@ -15,6 +16,12 @@ export default class unitController implements IController {
 	constructor() {
 		this.router.post('/add', authAdminToken, this.add);
 		this.router.get('/all', authAdminToken, this.getAll);
+		this.router.delete('/delete/:name', authAdminToken, this.deleteOneByName);
+		this.router.patch(
+			'/update/:name',
+			authAdminToken,
+			this.updateByMaterialName
+		);
 	}
 
 	private add = async (req: Request, res: Response) => {
@@ -50,6 +57,60 @@ export default class unitController implements IController {
 			);
 		}
 	};
+
+	private deleteOneByName = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+			log(name);
+			if (name) {
+				const response = await this.unit.deleteOne({ materialName: name });
+				if (response) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('02');
+				}
+			} else {
+				throw Error('42');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private updateByMaterialName = async (req: Request, res: Response) => {
+		try {
+			const name = req.params.name;
+			const newUnit = req.body;
+			log(name);
+			if (name) {
+				if (newUnit.unit) {
+					console.log(newUnit.unit);
+					const response = await this.unit.updateOne(
+						{ materialName: name },
+						{ $set: { unit: newUnit.unit } }
+					);
+					if (response) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('02');
+					}
+				} else {
+					throw Error('32');
+				}
+			} else {
+				throw Error('42');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
 	private unitConstraints = Joi.object({
 		materialName: Joi.string().min(2).max(30).required().messages({
 			'any.required': '17',

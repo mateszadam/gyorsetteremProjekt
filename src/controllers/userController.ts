@@ -12,6 +12,7 @@ import fs from 'fs';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { ObjectId } from 'mongoose';
+import { log } from 'console';
 
 export default class userController implements IController {
 	public router = Router();
@@ -101,17 +102,18 @@ export default class userController implements IController {
 			};
 			const user = await this.user.insertMany([userData]);
 			if (user) {
+				log(`User ${userData.name} registered`);
 				defaultAnswers.created(res);
 			} else {
+				log(`User ${userData.name} not registered`);
 				throw Error('02');
 			}
 		} catch (error: any) {
+			log(`Error: ${error.message}`);
+
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(
-					req,
-					languageBasedErrorMessage.getError(req, error.message)
-				)
+				languageBasedErrorMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -180,7 +182,6 @@ export default class userController implements IController {
 			const userData: IUser = {
 				...userInput,
 				password: hashedPassword,
-				role: 'admin',
 			};
 			const user = await this.user.insertMany([userData]);
 			if (user) {

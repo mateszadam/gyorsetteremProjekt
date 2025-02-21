@@ -13,6 +13,7 @@ import GoogleDriveManager from './helpers/googleDriveHelper';
 import webSocetController from './controllers/websocketController';
 import YAML from 'yamljs';
 import ImplementMiddleware from './helpers/middlewareHelper';
+import { userModel } from './models/mongooseSchema';
 
 require('dotenv').config();
 
@@ -22,24 +23,37 @@ class App {
 	private swagger = require('swagger-ui-express');
 	constructor(controllers: IController[]) {
 		this.app = express();
-
 		ImplementMiddleware.init(this.app);
-		GoogleDriveManager.init();
-		webSocetController.init();
-
-		this.connectToTheDatabase();
-
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
-
-		this.app.use(
-			'/',
-			this.swagger.serve,
-			this.swagger.setup(
-				this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
-			)
-		);
+		const mongoUri = process.env.MONGO_URI || '';
+		const isTest: string = process.env.IS_TEST?.toString() || '';
+		if (isTest == 'TRUE' || isTest == 'true') {
+			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
+			this.connectToTheDatabase(mongoUri + 'Test');
+			mongoose.connection.dropDatabase();
+			userModel.insertMany([
+				{
+					name: 'adminUser',
+					password:
+						'$2b$12$EfnHl3cYsaFgAQwFjv.Qee7vePCWWKloRoSRG3uiJOuEkkB0F7xBm',
+					role: 'admin',
+					email: 'admin@gmail.com',
+				},
+			]);
+		} else {
+			this.connectToTheDatabase(mongoUri);
+			GoogleDriveManager.init();
+			webSocetController.init();
+			this.app.use(
+				'/',
+				this.swagger.serve,
+				this.swagger.setup(
+					this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
+				)
+			);
+		}
 	}
 
 	public listen(): void {
@@ -48,9 +62,8 @@ class App {
 		});
 	}
 
-	private connectToTheDatabase() {
+	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
-		const mongoUri = process.env.MONGO_URI || '';
 		mongoose
 			.connect(mongoUri)
 			.catch(() =>
