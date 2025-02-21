@@ -24,11 +24,13 @@ class App {
 	constructor(controllers: IController[]) {
 		this.app = express();
 		ImplementMiddleware.init(this.app);
-
+		controllers.forEach((controller) => {
+			this.app.use(`${controller.endPoint}`, controller.router);
+		});
 		const mongoUri = process.env.MONGO_URI || '';
 		const isTest: string = process.env.IS_TEST?.toString() || '';
 		if (isTest == 'TRUE' || isTest == 'true') {
-			console.log('Test mode');
+			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
 			mongoose.connection.dropDatabase();
 			userModel.insertMany([
@@ -44,19 +46,14 @@ class App {
 			this.connectToTheDatabase(mongoUri);
 			GoogleDriveManager.init();
 			webSocetController.init();
+			this.app.use(
+				'/',
+				this.swagger.serve,
+				this.swagger.setup(
+					this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
+				)
+			);
 		}
-
-		controllers.forEach((controller) => {
-			this.app.use(`${controller.endPoint}`, controller.router);
-		});
-
-		this.app.use(
-			'/',
-			this.swagger.serve,
-			this.swagger.setup(
-				this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
-			)
-		);
 	}
 
 	public listen(): void {

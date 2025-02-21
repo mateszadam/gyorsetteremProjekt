@@ -80,7 +80,7 @@ describe('categoryController Integration Tests', () => {
 	describe('04 DELETE /category/:name', () => {
 		it('should category by name', async () => {
 			const response = await request(baseUrl)
-				.get('/category/TestCategory')
+				.delete('/category/TestCategory')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 			expect(

@@ -47,4 +47,50 @@ describe('unitController Integration Tests', () => {
 			});
 		});
 	});
+	describe('03 PUT /unit/update/:name', () => {
+		it('should update the unit by material name', async () => {
+			const materialName = 'TestMaterial';
+			const newUnit = 'kg';
+
+			const response = await request(baseUrl)
+				.patch(`/unit/update/${materialName}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({ unit: newUnit });
+
+			expect(response.status).toBe(200);
+
+			const updatedResponse = await request(baseUrl)
+				.get('/unit/all')
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(updatedResponse.status).toBe(200);
+			expect(updatedResponse.body).toEqual([
+				{ materialName: 'testmaterial', unit: 'kg' },
+			]);
+		});
+	});
+	describe('04 DELETE /unit/delete/:name', () => {
+		it('should delete the unit by material name', async () => {
+			const materialName = 'TestMaterial';
+
+			const response = await request(baseUrl)
+				.delete(`/unit/delete/${materialName}`)
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.status).toBe(200);
+
+			const getResponse = await request(baseUrl)
+				.get('/unit/all')
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(getResponse.status).toBe(200);
+			expect(getResponse.body).not.toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						materialName: materialName.toLowerCase(),
+					}),
+				])
+			);
+		});
+	});
 });

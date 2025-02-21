@@ -816,6 +816,62 @@ paths:
       401:
         description: Unauthorized
 
+/unit/delete/{name}:
+  delete:
+    summary: Delete unit of measure by name
+    tags: [Units]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: name
+        schema:
+          type: string
+          required: true
+          description: Unit name
+    security:
+      - adminBearerAuth: []
+    responses:
+      200:
+        description: List of all units retrieved successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+/unit/update/{name}:
+  patch:
+    summary: Delete unit of measure by name
+    tags: [Units]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: name
+        schema:
+          type: string
+          required: true
+          description: Unit name
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - unit
+            properties:
+              unit:
+                type: string
+                default: db
+    security:
+      - adminBearerAuth: []
+    responses:
+      200:
+        description: List of all units retrieved successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
 # User handling
 /user/all:
   get:
