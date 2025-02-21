@@ -42,7 +42,6 @@ export default class webSocetController {
 
 	public static async sendStateChange(id: string) {
 		const order: IOrder[] = await this.order.find({ orderId: id });
-		console.log(order);
 		const message = JSON.stringify(order);
 		if (order) {
 			[...this.clientsToNotifyOnStateChange].forEach((client) => {

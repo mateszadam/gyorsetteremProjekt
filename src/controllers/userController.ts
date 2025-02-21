@@ -102,17 +102,18 @@ export default class userController implements IController {
 			};
 			const user = await this.user.insertMany([userData]);
 			if (user) {
+				log(`User ${userData.name} registered`);
 				defaultAnswers.created(res);
 			} else {
+				log(`User ${userData.name} not registered`);
 				throw Error('02');
 			}
 		} catch (error: any) {
+			log(`Error: ${error.message}`);
+
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(
-					req,
-					languageBasedErrorMessage.getError(req, error.message)
-				)
+				languageBasedErrorMessage.getError(req, error.message)
 			);
 		}
 	};

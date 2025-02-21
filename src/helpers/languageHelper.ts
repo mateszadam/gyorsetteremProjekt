@@ -20,7 +20,7 @@ class languageBasedErrorMessage {
 			// Custom error messages on errors
 			if (errorCode.includes('E11000'))
 				message = this.errorMessages[language][0][60];
-			if (errorCode.includes('Cast to ObjectId failed for value'))
+			else if (errorCode.includes('Cast to ObjectId failed for value'))
 				message = this.errorMessages[language][0][61];
 			else {
 				console.log('----------------------------');
