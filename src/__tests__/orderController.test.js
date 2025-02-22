@@ -86,7 +86,7 @@ describe('orderController Integration Tests', () => {
 			expect(
 				(
 					await request(baseUrl)
-						.get('/order/ongoing')
+						.get('/order/salesman')
 						.set('Authorization', `Bearer ${token}`)
 				).body
 			).toEqual(
@@ -98,16 +98,18 @@ describe('orderController Integration Tests', () => {
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
 						totalPrice: expect.any(Number),
+						finishedCokingTime: null,
+						finishedTime: null,
 					},
 				])
 			);
 		});
 	});
 
-	describe('02 GET /order/ongoing', () => {
+	describe('02 GET /order/salesman', () => {
 		it('should get all ongoing orders', async () => {
 			const response = await request(baseUrl)
-				.get('/order/ongoing')
+				.get('/order/salesman')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 
@@ -120,6 +122,8 @@ describe('orderController Integration Tests', () => {
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
 						totalPrice: expect.any(Number),
+						finishedCokingTime: null,
+						finishedTime: null,
 					},
 				])
 			);
@@ -148,6 +152,7 @@ describe('orderController Integration Tests', () => {
 						orderNumber: expect.any(Number),
 						finishedCokingTime: expect.any(String),
 						totalPrice: expect.any(Number),
+						finishedTime: null,
 					},
 				])
 			);
@@ -213,7 +218,7 @@ describe('orderController Integration Tests', () => {
 			expect(response.status).toBe(200);
 			expect(response.body.length).toBeGreaterThan(0);
 			response.body.forEach((order) => {
-				expect(order.finishedCokingTime).toBeUndefined();
+				expect(order.finishedCokingTime).toBeNull();
 			});
 		});
 	});
@@ -264,6 +269,92 @@ describe('orderController Integration Tests', () => {
 				.patch(`/order/finish/${orderId}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
+		});
+	});
+	describe('10 PATCH /order/revertKitchenFinish/:id', () => {
+		it('should revert the kitchen finish time of an order by id', async () => {
+			await request(baseUrl)
+				.patch(`/order/finish/${orderId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+
+			const response = await request(baseUrl)
+				.patch(`/order/revert/finish/${orderId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+
+			expect(response.status).toBe(200);
+
+			const orderResponse = await request(baseUrl)
+				.get(`/order/all/${costumerId}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(orderResponse.status).toBe(200);
+			expect(orderResponse.body).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						_id: orderId,
+						finishedCokingTime: null,
+					}),
+				])
+			);
+		});
+
+		it('should return 400 if order id is invalid', async () => {
+			const response = await request(baseUrl)
+				.patch('/order/revert/finish/invalidOrderId')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
+	});
+	describe('11 PATCH /order/revertReceivedOrder/:id', () => {
+		it('should revert the received order by id', async () => {
+			await request(baseUrl)
+				.patch(`/order/finish/${orderId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+
+			const response = await request(baseUrl)
+				.patch(`/order/revert/handover/${orderId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+
+			expect(response.status).toBe(200);
+
+			const orderResponse = await request(baseUrl)
+				.get(`/order/all/${costumerId}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(orderResponse.status).toBe(200);
+			expect(orderResponse.body).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						_id: orderId,
+						finishedTime: null,
+					}),
+				])
+			);
+		});
+
+		it('should return 400 if order id is invalid', async () => {
+			const response = await request(baseUrl)
+				.patch('/order/revert/handover/invalidOrderId')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
+	});
+	describe('12 GET /order/display', () => {
+		it('should get orders for display', async () => {
+			const response = await request(baseUrl)
+				.get('/order/display')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			response.body.forEach((order) => {
+				expect(order).toHaveProperty('finishedCokingTime');
+				expect(order).toHaveProperty('orderNumber');
+			});
 		});
 	});
 });

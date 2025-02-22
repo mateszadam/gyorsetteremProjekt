@@ -158,7 +158,7 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('43');
+					throw Error('73');
 				}
 			} else {
 				throw Error('42');
@@ -185,7 +185,7 @@ export default class foodController implements IController {
 				if (foods.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
-					throw Error('43');
+					throw Error('73');
 				}
 			} else {
 				throw Error('42');
@@ -229,7 +229,7 @@ export default class foodController implements IController {
 				if (foods) {
 					res.send(foods);
 				} else {
-					throw Error('02');
+					throw Error('73');
 				}
 			} else {
 				throw Error('42');
@@ -248,16 +248,20 @@ export default class foodController implements IController {
 				const selectedCategory = await this.category.findOne({
 					name: category,
 				});
-				const foods = await this.food
-					.find({
-						categoryId: { $in: selectedCategory?._id },
-					})
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
-				if (foods) {
-					res.send(foods);
+				if (selectedCategory) {
+					const foods = await this.food
+						.find({
+							categoryId: { $in: selectedCategory?._id },
+						})
+						.populate('categoryId', '-_id')
+						.populate('subCategoryId', '-_id');
+					if (foods) {
+						res.send(foods);
+					} else {
+						throw Error('02');
+					}
 				} else {
-					throw Error('02');
+					throw Error('44');
 				}
 			} else {
 				throw Error('50');
@@ -271,15 +275,17 @@ export default class foodController implements IController {
 	};
 	private foodConstraints = Joi.object({
 		name: Joi.string()
-			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9 ]+$/)
 			.required()
 			.messages({
 				'string.empty': '17',
 				'string.pattern.base': '19',
+				'any.required': '17',
 			}),
 		price: Joi.number().greater(0).required().messages({
 			'number.base': '21',
 			'number.greater': '22',
+			'any.required': '21',
 		}),
 		materials: Joi.array()
 			.items(
@@ -298,10 +304,12 @@ export default class foodController implements IController {
 			.required()
 			.messages({
 				'array.min': '23',
+				'array.empty': '23',
+				'any.required': '23',
 			}),
 		subCategoryId: Joi.array().required().messages({
-			'array.empty': '27',
-			'any.required': '27',
+			'array.empty': '70',
+			'any.required': '70',
 		}),
 		categoryId: Joi.string().required().messages({
 			'string.empty': '27',

@@ -70,4 +70,74 @@ describe('materialController Integration Tests', () => {
 			});
 		});
 	});
+	describe('04 GET /material/changes', () => {
+		it('should get all material changes', async () => {
+			const response = await request(baseUrl)
+				.get('/material/changes')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body.length).toBeGreaterThan(0);
+			response.body.forEach((change) => {
+				expect(change).toEqual({
+					_id: expect.any(String),
+					name: expect.any(String),
+					quantity: expect.any(Number),
+					message: expect.any(String),
+					date: expect.any(String),
+				});
+			});
+		});
+	});
+
+	let materialId = '';
+	describe('05 PUT /material/update/:id', () => {
+		beforeAll(async () => {
+			await request(baseUrl)
+				.post('/material/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestMaterial',
+					quantity: 10,
+					message: 'Test',
+				});
+			materialId = await request(baseUrl)
+				.get('/material/changes')
+				.set('Authorization', `Bearer ${token}`)
+				.then((response) => response.body[0]._id);
+		});
+		it('should update a material', async () => {
+			const response = await request(baseUrl)
+				.patch(`/material/update/${materialId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'UpdatedMaterial',
+					quantity: 20,
+					message: 'Updated',
+				});
+			expect(response.status).toBe(200);
+		});
+
+		it('should not update a material with invalid id', async () => {
+			const response = await request(baseUrl)
+				.patch('/material/update/invalidId')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'UpdatedMaterial',
+					quantity: 20,
+					message: 'Updated',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
+
+		it('should not update a material without required fields', async () => {
+			const response = await request(baseUrl)
+				.patch(`/material/update/${materialId}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'No data to be changed found in the request!'
+			);
+		});
+	});
 });
