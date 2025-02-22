@@ -19,6 +19,16 @@ definition:
         scheme: bearer
         bearerFormat: JWT
         description: 'Enter your bearer token in the format **Bearer <token>**'
+      kitchenBearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+        description: 'Enter your bearer token in the format **Bearer <token>**'
+      salesmanBearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+        description: 'Enter your bearer token in the format **Bearer <token>**'
     parameters:
       AcceptLanguage:
         name: Accept-Language
@@ -31,6 +41,8 @@ definition:
   security:
     - adminBearerAuth: []
     - customerBearerAuth: []
+    - salesmanBearerAuth: []
+    - kitchenBearerAuth: []
 apis: [./src/swagger/swagger.yaml]
 
 paths:
@@ -542,6 +554,53 @@ paths:
                     type: string
       401:
         description: Unauthorized access
+/material/changes:
+  get:
+    summary: Get all materials changes
+    tags: [Material changes]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    security:
+      - adminBearerAuth: []
+    responses:
+      200:
+        description: Successfully retrieved
+      401:
+        description: Unauthorized access
+/material/update/{id}:
+  patch:
+    summary: Update material change by ID
+    tags: [Material changes]
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: The ID of the material to update
+    security:
+      - adminBearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the material
+              quantity:
+                type: number
+                description: Quantity of the material
+    responses:
+      200:
+        description: Material updated successfully
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized access
 
 # Order
 /order/new:
@@ -585,14 +644,15 @@ paths:
         description: Order created successfully
       400:
         description: Bad request
-/order/ongoing:
+/order/salesman:
   get:
-    summary: Get all ongoing orders
+    summary: Get all orders for salesman
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Orders]
     security:
       - adminBearerAuth: []
+      - salesmanBearerAuth: []
     responses:
       200:
         description: List of ongoing orders
@@ -665,6 +725,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - adminBearerAuth: []
+      - kitchenBearerAuth: []
     responses:
       200:
         description: List of orders for kitchen
@@ -676,6 +737,7 @@ paths:
     tags: [Orders]
     security:
       - adminBearerAuth: []
+      - kitchenBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -695,6 +757,8 @@ paths:
     tags: [Orders]
     security:
       - adminBearerAuth: []
+      - salesmanBearerAuth: []
+
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -705,9 +769,65 @@ paths:
         description: Order ID
     responses:
       200:
-        description: Order ready for handover
+        description: Order handed over
       400:
         description: Bad request
+
+/order/revert/finish/{id}:
+  patch:
+    summary: Mark an order as finished
+    tags: [Orders]
+    security:
+      - adminBearerAuth: []
+      - kitchenBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        description: Rever successfully done
+      400:
+        description: Bad request
+
+/order/revert/handover/{id}:
+  patch:
+    summary: Get an order for handover
+    tags: [Orders]
+    security:
+      - adminBearerAuth: []
+      - salesmanBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        description: Rever successfully done
+      400:
+        description: Bad request
+
+/order/display:
+  get:
+    summary: Get orders for display
+    tags: [Orders]
+    security: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    responses:
+      200:
+        description: List of orders for display
+      400:
+        description: Bad request
+
 /order/time/{from}/{to}:
   get:
     summary: Get all orders within a time range
@@ -1082,9 +1202,6 @@ components:
         categoryId:
           type: string
           default: 679f462818947c0fa463a88f
-        costumerId:
-          type: string
-          default: 6793b122d55c7354ff36be8f
         subCategoryId:
           type: array
           items:

@@ -198,19 +198,21 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date();
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		finishedTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date() || v === null;
 				},
-				message: 'You cannot specify a date earlier than the current date!',
+				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		orderedProducts: [
 			{

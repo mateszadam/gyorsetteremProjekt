@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import e, { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
@@ -6,6 +6,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -76,21 +77,28 @@ export default class categoryController implements IController {
 			const inputCategory: ICategory = req.body;
 			const id = req.params.id;
 			await this.categoryConstraints.validateAsync(inputCategory);
-
 			if (id) {
-				const response = await this.category.updateOne(
-					{ _id: id },
-					{
-						$set: {
-							name: inputCategory.name,
-							icon: inputCategory.icon,
-						},
+				const response = await this.category.find({
+					$and: [{ name: inputCategory.name }, { _id: { $ne: id } }],
+				});
+
+				if (response.length === 0) {
+					const response = await this.category.updateOne(
+						{ _id: id },
+						{
+							$set: {
+								name: inputCategory.name,
+								icon: inputCategory.icon,
+							},
+						}
+					);
+					if (response.matchedCount > 0) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('44');
 					}
-				);
-				if (response.modifiedCount > 0) {
-					defaultAnswers.ok(res);
 				} else {
-					throw Error('06');
+					throw Error('75');
 				}
 			} else {
 				throw Error('07');
@@ -107,7 +115,7 @@ export default class categoryController implements IController {
 		name: Joi.string()
 			.min(2)
 			.max(30)
-			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9]+$/)
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9 ]+$/)
 			.required()
 			.messages({
 				'any.required': '17',

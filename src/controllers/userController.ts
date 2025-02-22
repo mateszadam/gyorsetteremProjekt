@@ -178,6 +178,10 @@ export default class userController implements IController {
 			let userInput: IUser = req.body;
 			await this.userConstraints.validateAsync(userInput);
 
+			if (!['admin', 'kitchen', 'salesman'].includes(userInput.role)) {
+				throw Error('72');
+			}
+
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {
 				...userInput,
