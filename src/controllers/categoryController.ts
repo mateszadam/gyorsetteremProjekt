@@ -1,12 +1,13 @@
 import e, { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel } from '../models/mongooseSchema';
-import { authAdminToken } from '../services/tokenService';
+import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
+import { waitForDebugger } from 'inspector';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -17,17 +18,45 @@ export default class categoryController implements IController {
 		this.router.get('/all', authAdminToken, this.getAll);
 		this.router.delete('/:name', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
+		this.router.get('/filter', authToken, this.filterCategory);
 	}
+
+	private filterCategory = async (req: Request, res: Response) => {
+		try {
+			const { field, value } = req.query;
+			if (field && value) {
+				const selectedItems = await this.category.find({
+					[field as string]: value,
+				});
+				if (selectedItems.length > 0) {
+					res.send(selectedItems);
+				} else {
+					throw Error('77');
+				}
+			} else {
+				throw Error('76');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 
 	private add = async (req: Request, res: Response) => {
 		try {
 			const newCategory: ICategory = req.body;
 			await this.categoryConstraints.validateAsync(newCategory);
-			const response = await this.category.insertMany([newCategory]);
-			if (response) {
-				defaultAnswers.ok(res);
+			if ((await this.category.find({ name: newCategory.name })).length === 0) {
+				const response = await this.category.insertMany([newCategory]);
+				if (response) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('02');
+				}
 			} else {
-				throw Error('02');
+				throw Error('75');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(

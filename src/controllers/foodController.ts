@@ -6,6 +6,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import { UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -20,6 +21,7 @@ export default class foodController implements IController {
 		this.router.get('/allToOrder', authToken, this.getFoodToOrder);
 		this.router.get('/name/:name', authToken, this.getFoodByName);
 		this.router.get('/category/:category', authToken, this.getFoodByCategory);
+		this.router.get('/filter', authToken, this.filterFood);
 
 		this.router.put('/update/:id', authAdminToken, this.updateFood);
 
@@ -29,6 +31,30 @@ export default class foodController implements IController {
 		this.router.delete('/name/:name', authAdminToken, this.deleteFood);
 	}
 
+	private filterFood = async (req: Request, res: Response) => {
+		try {
+			const { field, value } = req.query;
+			if (field && value) {
+				log(await this.food.find({}));
+				const selectedItems = await this.food
+					.find({ [field as string]: value })
+					.populate('categoryId', '-_id')
+					.populate('subCategoryId', '-_id');
+				if (selectedItems.length > 0) {
+					res.send(selectedItems);
+				} else {
+					throw Error('77');
+				}
+			} else {
+				throw Error('76');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 	private addFood = async (req: Request, res: Response) => {
 		try {
 			const foodInput: IFood = req.body;

@@ -18,7 +18,7 @@ class languageBasedErrorMessage {
 		}
 		if (!message) {
 			console.log('----------------------------');
-			console.log('\x1b[41m%s\x1b[0m', errorCode);
+			console.log('\x1b[43m%s\x1b[0m', errorCode);
 			console.log('----------------------------');
 			// Custom error messages on errors
 			if (errorCode.includes('E11000'))
