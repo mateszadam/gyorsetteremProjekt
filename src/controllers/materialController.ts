@@ -111,7 +111,11 @@ export default class materialController implements IController {
 						},
 					},
 				]);
-				if (isEnoughMaterial[0].inStock + inputMaterial.quantity < 0)
+				log(isEnoughMaterial);
+				if (
+					isEnoughMaterial.length === 0 ||
+					isEnoughMaterial[0].inStock + inputMaterial.quantity < 0
+				)
 					throw Error('71');
 			}
 
