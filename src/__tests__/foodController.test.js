@@ -8,6 +8,8 @@ let catId = '';
 
 describe('foodController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
@@ -394,6 +396,63 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).status
 			).toBe(400);
+		});
+	});
+	describe('11 GET /food/filter', () => {
+		it('should filter food items by field and value', async () => {
+			await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					price: 10,
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'materials.name', value: 'liszt' });
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual(
+				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
+			);
+		});
+
+		it('should return 400 if field is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ value: 'TestFood' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return 400 if value is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return 400 if no items match the filter', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'NonExistentFood' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'No result in the database for the search condition!'
+			);
 		});
 	});
 });

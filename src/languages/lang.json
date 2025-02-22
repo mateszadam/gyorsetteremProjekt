@@ -75,7 +75,9 @@
 			"72": "A megadott jogosultság nem létezik!",
 			"73": "Az étel nincs az adatbázisban!",
 			"74": "A kategória neve megadása kötelező!",
-			"75": "A kategória neve már foglalt!"
+			"75": "A kategória neve már foglalt!",
+			"76": "A keresési feltétel nem található az url-ben!",
+			"77": "A keresési feltételre nincs eredmény az adatbázisban!"
 		}
 	],
 	"en-GB": [
@@ -154,7 +156,9 @@
 			"72": "The provided permission does not exist!",
 			"73": "The food is not in database!",
 			"74": "Category name is required!",
-			"75": "Category name is already taken!"
+			"75": "Category name is already taken!",
+			"76": "The search condition is not found in the URL!",
+			"77": "No result in the database for the search condition!"
 		}
 	]
 }

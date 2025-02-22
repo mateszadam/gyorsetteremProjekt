@@ -8,6 +8,8 @@ let token = '';
 
 describe('userController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',

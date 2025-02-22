@@ -6,6 +6,8 @@ let token = '';
 
 describe('categoryController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
@@ -43,7 +45,7 @@ describe('categoryController Integration Tests', () => {
 				});
 
 			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('Name already taken!');
+			expect(response.body.message).toBe('Category name is already taken!');
 		});
 	});
 
@@ -141,6 +143,66 @@ describe('categoryController Integration Tests', () => {
 				.delete('/category/dasd')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(400);
+		});
+	});
+	describe('05 GET /category/filter', () => {
+		it('should filter categories by field and value', async () => {
+			await request(baseUrl)
+				.post('/category/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestCategory2',
+					icon: 'test-icon3.svg',
+				});
+
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'TestCategory2' });
+
+			await request(baseUrl)
+				.delete('/category/TestCategory2')
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ name: 'TestCategory2' }),
+				])
+			);
+		});
+
+		it('should return error if field is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ value: 'TestCategory' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return error if value is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return error if no categories match the filter', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'NonExistentCategory' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'No result in the database for the search condition!'
+			);
 		});
 	});
 });

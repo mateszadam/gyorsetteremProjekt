@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { IController, IMaterial } from '../models/models';
 import { foodModel, materialModel } from '../models/mongooseSchema';
-import { authAdminToken } from '../services/tokenService';
+import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
@@ -18,7 +18,31 @@ export default class materialController implements IController {
 		this.router.get('/all', authAdminToken, this.getAllMaterialFromRecipe);
 		this.router.get('/changes', authAdminToken, this.getChanges);
 		this.router.patch('/update/:id', authAdminToken, this.updateMaterial);
+		this.router.get('/filter', authAdminToken, this.filterMaterial);
 	}
+
+	private filterMaterial = async (req: Request, res: Response) => {
+		try {
+			const { field, value } = req.query;
+			if (field && value) {
+				const selectedItems = await this.material.find({
+					[field as string]: value,
+				});
+				if (selectedItems.length > 0) {
+					res.send(selectedItems);
+				} else {
+					throw Error('77');
+				}
+			} else {
+				throw Error('76');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 
 	private updateMaterial = async (req: Request, res: Response) => {
 		try {

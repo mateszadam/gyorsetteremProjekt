@@ -96,7 +96,7 @@ export default class orderController implements IController {
 					name: { $in: newOrder.orderedProducts.map((item) => item.name) },
 				});
 
-				const totalPrice = newOrder.orderedProducts.reduce(
+				let totalPrice = newOrder.orderedProducts.reduce(
 					(acc, item) =>
 						acc +
 						Number(
@@ -106,6 +106,10 @@ export default class orderController implements IController {
 					0
 				);
 				log(totalPrice);
+				if (Number.isNaN(totalPrice)) {
+					log(newOrder.orderedProducts);
+					throw Error('00');
+				}
 				newOrder.totalPrice = totalPrice;
 				const insertedOrders = await this.order.insertMany([newOrder], {
 					rawResult: true,
