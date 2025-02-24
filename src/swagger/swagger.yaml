@@ -1182,6 +1182,7 @@ paths:
               - name
               - password
               - email
+              - role
             properties:
               name:
                 type: string
@@ -1192,6 +1193,9 @@ paths:
               email:
                 type: string
                 default: admin@gmail.com
+              role:
+                type: string
+                default: admin
     responses:
       201:
         description: Admin registered successfully
