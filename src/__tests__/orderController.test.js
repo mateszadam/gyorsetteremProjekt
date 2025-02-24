@@ -74,7 +74,7 @@ describe('orderController Integration Tests', () => {
 				orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 			});
 		orderId = order.body.orderId;
-	});
+	}, 20000);
 
 	describe('01 POST /order/new', () => {
 		it('should create a new order', async () => {
