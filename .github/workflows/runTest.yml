@@ -1,11 +1,6 @@
 name: CI/CD Pipeline for MongoDB
 
 on:
-  push:
-    branches:
-      - main
-      - add-tests
-      - make-endpoints
   pull_request:
     branches:
       - main

@@ -349,5 +349,10 @@ export default class foodController implements IController {
 			'boolean.empty': '65',
 			'any.required': '65',
 		}),
+		englishName: Joi.string().required().messages({
+			'string.empty': '78',
+			'string.pattern.base': '78',
+			'any.required': '78',
+		}),
 	});
 }

@@ -42,6 +42,13 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Category name already exists'],
+			trim: true,
+		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
 		},
 		icon: {
 			type: String,
@@ -64,6 +71,13 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Food name is already taken'],
+			trim: true,
+		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
 		},
 		materials: [
 			{
