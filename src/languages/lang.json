@@ -77,7 +77,9 @@
 			"74": "A kategória neve megadása kötelező!",
 			"75": "A kategória neve már foglalt!",
 			"76": "A keresési feltétel nem található az url-ben!",
-			"77": "A keresési feltételre nincs eredmény az adatbázisban!"
+			"77": "A keresési feltételre nincs eredmény az adatbázisban!",
+			"78": "Az angol név megadása kötelező",
+			"79": "A jogosultság megadása kötelező"
 		}
 	],
 	"en-GB": [
@@ -158,7 +160,9 @@
 			"74": "Category name is required!",
 			"75": "Category name is already taken!",
 			"76": "The search condition is not found in the URL!",
-			"77": "No result in the database for the search condition!"
+			"77": "No result in the database for the search condition!",
+			"78": "English name is required",
+			"79": "Role is required"
 		}
 	]
 }

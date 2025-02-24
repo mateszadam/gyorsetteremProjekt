@@ -274,5 +274,10 @@ export default class userController implements IController {
 			'string.email': '31',
 			'any.required': '30',
 		}),
+		role: Joi.string().messages({
+			'string.base': '79',
+			'string.empty': '79',
+			'any.required': '79',
+		}),
 	});
 }

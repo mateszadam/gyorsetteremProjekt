@@ -1,4 +1,5 @@
 const { error } = require('console');
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -15,16 +16,6 @@ describe('foodController Integration Tests', () => {
 			password: 'adminUser!1',
 		});
 		token = response.body.token;
-		const response1 = await request(baseUrl)
-			.get('/food/all')
-			.set('Authorization', `Bearer ${token}`);
-		if (response1.body.length > 0) {
-			response1.body.forEach(async (food) => {
-				await request(baseUrl)
-					.delete(`/food/name/${food.name}`)
-					.set('Authorization', `Bearer ${token}`);
-			});
-		}
 	});
 	describe('01 POST /food/add', () => {
 		it('should add a new food item', async () => {
@@ -42,6 +33,7 @@ describe('foodController Integration Tests', () => {
 				.send({
 					name: 'string',
 					icon: 'no-image.svg',
+					englishName: 'string',
 				});
 
 			const category = await request(baseUrl)
@@ -55,6 +47,7 @@ describe('foodController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'TestFood',
+					englishName: 'TestFood',
 					price: 10,
 					materials: [{ name: 'liszt', quantity: 1 }],
 					categoryId: catId,
@@ -69,6 +62,7 @@ describe('foodController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					price: 10,
+					englishName: 'TestFood',
 					materials: [{ name: 'liszt', quantity: 1 }],
 					categoryId: catId,
 					subCategoryId: [catId],
@@ -192,6 +186,7 @@ describe('foodController Integration Tests', () => {
 			expect(response.body).toEqual({
 				_id: expect.any(String),
 				name: 'TestFood',
+				englishName: 'TestFood',
 				materials: [
 					{
 						name: 'liszt',
@@ -203,6 +198,8 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				categoryId: {
 					name: 'string',
+					englishName: 'string',
+
 					icon: 'no-image.svg',
 				},
 
@@ -210,6 +207,7 @@ describe('foodController Integration Tests', () => {
 					{
 						name: 'string',
 						icon: 'no-image.svg',
+						englishName: 'string',
 					},
 				],
 				image: 'no-image',
@@ -241,6 +239,7 @@ describe('foodController Integration Tests', () => {
 						{
 							name: 'string',
 							icon: 'no-image.svg',
+							englishName: 'string',
 						},
 					],
 					_id: expect.any(String),
@@ -248,10 +247,12 @@ describe('foodController Integration Tests', () => {
 					price: expect.any(Number),
 					materials: expect.any(Array),
 					image: expect.any(String),
+					englishName: expect.any(String),
 					isEnabled: expect.any(Boolean),
 					categoryId: {
 						name: 'string',
 						icon: 'no-image.svg',
+						englishName: 'string',
 					},
 				});
 			});
@@ -283,6 +284,7 @@ describe('foodController Integration Tests', () => {
 					subCategoryId: [catId],
 					categoryId: catId,
 					image: 'no-image',
+					englishName: 'TestFood',
 				});
 			expect(response.status).toBe(200);
 			expect(
@@ -307,13 +309,16 @@ describe('foodController Integration Tests', () => {
 					{
 						name: 'string',
 						icon: 'no-image.svg',
+						englishName: 'string',
 					},
 				],
 				categoryId: {
 					name: 'string',
 					icon: 'no-image.svg',
+					englishName: 'string',
 				},
 				image: 'no-image',
+				englishName: 'TestFood',
 			});
 		});
 	});
@@ -340,6 +345,7 @@ describe('foodController Integration Tests', () => {
 				image: expect.any(String),
 				isEnabled: false,
 				categoryId: expect.any(Object),
+				englishName: expect.any(String),
 			});
 		});
 		it('should not disable a food item with a wrong name', async () => {
@@ -373,6 +379,7 @@ describe('foodController Integration Tests', () => {
 				materials: expect.any(Array),
 				image: expect.any(String),
 				isEnabled: true,
+				englishName: expect.any(String),
 			});
 		});
 		it('should not enable a food item with a wrong name', async () => {
@@ -410,6 +417,7 @@ describe('foodController Integration Tests', () => {
 					categoryId: catId,
 					subCategoryId: [catId],
 					image: 'no-image',
+					englishName: 'TestFood',
 				});
 
 			const response = await request(baseUrl)

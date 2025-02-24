@@ -118,6 +118,7 @@ export default class categoryController implements IController {
 							$set: {
 								name: inputCategory.name,
 								icon: inputCategory.icon,
+								englishName: inputCategory.englishName,
 							},
 						}
 					);
@@ -156,6 +157,11 @@ export default class categoryController implements IController {
 		icon: Joi.string().required().messages({
 			'string.empty': '20',
 			'any.required': '20',
+		}),
+		englishName: Joi.string().required().messages({
+			'string.empty': '78',
+			'string.pattern.base': '78',
+			'any.required': '78',
 		}),
 	});
 }

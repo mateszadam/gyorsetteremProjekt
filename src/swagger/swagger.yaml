@@ -64,6 +64,7 @@ paths:
               required:
                 - name
                 - icon
+                - englishName
               properties:
                 name:
                   type: string
@@ -72,6 +73,9 @@ paths:
                   type: string
                   description: Icon of the category
                   default: no-image.svg
+                englishName:
+                  type: string
+                  description: English name of the category
       responses:
         200:
           description: Category added successfully
@@ -131,6 +135,7 @@ paths:
               required:
                 - name
                 - icon
+                - englishName
               properties:
                 name:
                   type: string
@@ -139,6 +144,10 @@ paths:
                   type: string
                   description: Icon of the category
                   default: no-image.svg
+                englishName:
+                  type: string
+                  description: English name of the category
+
       responses:
         200:
           description: Category modifyed
@@ -178,6 +187,8 @@ paths:
                     _id:
                       type: string
                     name:
+                      type: string
+                    englishName:
                       type: string
                     icon:
                       type: string
@@ -1171,6 +1182,7 @@ paths:
               - name
               - password
               - email
+              - role
             properties:
               name:
                 type: string
@@ -1181,6 +1193,9 @@ paths:
               email:
                 type: string
                 default: admin@gmail.com
+              role:
+                type: string
+                default: admin
     responses:
       201:
         description: Admin registered successfully
@@ -1292,8 +1307,10 @@ components:
       type: object
       required:
         - name
+        - englishName
         - price
         - material
+
       properties:
         name:
           type: string
@@ -1319,6 +1336,8 @@ components:
           items:
             type: string
             default: 679f462818947c0fa463a88f
+        englishName:
+          type: string
 
         image:
           type: string

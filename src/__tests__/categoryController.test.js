@@ -1,3 +1,4 @@
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -22,6 +23,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
+					englishName: 'TestCategory',
 				});
 			expect(response.status).toBe(200);
 		});
@@ -42,6 +44,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
+					englishName: 'TestCategory',
 				});
 
 			expect(response.status).toBe(400);
@@ -60,6 +63,7 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: expect.any(String),
 					icon: expect.any(String),
+					englishName: expect.any(String),
 				});
 			});
 		});
@@ -81,6 +85,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory2',
 					icon: 'test-icon3.svg',
+					englishName: 'TestCategory2',
 				});
 			expect(response.status).toBe(200);
 			expect(
@@ -95,6 +100,7 @@ describe('categoryController Integration Tests', () => {
 						_id: expect.any(String),
 						name: 'TestCategory2',
 						icon: 'test-icon3.svg',
+						englishName: 'TestCategory2',
 					},
 				])
 			);
@@ -116,6 +122,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory',
 					icon: 'test-icon3.svg',
+					englishName: 'TestCategory',
 				});
 			expect(response.status).toBe(400);
 			expect(response.body.message).toBe('The provided ID is invalid!');
@@ -153,6 +160,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory2',
 					icon: 'test-icon3.svg',
+					englishName: 'TestCategory2',
 				});
 
 			const response = await request(baseUrl)

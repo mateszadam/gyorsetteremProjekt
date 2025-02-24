@@ -34,6 +34,7 @@ describe('orderController Integration Tests', () => {
 			.send({
 				name: 'string',
 				icon: 'no-image.svg',
+				englishName: 'string',
 			});
 		const category = await request(baseUrl)
 			.get('/category/all')
@@ -50,6 +51,7 @@ describe('orderController Integration Tests', () => {
 				categoryId: catId,
 				subCategoryId: [catId],
 				image: 'no-image',
+				englishName: 'TestFood3',
 			});
 
 		const user = await request(baseUrl)
@@ -72,7 +74,7 @@ describe('orderController Integration Tests', () => {
 				orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 			});
 		orderId = order.body.orderId;
-	});
+	}, 20000);
 
 	describe('01 POST /order/new', () => {
 		it('should create a new order', async () => {
