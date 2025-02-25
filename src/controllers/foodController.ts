@@ -35,7 +35,6 @@ export default class foodController implements IController {
 		try {
 			const { field, value } = req.query;
 			if (field && value) {
-				log(await this.food.find({}));
 				const selectedItems = await this.food
 					.find({ [field as string]: value })
 					.populate('categoryId', '-_id')

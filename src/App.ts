@@ -33,6 +33,7 @@ class App {
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
+
 		const mongoUri = process.env.MONGO_URI || '';
 		const isTest: string = process.env.IS_TEST?.toString() || '';
 		if (isTest == 'TRUE' || isTest == 'true') {
