@@ -56,6 +56,29 @@ describe('foodController Integration Tests', () => {
 				});
 			expect(response.status).toBe(200);
 		});
+
+		it('should add a new food item with special name', async () => {
+			const category = await request(baseUrl)
+				.get('/category/all')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			catId = category.body[0]._id;
+
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'Test Fooddőóüö',
+					englishName: 'TestFood',
+					price: 10,
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+			expect(response.status).toBe(200);
+		});
+
 		it('should not add a new food item without name', async () => {
 			const response = await request(baseUrl)
 				.post('/food/add')

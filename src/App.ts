@@ -25,9 +25,11 @@ require('dotenv').config();
 
 class App {
 	public app: express.Application;
-	private swaggerjsdoc = require('swagger-jsdoc');
-	private swagger = require('swagger-ui-express');
+	private startTime: number;
+
 	constructor(controllers: IController[]) {
+		this.startTime = Date.now();
+
 		this.app = express();
 		ImplementMiddleware.init(this.app);
 		controllers.forEach((controller) => {
@@ -51,14 +53,15 @@ class App {
 			this.connectToTheDatabase(mongoUri);
 			GoogleDriveManager.init();
 			webSocetController.init();
+			const swaggerjsdoc = require('swagger-jsdoc');
+			const swagger = require('swagger-ui-express');
 			this.app.use(
 				'/',
-				this.swagger.serve,
-				this.swagger.setup(
-					this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
-				)
+				swagger.serve,
+				swagger.setup(swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml')))
 			);
 		}
+		console.log('App started in', Date.now() - this.startTime, 'ms');
 	}
 
 	public listen(): void {

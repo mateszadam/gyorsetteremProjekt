@@ -1,3 +1,4 @@
+const { error } = require('console');
 const e = require('cors');
 const { waitForDebugger } = require('inspector');
 const { after } = require('node:test');
@@ -246,8 +247,18 @@ describe('orderController Integration Tests', () => {
 	});
 
 	describe('08 GET /order/page/:number', () => {
-		beforeAll(async () => {
-			for (let i = 0; i < 9; i++) {
+		it('should get orders by page number with 1 page', async () => {
+			const pageNumber = 0;
+			const pageResponse = await request(baseUrl)
+				.get(`/order/page/${pageNumber}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(pageResponse.status).toBe(200);
+			expect(pageResponse.body.pageCount).toEqual(1);
+			expect(pageResponse.body.orders.length).toBeLessThanOrEqual(10);
+		});
+
+		it('should get orders by page number with 2 page', async () => {
+			for (let i = 0; i < 10; i++) {
 				await request(baseUrl)
 					.post('/order/new')
 					.set('Authorization', `Bearer ${token}`)
@@ -256,15 +267,31 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 					});
 			}
-		}, 15000);
-		it('should get orders by page number', async () => {
+			const pageNumber = 0;
+			const pageResponse = await request(baseUrl)
+				.get(`/order/page/${pageNumber}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(pageResponse.status).toBe(200);
+			expect(pageResponse.body.pageCount).toEqual(2);
+			expect(pageResponse.body.orders.length).toEqual(10);
+		});
+
+		it('should get orders by page number 1 ', async () => {
 			const pageNumber = 1;
 			const pageResponse = await request(baseUrl)
 				.get(`/order/page/${pageNumber}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(1);
-			expect(pageResponse.body.orders.length).toBeLessThanOrEqual(10);
+			expect(pageResponse.body.pageCount).toEqual(2);
+			expect(pageResponse.body.orders.length).toEqual(2);
+		});
+
+		it('should return 400 if page number is invalid', async () => {
+			const response = await request(baseUrl)
+				.get('/order/page/invalidPageNumber')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Page number is invalid!');
 		});
 	});
 	describe('9 PATCH /order/finish/:id', () => {
