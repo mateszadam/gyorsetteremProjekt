@@ -1338,6 +1338,6 @@ components:
             default: 679f462818947c0fa463a88f
         englishName:
           type: string
-
         image:
           type: string
+          default: no-image.svg

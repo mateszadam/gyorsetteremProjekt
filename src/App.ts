@@ -40,23 +40,11 @@ class App {
 			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
 			this.app.use('/drop', async (req: Request, res: Response) => {
-				await userModel.collection.drop();
 				await categoryModel.collection.drop();
 				await foodModel.collection.drop();
 				await orderModel.collection.drop();
 				await unitOfMeasureModel.collection.drop();
-
 				console.log('\x1b[42m%s\x1b[0m', 'Database dropped');
-
-				await userModel.insertMany([
-					{
-						name: 'adminUser',
-						password:
-							'$2b$12$EfnHl3cYsaFgAQwFjv.Qee7vePCWWKloRoSRG3uiJOuEkkB0F7xBm',
-						role: 'admin',
-						email: 'admin@gmail.com',
-					},
-				]);
 				res.send('Database dropped');
 			});
 		} else {

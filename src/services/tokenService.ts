@@ -53,7 +53,6 @@ async function isAuthValid(
 		return false;
 	} catch (err: any) {
 		console.log(err.message);
-
 		return false;
 	}
 }
