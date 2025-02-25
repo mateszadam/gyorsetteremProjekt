@@ -477,8 +477,8 @@ export default class orderController implements IController {
 	private getAllByPage = async (req: Request, res: Response) => {
 		try {
 			const number = Number(req.params.number);
-			if (number > 0) {
-				if (number) {
+			if (number != undefined) {
+				if (number >= 0) {
 					const order = await this.order.aggregate([
 						{ $sort: { orderedTime: -1 } },
 						{ $skip: number * 10 },
@@ -487,17 +487,17 @@ export default class orderController implements IController {
 					]);
 					if (order) {
 						res.json({
-							pageCount: Math.ceil((await this.order.find()).length / 10) - 1,
+							pageCount: Math.ceil((await this.order.find({})).length / 10),
 							orders: order,
 						});
 					} else {
 						throw Error('02');
 					}
 				} else {
-					throw Error('55');
+					throw Error('65');
 				}
 			} else {
-				throw Error('65');
+				throw Error('55');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
