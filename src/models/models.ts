@@ -14,6 +14,7 @@ interface ICategory {
 	_id: ObjectId;
 	name: string;
 	icon: string;
+	englishName: string;
 }
 
 interface IMaterial {
@@ -34,8 +35,10 @@ interface IFood {
 	materials: IFoodMaterial[];
 	price: number;
 	name: string;
+	englishName: string;
 	isEnabled: boolean;
-	categoryId: string | undefined;
+	subCategoryId: string[] | undefined;
+	categoryId: string;
 }
 
 interface IFoodMaterial {
@@ -51,6 +54,7 @@ interface IOrder {
 	finishedCokingTime: Date | undefined;
 	orderedProducts: IOrderedProducts[];
 	orderNumber?: Number;
+	totalPrice: number;
 }
 interface IController {
 	router: Router;

@@ -3,6 +3,7 @@ import languageBasedErrorMessage from './languageHelper';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
+import { log } from 'console';
 export default class ImplementMiddleware {
 	public static init(app: express.Application) {
 		app.use(express.json());
@@ -10,9 +11,16 @@ export default class ImplementMiddleware {
 		app.use(morgan('dev'));
 		const limiter = rateLimit({
 			windowMs: 15 * 60 * 1000,
-			limit: 100,
+			limit: 200,
 			standardHeaders: 'draft-8',
 			legacyHeaders: false,
+			message: 'To many requests, please try again later',
+			skip: (req, res) => {
+				if (req.ip == '::1') {
+					return true;
+				}
+				return false;
+			},
 		});
 		app.use(limiter);
 

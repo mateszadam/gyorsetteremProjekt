@@ -1,4 +1,5 @@
 const { error } = require('console');
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -8,21 +9,13 @@ let catId = '';
 
 describe('foodController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
 		});
 		token = response.body.token;
-		const response1 = await request(baseUrl)
-			.get('/food/all')
-			.set('Authorization', `Bearer ${token}`);
-		if (response1.body.length > 0) {
-			response1.body.forEach(async (food) => {
-				await request(baseUrl)
-					.delete(`/food/name/${food.name}`)
-					.set('Authorization', `Bearer ${token}`);
-			});
-		}
 	});
 	describe('01 POST /food/add', () => {
 		it('should add a new food item', async () => {
@@ -40,6 +33,7 @@ describe('foodController Integration Tests', () => {
 				.send({
 					name: 'string',
 					icon: 'no-image.svg',
+					englishName: 'string',
 				});
 
 			const category = await request(baseUrl)
@@ -53,12 +47,85 @@ describe('foodController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'TestFood',
+					englishName: 'TestFood',
 					price: 10,
 					materials: [{ name: 'liszt', quantity: 1 }],
-					categoryId: [catId],
+					categoryId: catId,
+					subCategoryId: [catId],
 					image: 'no-image',
 				});
 			expect(response.status).toBe(200);
+		});
+		it('should not add a new food item without name', async () => {
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					price: 10,
+					englishName: 'TestFood',
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Name is required');
+		});
+		it('should not add a new food item without price', async () => {
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Price is required.');
+		});
+		it('should not add a new food item without materials', async () => {
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					price: 10,
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Ingredients are required.');
+		});
+		it('should not add a new food item without category', async () => {
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					price: 10,
+					materials: [{ name: 'liszt', quantity: 1 }],
+					subCategoryId: [catId],
+					image: 'no-image',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Category is required.');
+		});
+		it('should not add a new food item without subCategory', async () => {
+			const response = await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					price: 10,
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					image: 'no-image',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Subcategory is required!');
 		});
 	});
 
@@ -72,6 +139,10 @@ describe('foodController Integration Tests', () => {
 				expect(item).toEqual(expect.objectContaining({ isEnabled: true }));
 			});
 		});
+		it('should not get without token', async () => {
+			const response = await request(baseUrl).get('/food/allEnabled');
+			expect(response.status).toBe(401);
+		});
 	});
 
 	describe('03 GET /food/all', () => {
@@ -83,6 +154,10 @@ describe('foodController Integration Tests', () => {
 			expect(response.body).toEqual(
 				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
 			);
+		});
+		it('should not get without token', async () => {
+			const response = await request(baseUrl).get('/food/all');
+			expect(response.status).toBe(401);
 		});
 	});
 
@@ -96,6 +171,10 @@ describe('foodController Integration Tests', () => {
 				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
 			);
 		});
+		it('should not get without token', async () => {
+			const response = await request(baseUrl).get('/food/all');
+			expect(response.status).toBe(401);
+		});
 	});
 
 	describe('05 GET /food/name/:name', () => {
@@ -107,6 +186,7 @@ describe('foodController Integration Tests', () => {
 			expect(response.body).toEqual({
 				_id: expect.any(String),
 				name: 'TestFood',
+				englishName: 'TestFood',
 				materials: [
 					{
 						name: 'liszt',
@@ -116,14 +196,33 @@ describe('foodController Integration Tests', () => {
 				],
 				price: 10,
 				isEnabled: true,
-				categoryId: [
+				categoryId: {
+					name: 'string',
+					englishName: 'string',
+
+					icon: 'no-image.svg',
+				},
+
+				subCategoryId: [
 					{
 						name: 'string',
 						icon: 'no-image.svg',
+						englishName: 'string',
 					},
 				],
 				image: 'no-image',
 			});
+		});
+		it('should not get without token', async () => {
+			const response = await request(baseUrl).get('/food/name/TestFood');
+			expect(response.status).toBe(401);
+		});
+		it('should not get with wrong name', async () => {
+			const response = await request(baseUrl)
+				.get('/food/name/TestFood1')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The food is not in database!');
 		});
 	});
 
@@ -136,15 +235,35 @@ describe('foodController Integration Tests', () => {
 
 			response.body.forEach((item) => {
 				expect(item).toEqual({
-					categoryId: [catId],
+					subCategoryId: [
+						{
+							name: 'string',
+							icon: 'no-image.svg',
+							englishName: 'string',
+						},
+					],
 					_id: expect.any(String),
 					name: expect.any(String),
 					price: expect.any(Number),
 					materials: expect.any(Array),
 					image: expect.any(String),
+					englishName: expect.any(String),
 					isEnabled: expect.any(Boolean),
+					categoryId: {
+						name: 'string',
+						icon: 'no-image.svg',
+						englishName: 'string',
+					},
 				});
 			});
+		});
+
+		it('should not get with wrong category', async () => {
+			const response = await request(baseUrl)
+				.get('/food/category/string1')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Category not found in the database!');
 		});
 	});
 
@@ -162,8 +281,10 @@ describe('foodController Integration Tests', () => {
 					price: 12,
 					materials: [{ name: 'liszt', quantity: 2 }],
 					isEnabled: true,
-					categoryId: [catId],
+					subCategoryId: [catId],
+					categoryId: catId,
 					image: 'no-image',
+					englishName: 'TestFood',
 				});
 			expect(response.status).toBe(200);
 			expect(
@@ -184,13 +305,20 @@ describe('foodController Integration Tests', () => {
 				],
 				price: 12,
 				isEnabled: true,
-				categoryId: [
+				subCategoryId: [
 					{
 						name: 'string',
 						icon: 'no-image.svg',
+						englishName: 'string',
 					},
 				],
+				categoryId: {
+					name: 'string',
+					icon: 'no-image.svg',
+					englishName: 'string',
+				},
 				image: 'no-image',
+				englishName: 'TestFood',
 			});
 		});
 	});
@@ -209,14 +337,23 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).body
 			).toEqual({
-				categoryId: expect.any(Array),
+				subCategoryId: expect.any(Array),
 				_id: expect.any(String),
 				name: expect.any(String),
 				price: expect.any(Number),
 				materials: expect.any(Array),
 				image: expect.any(String),
 				isEnabled: false,
+				categoryId: expect.any(Object),
+				englishName: expect.any(String),
 			});
+		});
+		it('should not disable a food item with a wrong name', async () => {
+			const response = await request(baseUrl)
+				.patch('/food/disable/asd')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The food is not in database!');
 		});
 	});
 
@@ -234,14 +371,23 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).body
 			).toEqual({
-				categoryId: expect.any(Array),
+				subCategoryId: expect.any(Array),
+				categoryId: expect.any(Object),
 				_id: expect.any(String),
 				name: expect.any(String),
 				price: expect.any(Number),
 				materials: expect.any(Array),
 				image: expect.any(String),
 				isEnabled: true,
+				englishName: expect.any(String),
 			});
+		});
+		it('should not enable a food item with a wrong name', async () => {
+			const response = await request(baseUrl)
+				.patch('/food/enable/asd')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The food is not in database!');
 		});
 	});
 	describe('10 DELETE /food/name/:name', () => {
@@ -257,6 +403,64 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).status
 			).toBe(400);
+		});
+	});
+	describe('11 GET /food/filter', () => {
+		it('should filter food items by field and value', async () => {
+			await request(baseUrl)
+				.post('/food/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestFood',
+					price: 10,
+					materials: [{ name: 'liszt', quantity: 1 }],
+					categoryId: catId,
+					subCategoryId: [catId],
+					image: 'no-image',
+					englishName: 'TestFood',
+				});
+
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'materials.name', value: 'liszt' });
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual(
+				expect.arrayContaining([expect.objectContaining({ name: 'TestFood' })])
+			);
+		});
+
+		it('should return 400 if field is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ value: 'TestFood' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return 400 if value is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return 400 if no items match the filter', async () => {
+			const response = await request(baseUrl)
+				.get('/food/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'NonExistentFood' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'No result in the database for the search condition!'
+			);
 		});
 	});
 });

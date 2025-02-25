@@ -7,9 +7,10 @@ import {
 	userModel,
 } from '../models/mongooseSchema';
 import {
-	authKioskToken,
+	authSalesmanToken,
 	authKitchenToken,
 	authToken,
+	authAdminToken,
 } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
@@ -29,20 +30,58 @@ export default class orderController implements IController {
 	constructor() {
 		this.router.post('/new', authToken, this.newOrder);
 
-		this.router.get('/ongoing', authKioskToken, this.getAllOngoingOrder);
+		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
 		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
 		this.router.get('/finished/:id', authToken, this.getFinishedById);
 		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
 		this.router.get('/all/:id', authToken, this.getById);
 
+		this.router.get('/display', this.getOrdersForDisplay);
+
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
-		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
-		this.router.get('/page/:number', authKioskToken, this.getAllByPage);
+		this.router.patch('/handover/:id', authSalesmanToken, this.receivedOrder);
+
+		this.router.patch(
+			'/revert/finish/:id',
+			authKitchenToken,
+			this.revertKitchenFinishOrder
+		);
+		this.router.patch(
+			'/revert/handover/:id',
+			authSalesmanToken,
+			this.revertReceivedOrder
+		);
+		this.router.get('/page/:number', authAdminToken, this.getAllByPage);
 	}
+
+	private getOrdersForDisplay = async (req: Request, res: Response) => {
+		try {
+			const order = await this.order
+				.find(
+					{
+						finishedTime: null,
+					},
+					{ _id: 0, finishedCokingTime: 1, orderNumber: 1 }
+				)
+				.sort({ orderedTime: 1 });
+
+			if (order) {
+				res.json(order);
+			} else {
+				throw Error('02');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
+		let newOrderId: ObjectId | null = null;
 		try {
 			const newOrder: IOrder = req.body;
 			await this.orderConstraints.validateAsync(newOrder);
@@ -52,10 +91,28 @@ export default class orderController implements IController {
 			});
 			if (userExists.length > 0) {
 				newOrder.orderNumber = await this.getNewOrderNumber();
+
+				const foodsFromOrder = await this.food.find({
+					name: { $in: newOrder.orderedProducts.map((item) => item.name) },
+				});
+
+				let totalPrice = newOrder.orderedProducts.reduce(
+					(acc, item) =>
+						acc +
+						Number(
+							foodsFromOrder.find((food) => food.name === item.name)?.price
+						) *
+							item.quantity,
+					0
+				);
+				if (Number.isNaN(totalPrice)) {
+					throw Error('00');
+				}
+				newOrder.totalPrice = totalPrice;
 				const insertedOrders = await this.order.insertMany([newOrder], {
 					rawResult: true,
 				});
-				const newOrderId = insertedOrders.insertedIds[0];
+				newOrderId = insertedOrders.insertedIds[0];
 				if (insertedOrders.acknowledged) {
 					const newOrderId = insertedOrders.insertedIds[0];
 
@@ -106,10 +163,6 @@ export default class orderController implements IController {
 									) {
 										await this.material.insertMany([materialChange]);
 									} else {
-										await this.material.deleteMany({
-											message: { $regex: newOrderId },
-										});
-										await this.order.deleteOne({ _id: newOrderId });
 										throw Error('56');
 									}
 								}
@@ -128,11 +181,16 @@ export default class orderController implements IController {
 				defaultAnswers.created(res, {
 					orderId: newOrderId,
 					orderNumber: newOrder.orderNumber,
+					totalPrice: newOrder.totalPrice,
 				});
 			} else {
 				throw Error('02');
 			}
 		} catch (error: any) {
+			await this.material.deleteMany({
+				message: { $regex: 'Rendelés ' + newOrderId },
+			});
+			await this.order.deleteOne({ _id: newOrderId });
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)
@@ -169,7 +227,6 @@ export default class orderController implements IController {
 	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-
 			const order = await this.order
 				.find({ finishedTime: null }, { 'orderedProducts._id': 0 })
 				.sort({ orderedTime: -1 });
@@ -296,6 +353,34 @@ export default class orderController implements IController {
 			);
 		}
 	};
+	private revertKitchenFinishOrder = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.updateOne(
+					{
+						_id: id,
+					},
+					{
+						$set: { finishedCokingTime: null },
+					}
+				);
+				if (order.modifiedCount > 0) {
+					webSocetController.sendStateChange(id);
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('64');
+				}
+			} else {
+				defaultAnswers.badRequest(res);
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 	private getAllOrder = async (req: Request, res: Response) => {
 		try {
 			const from: string = req.params.from;
@@ -339,6 +424,36 @@ export default class orderController implements IController {
 					},
 					{
 						$set: { finishedTime: Date.now() },
+					}
+				);
+				if (order.modifiedCount > 0) {
+					webSocetController.sendStateChange(id);
+
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('54');
+				}
+			} else {
+				throw Error('54');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+	private revertReceivedOrder = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.updateOne(
+					{
+						_id: id,
+					},
+
+					{
+						$set: { finishedTime: null },
 					}
 				);
 				if (order.modifiedCount > 0) {

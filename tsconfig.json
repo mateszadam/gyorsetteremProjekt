@@ -33,5 +33,6 @@
     "include": [
         "src/**/*.ts",
         "**/test/**/*.ts",
+        "src/__tests__/orderController.test.js",
     ]
 }

@@ -1,3 +1,4 @@
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -6,6 +7,8 @@ let token = '';
 
 describe('categoryController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
@@ -20,6 +23,7 @@ describe('categoryController Integration Tests', () => {
 				.send({
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
+					englishName: 'TestCategory',
 				});
 			expect(response.status).toBe(200);
 		});
@@ -32,6 +36,19 @@ describe('categoryController Integration Tests', () => {
 				});
 			expect(response.status).toBe(400);
 			expect(response.body.message).toBe('Name is required');
+		});
+		it('should not add a new category when category already exists ', async () => {
+			const response = await request(baseUrl)
+				.post('/category/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestCategory',
+					icon: 'test-icon.svg',
+					englishName: 'TestCategory',
+				});
+
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Category name is already taken!');
 		});
 	});
 
@@ -46,41 +63,76 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: expect.any(String),
 					icon: expect.any(String),
+					englishName: expect.any(String),
 				});
 			});
 		});
+		it('should not get without token', async () => {
+			const response = await request(baseUrl).get('/category/all');
+			expect(response.status).toBe(401);
+		});
 	});
 
-	describe('03 PUT /category/:name', () => {
-		if (
-			('should update category by name',
-			async () => {
-				const response = await request(baseUrl)
-					.put('/category/TestCategory')
-					.set('Authorization', `Bearer ${token}`)
-					.send({
-						name: 'TestCategory',
-						icon: 'test-icon3.svg',
-					});
-				expect(response.status).toBe(200);
-				expect(
+	describe('03 PUT /category/:id', () => {
+		it('should update category by id', async () => {
+			const categories = await request(baseUrl)
+				.get('/category/all')
+				.set('Authorization', `Bearer ${token}`);
+
+			const response = await request(baseUrl)
+				.put(`/category/${categories.body[0]._id}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestCategory2',
+					icon: 'test-icon3.svg',
+					englishName: 'TestCategory2',
+				});
+			expect(response.status).toBe(200);
+			expect(
+				(
 					await request(baseUrl)
 						.get('/category/all')
 						.set('Authorization', `Bearer ${token}`)
-				).toEqual([
+				).body
+			).toEqual(
+				expect.arrayContaining([
 					{
-						name: 'TestCategory',
+						_id: expect.any(String),
+						name: 'TestCategory2',
 						icon: 'test-icon3.svg',
+						englishName: 'TestCategory2',
 					},
-				]);
-			})
-		);
+				])
+			);
+		});
+		it('should not update category without id', async () => {
+			const response = await request(baseUrl)
+				.put('/category/TestCategory2')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					icon: 'test-icon3.svg',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Name is required');
+		});
+		it('should not update category when category already exists ', async () => {
+			const response = await request(baseUrl)
+				.put('/category/TestCategoryId')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestCategory',
+					icon: 'test-icon3.svg',
+					englishName: 'TestCategory',
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
 	});
 
 	describe('04 DELETE /category/:name', () => {
 		it('should category by name', async () => {
 			const response = await request(baseUrl)
-				.delete('/category/TestCategory')
+				.delete('/category/TestCategory2')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 			expect(
@@ -89,8 +141,75 @@ describe('categoryController Integration Tests', () => {
 					.set('Authorization', `Bearer ${token}`)
 			).toEqual(
 				expect.not.arrayContaining([
-					expect.objectContaining({ name: 'TestCategory' }),
+					expect.objectContaining({ name: 'TestCategory2' }),
 				])
+			);
+		});
+		it('should not delete category without name', async () => {
+			const response = await request(baseUrl)
+				.delete('/category/dasd')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+		});
+	});
+	describe('05 GET /category/filter', () => {
+		it('should filter categories by field and value', async () => {
+			await request(baseUrl)
+				.post('/category/add')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestCategory2',
+					icon: 'test-icon3.svg',
+					englishName: 'TestCategory2',
+				});
+
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'TestCategory2' });
+
+			await request(baseUrl)
+				.delete('/category/TestCategory2')
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ name: 'TestCategory2' }),
+				])
+			);
+		});
+
+		it('should return error if field is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ value: 'TestCategory' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return error if value is missing', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'The search condition is not found in the URL!'
+			);
+		});
+
+		it('should return error if no categories match the filter', async () => {
+			const response = await request(baseUrl)
+				.get('/category/filter')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'name', value: 'NonExistentCategory' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'No result in the database for the search condition!'
 			);
 		});
 	});

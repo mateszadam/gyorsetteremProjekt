@@ -102,17 +102,18 @@ export default class userController implements IController {
 			};
 			const user = await this.user.insertMany([userData]);
 			if (user) {
+				log(`User ${userData.name} registered`);
 				defaultAnswers.created(res);
 			} else {
+				log(`User ${userData.name} not registered`);
 				throw Error('02');
 			}
 		} catch (error: any) {
+			log(`Error: ${error.message}`);
+
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(
-					req,
-					languageBasedErrorMessage.getError(req, error.message)
-				)
+				languageBasedErrorMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -176,6 +177,10 @@ export default class userController implements IController {
 		try {
 			let userInput: IUser = req.body;
 			await this.userConstraints.validateAsync(userInput);
+
+			if (!['admin', 'kitchen', 'salesman'].includes(userInput.role)) {
+				throw Error('72');
+			}
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {
@@ -268,6 +273,11 @@ export default class userController implements IController {
 			'string.empty': '30',
 			'string.email': '31',
 			'any.required': '30',
+		}),
+		role: Joi.string().messages({
+			'string.base': '79',
+			'string.empty': '79',
+			'any.required': '79',
 		}),
 	});
 }

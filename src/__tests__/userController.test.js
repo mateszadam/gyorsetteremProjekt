@@ -1,4 +1,3 @@
-const { error } = require('console');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -8,6 +7,8 @@ let token = '';
 
 describe('userController Integration Tests', () => {
 	beforeAll(async () => {
+		await request(baseUrl).post('/drop');
+
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
@@ -23,7 +24,6 @@ describe('userController Integration Tests', () => {
 					password: 'Test@1234',
 					email: 'testcustomer@example.com',
 				});
-			error(response.body);
 			expect(response.status).toBe(201);
 		});
 	});

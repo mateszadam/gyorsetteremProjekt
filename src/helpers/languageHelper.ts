@@ -17,15 +17,15 @@ class languageBasedErrorMessage {
 			message = this.errorMessages[language][0][errorCode];
 		}
 		if (!message) {
+			console.log('----------------------------');
+			console.log('\x1b[43m%s\x1b[0m', errorCode);
+			console.log('----------------------------');
 			// Custom error messages on errors
 			if (errorCode.includes('E11000'))
 				message = this.errorMessages[language][0][60];
-			if (errorCode.includes('Cast to ObjectId failed for value'))
+			else if (errorCode.includes('Cast to ObjectId failed for value'))
 				message = this.errorMessages[language][0][61];
 			else {
-				console.log('----------------------------');
-				console.log('\x1b[41m%s\x1b[0m', errorCode);
-				console.log('----------------------------');
 				message = errorCode;
 			}
 		}

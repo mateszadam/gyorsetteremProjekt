@@ -26,10 +26,7 @@ export default class webSocetController {
 					header: message.header,
 					orderId: message.id,
 				};
-				console.log(ws.header);
 				this.clientsToNotifyOnStateChange.set(ws, metadata);
-
-				console.log(`Received message => ${message}`);
 			});
 
 			ws.on('close', () => {
@@ -42,7 +39,6 @@ export default class webSocetController {
 
 	public static async sendStateChange(id: string) {
 		const order: IOrder[] = await this.order.find({ orderId: id });
-		console.log(order);
 		const message = JSON.stringify(order);
 		if (order) {
 			[...this.clientsToNotifyOnStateChange].forEach((client) => {

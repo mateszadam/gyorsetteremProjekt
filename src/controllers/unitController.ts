@@ -61,7 +61,7 @@ export default class unitController implements IController {
 	private deleteOneByName = async (req: Request, res: Response) => {
 		try {
 			const name = req.params.name;
-			log(name);
+
 			if (name) {
 				const response = await this.unit.deleteOne({ materialName: name });
 				if (response) {
@@ -84,10 +84,9 @@ export default class unitController implements IController {
 		try {
 			const name = req.params.name;
 			const newUnit = req.body;
-			log(name);
+
 			if (name) {
 				if (newUnit.unit) {
-					console.log(newUnit.unit);
 					const response = await this.unit.updateOne(
 						{ materialName: name },
 						{ $set: { unit: newUnit.unit } }

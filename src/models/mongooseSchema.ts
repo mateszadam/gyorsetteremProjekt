@@ -42,6 +42,13 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Category name already exists'],
+			trim: true,
+		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
 		},
 		icon: {
 			type: String,
@@ -64,6 +71,13 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Food name is already taken'],
+			trim: true,
+		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
 		},
 		materials: [
 			{
@@ -86,7 +100,12 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: Boolean,
 			default: true,
 		},
-		categoryId: [
+		categoryId: {
+			type: Schema.Types.ObjectId,
+			required: [true, 'Category is required'],
+			ref: 'categoryId',
+		},
+		subCategoryId: [
 			{
 				type: Schema.Types.ObjectId,
 				required: [true, 'Category is required'],
@@ -184,23 +203,30 @@ const orderSchema = new Schema<SchemaDefinition>(
 				message: 'You cannot specify a date later than the current date!',
 			},
 		},
+		totalPrice: {
+			type: Number,
+			required: [true, 'Total price is required'],
+			min: [0, 'Price cannot be negative'],
+		},
 		finishedCokingTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date();
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		finishedTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date() || v === null;
 				},
-				message: 'You cannot specify a date earlier than the current date!',
+				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		orderedProducts: [
 			{

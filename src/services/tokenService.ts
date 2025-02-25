@@ -5,6 +5,22 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 function generateToken(user: IUser) {
+	let expiresIn = '1h';
+
+	if (user.role === 'admin') {
+		expiresIn = '1h';
+	}
+	switch (user.role) {
+		case 'kitchen':
+			expiresIn = '12h';
+			break;
+		case 'salesman':
+			expiresIn = '12h';
+			break;
+		default:
+			expiresIn = '1h';
+	}
+
 	return jwt.sign(
 		{
 			_id: user._id,
@@ -22,7 +38,7 @@ function generateToken(user: IUser) {
 
 async function isAuthValid(
 	token: string,
-	roles: string[] = ['customer', 'kitchen', 'kiosk']
+	roles: string[] = ['customer', 'kitchen', 'salesman']
 ): Promise<boolean> {
 	try {
 		roles.push('admin');
@@ -37,7 +53,6 @@ async function isAuthValid(
 		return false;
 	} catch (err: any) {
 		console.log(err.message);
-
 		return false;
 	}
 }
@@ -81,11 +96,11 @@ const authAdminToken = async (req: any, res: any, next: any) => {
 	}
 };
 
-const authKioskToken = async (req: any, res: any, next: any) => {
+const authSalesmanToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 	if (token == null) return res.sendStatus(401);
 
-	if (!(await isAuthValid(token, ['kiosk']))) {
+	if (!(await isAuthValid(token, ['salesman']))) {
 		defaultAnswers.notAuthorized(res);
 	} else {
 		next();
@@ -98,6 +113,6 @@ export {
 	authToken,
 	authAdminToken,
 	authKitchenToken,
-	authKioskToken,
+	authSalesmanToken,
 	getDataFromToken,
 };
