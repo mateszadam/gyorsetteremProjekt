@@ -1,4 +1,3 @@
-const { error } = require('console');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -25,7 +24,6 @@ describe('userController Integration Tests', () => {
 					password: 'Test@1234',
 					email: 'testcustomer@example.com',
 				});
-			error(response.body);
 			expect(response.status).toBe(201);
 		});
 	});

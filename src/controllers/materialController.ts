@@ -71,7 +71,6 @@ export default class materialController implements IController {
 							...oldMaterialChange,
 							...inputMaterialChange,
 						};
-						log(newMaterialChange);
 
 						const databaseAnswer = await this.material.findByIdAndUpdate(
 							materialChangeId,
@@ -135,7 +134,6 @@ export default class materialController implements IController {
 						},
 					},
 				]);
-				log(isEnoughMaterial);
 				if (
 					isEnoughMaterial.length === 0 ||
 					isEnoughMaterial[0].inStock + inputMaterial.quantity < 0
@@ -145,13 +143,11 @@ export default class materialController implements IController {
 
 			const databaseAnswer = await this.material.insertMany([inputMaterial]);
 			if (databaseAnswer) {
-				log(databaseAnswer);
 				defaultAnswers.ok(res);
 			} else {
 				throw Error('02');
 			}
 		} catch (error: any) {
-			log(error);
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)

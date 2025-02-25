@@ -26,10 +26,7 @@ export default class webSocetController {
 					header: message.header,
 					orderId: message.id,
 				};
-				console.log(ws.header);
 				this.clientsToNotifyOnStateChange.set(ws, metadata);
-
-				console.log(`Received message => ${message}`);
 			});
 
 			ws.on('close', () => {

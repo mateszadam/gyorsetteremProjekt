@@ -105,9 +105,7 @@ export default class orderController implements IController {
 							item.quantity,
 					0
 				);
-				log(totalPrice);
 				if (Number.isNaN(totalPrice)) {
-					log(newOrder.orderedProducts);
 					throw Error('00');
 				}
 				newOrder.totalPrice = totalPrice;
@@ -189,7 +187,6 @@ export default class orderController implements IController {
 				throw Error('02');
 			}
 		} catch (error: any) {
-			log('Rendelés ' + newOrderId);
 			await this.material.deleteMany({
 				message: { $regex: 'Rendelés ' + newOrderId },
 			});
