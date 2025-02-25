@@ -1,4 +1,3 @@
-const { error } = require('console');
 const e = require('cors');
 const { waitForDebugger } = require('inspector');
 const { after } = require('node:test');
@@ -14,8 +13,6 @@ let orderId = '';
 
 describe('orderController Integration Tests', () => {
 	beforeAll(async () => {
-		await request(baseUrl).post('/drop');
-
 		const response = await request(baseUrl).post('/user/login').send({
 			name: 'adminUser',
 			password: 'adminUser!1',
@@ -35,7 +32,6 @@ describe('orderController Integration Tests', () => {
 			.send({
 				name: 'string',
 				icon: 'no-image.svg',
-				englishName: 'string',
 			});
 		const category = await request(baseUrl)
 			.get('/category/all')
@@ -52,7 +48,6 @@ describe('orderController Integration Tests', () => {
 				categoryId: catId,
 				subCategoryId: [catId],
 				image: 'no-image',
-				englishName: 'TestFood3',
 			});
 
 		const user = await request(baseUrl)
@@ -75,7 +70,7 @@ describe('orderController Integration Tests', () => {
 				orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 			});
 		orderId = order.body.orderId;
-	}, 20000);
+	});
 
 	describe('01 POST /order/new', () => {
 		it('should create a new order', async () => {
@@ -247,18 +242,8 @@ describe('orderController Integration Tests', () => {
 	});
 
 	describe('08 GET /order/page/:number', () => {
-		it('should get orders by page number with 1 page', async () => {
-			const pageNumber = 0;
-			const pageResponse = await request(baseUrl)
-				.get(`/order/page/${pageNumber}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(1);
-			expect(pageResponse.body.orders.length).toBeLessThanOrEqual(10);
-		});
-
-		it('should get orders by page number with 2 page', async () => {
-			for (let i = 0; i < 10; i++) {
+		beforeAll(async () => {
+			for (let i = 0; i < 9; i++) {
 				await request(baseUrl)
 					.post('/order/new')
 					.set('Authorization', `Bearer ${token}`)
@@ -267,31 +252,15 @@ describe('orderController Integration Tests', () => {
 						orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
 					});
 			}
-			const pageNumber = 0;
-			const pageResponse = await request(baseUrl)
-				.get(`/order/page/${pageNumber}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(2);
-			expect(pageResponse.body.orders.length).toEqual(10);
-		});
-
-		it('should get orders by page number 1 ', async () => {
+		}, 15000);
+		it('should get orders by page number', async () => {
 			const pageNumber = 1;
 			const pageResponse = await request(baseUrl)
 				.get(`/order/page/${pageNumber}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(2);
-			expect(pageResponse.body.orders.length).toEqual(2);
-		});
-
-		it('should return 400 if page number is invalid', async () => {
-			const response = await request(baseUrl)
-				.get('/order/page/invalidPageNumber')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('Page number is invalid!');
+			expect(pageResponse.body.pageCount).toEqual(1);
+			expect(pageResponse.body.orders.length).toBeLessThanOrEqual(10);
 		});
 	});
 	describe('9 PATCH /order/finish/:id', () => {

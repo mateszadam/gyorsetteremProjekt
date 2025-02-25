@@ -3,10 +3,10 @@ import mongoose from 'mongoose';
 import { IController } from './models/models';
 import userController from './controllers/userController';
 import orderController from './controllers/orderController';
-import materialController from './controllers/materialController';
+import materialController from './controllers/inventoryController';
 import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
-import unitController from './controllers/unitController';
+import unitController from './controllers/materialController';
 import categoryController from './controllers/categoryController';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
@@ -16,8 +16,8 @@ import ImplementMiddleware from './helpers/middlewareHelper';
 import {
 	categoryModel,
 	foodModel,
+	materialChangeModel,
 	orderModel,
-	unitOfMeasureModel,
 	userModel,
 } from './models/mongooseSchema';
 
@@ -45,7 +45,7 @@ class App {
 				await categoryModel.collection.drop();
 				await foodModel.collection.drop();
 				await orderModel.collection.drop();
-				await unitOfMeasureModel.collection.drop();
+				await materialChangeModel.collection.drop();
 				console.log('\x1b[42m%s\x1b[0m', 'Database dropped');
 				res.send('Database dropped');
 			});

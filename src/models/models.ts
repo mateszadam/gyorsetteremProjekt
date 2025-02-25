@@ -19,7 +19,7 @@ interface ICategory {
 
 interface IMaterial {
 	_id: ObjectId;
-	name: string;
+	materialId: ObjectId;
 	quantity: number;
 	message: string;
 }

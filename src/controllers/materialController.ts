@@ -1,148 +1,34 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial } from '../models/models';
-import { foodModel, materialModel } from '../models/mongooseSchema';
-import { authAdminToken, authToken } from '../services/tokenService';
+import { IController, IUnit } from '../models/models';
+import { materialChangeModel, materialModel } from '../models/mongooseSchema';
+import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
+
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
 
-export default class materialController implements IController {
+export default class unitController implements IController {
 	public router = Router();
-	public endPoint = '/material';
 	private material = materialModel;
-	private food = foodModel;
+	private materialChange = materialChangeModel;
+	public endPoint = '/material';
+
 	constructor() {
-		this.router.post('/add', authAdminToken, this.addMaterial);
-		this.router.get('/stock', authAdminToken, this.getAllMaterial);
-		this.router.get('/all', authAdminToken, this.getAllMaterialFromRecipe);
-		this.router.get('/changes', authAdminToken, this.getChanges);
-		this.router.patch('/update/:id', authAdminToken, this.updateMaterial);
-		this.router.get('/filter', authAdminToken, this.filterMaterial);
+		this.router.post('', authAdminToken, this.add);
+		this.router.get('/stock', authAdminToken, this.getAll);
+		this.router.delete('/:id', authAdminToken, this.deleteOneById);
+		this.router.patch('/:id', authAdminToken, this.updateByMaterialId);
+		this.router.put('/:id', authAdminToken, this.updateByMaterialId);
 	}
 
-	private filterMaterial = async (req: Request, res: Response) => {
+	private add = async (req: Request, res: Response) => {
 		try {
-			const { field, value } = req.query;
-			if (field && value) {
-				const selectedItems = await this.material.find({
-					[field as string]: value,
-				});
-				if (selectedItems.length > 0) {
-					res.send(selectedItems);
-				} else {
-					throw Error('77');
-				}
-			} else {
-				throw Error('76');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
+			const newUnit: IUnit = req.body;
+			await this.materialConstraints.validateAsync(newUnit);
 
-	private updateMaterial = async (req: Request, res: Response) => {
-		try {
-			const materialChangeId = req.params.id;
-			const inputMaterialChange: IMaterial = req.body;
-			if (materialChangeId) {
-				if (
-					inputMaterialChange.message ||
-					inputMaterialChange.quantity ||
-					inputMaterialChange.name
-				) {
-					const oldMaterialChange = await this.material
-						.findOne(
-							{ _id: materialChangeId },
-							{ _id: 0, name: 1, quantity: 1, message: 1, date: 1 }
-						)
-						.lean();
-					if (oldMaterialChange) {
-						Object.keys(inputMaterialChange).forEach((key) => {
-							if (inputMaterialChange[key as keyof IMaterial] === '') {
-								delete inputMaterialChange[key as keyof IMaterial];
-							}
-						});
-
-						const newMaterialChange = {
-							...oldMaterialChange,
-							...inputMaterialChange,
-						};
-
-						const databaseAnswer = await this.material.findByIdAndUpdate(
-							materialChangeId,
-							newMaterialChange
-						);
-
-						if (databaseAnswer?.isModified) {
-							defaultAnswers.ok(res);
-						} else {
-							throw Error('02');
-						}
-					} else {
-						throw Error('67');
-					}
-				} else {
-					throw Error('69');
-				}
-			} else {
-				throw Error('68');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getChanges = async (req: Request, res: Response) => {
-		try {
-			const changes = await this.material.find({}).sort({ date: -1 });
-			if (changes) {
-				res.status(200).send(changes);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private addMaterial = async (req: Request, res: Response) => {
-		try {
-			const inputMaterial: IMaterial = req.body;
-			await this.materialConstraints.validateAsync(inputMaterial);
-
-			if (inputMaterial.quantity < 0) {
-				const isEnoughMaterial = await this.material.aggregate([
-					{
-						$group: {
-							_id: '$name',
-							inStock: { $sum: '$quantity' },
-						},
-					},
-					{
-						$match: {
-							_id: inputMaterial.name,
-						},
-					},
-				]);
-				if (
-					isEnoughMaterial.length === 0 ||
-					isEnoughMaterial[0].inStock + inputMaterial.quantity < 0
-				)
-					throw Error('71');
-			}
-
-			const databaseAnswer = await this.material.insertMany([inputMaterial]);
-			if (databaseAnswer) {
+			const response = await this.material.insertMany([newUnit]);
+			if (response) {
 				defaultAnswers.ok(res);
 			} else {
 				throw Error('02');
@@ -154,41 +40,45 @@ export default class materialController implements IController {
 			);
 		}
 	};
-
-	private getAllMaterial = async (req: Request, res: Response) => {
+	private getAll = async (req: Request, res: Response) => {
 		try {
-			const materials = await this.material.aggregate([
-				{
-					$group: {
-						_id: '$name',
-						inStock: { $sum: '$quantity' },
-					},
-				},
-				{
-					$lookup: {
-						from: 'unitOfMeasures',
-						localField: '_id',
-						foreignField: 'materialName',
-						as: 'UOM',
-					},
-				},
-				{
-					$project: {
-						_id: 1,
-						inStock: 1,
-						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
-					},
-				},
-				{
-					$match: {
-						inStock: { $gt: 0 },
-					},
-				},
-			]);
-			if (materials) {
-				res.status(200).send(materials);
+			const { field, value, page } = req.query;
+			const pageNumber = Number(page) || 1;
+			const itemsPerPage = 10;
+			const skip = (pageNumber - 1) * itemsPerPage;
+
+			if (field && value) {
+				const selectedItems = await this.material
+					.find({ [field as string]: value })
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (selectedItems.length > 0) {
+					res.send({
+						items: selectedItems,
+						pageCount: Math.ceil(
+							(await this.material.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
 			} else {
-				throw Error('02');
+				const allItems = await this.material
+					.find({})
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (allItems.length > 0) {
+					res.send({
+						items: allItems,
+						pageCount: Math.ceil(
+							(await this.material.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -197,85 +87,58 @@ export default class materialController implements IController {
 			);
 		}
 	};
-	private getAllMaterialFromRecipe = async (req: Request, res: Response) => {
+
+	private deleteOneById = async (req: Request, res: Response) => {
 		try {
-			const materialsInStock = await this.material.aggregate([
-				{
-					$facet: {
-						stockMaterials: [
-							{
-								$group: {
-									_id: '$name',
-									inStock: { $sum: '$quantity' },
-								},
-							},
-							{
-								$project: {
-									_id: 0,
-									name: '$_id',
-									inStock: 1,
-								},
-							},
-						],
-						recipeMaterials: [
-							{
-								$lookup: {
-									from: 'foods',
-									pipeline: [
-										{ $unwind: '$material' },
-										{
-											$group: {
-												_id: '$material.name',
-											},
-										},
-									],
-									as: 'recipes',
-								},
-							},
-							{ $unwind: '$recipes' },
-							{
-								$project: {
-									name: '$recipes._id',
-									inStock: { $literal: 0 },
-								},
-							},
-						],
-					},
-				},
-				{
-					$project: {
-						combined: {
-							$setUnion: ['$stockMaterials', '$recipeMaterials'],
-						},
-					},
-				},
-				{ $unwind: '$combined' },
-				{
-					$group: {
-						_id: '$combined.name',
-						inStock: { $max: '$combined.inStock' },
-					},
-				},
-				{
-					$lookup: {
-						from: 'unitOfMeasures',
-						localField: '_id',
-						foreignField: 'materialName',
-						as: 'UOM',
-					},
-				},
-				{
-					$project: {
-						_id: 1,
-						inStock: 1,
-						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
-					},
-				},
-			]);
-			if (materialsInStock) {
-				res.status(200).send(materialsInStock);
+			const id = req.params.id;
+
+			if (id) {
+				await materialChangeModel.deleteMany({ materialId: id });
+				const response = await this.material.findByIdAndDelete(id);
+				if (response) {
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('02');
+				}
 			} else {
-				throw Error('02');
+				throw Error('42');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private updateByMaterialId = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
+			const body = req.body;
+
+			if (id) {
+				const oldMaterial = await this.material.findById(id);
+				if (!oldMaterial) {
+					throw Error('06');
+				}
+				const newUnit: IUnit = {
+					...oldMaterial,
+					...body,
+					_id: oldMaterial._id,
+				};
+
+				if (newUnit) {
+					const response = await this.material.findByIdAndUpdate(id, newUnit);
+					if (response) {
+						defaultAnswers.ok(res);
+					} else {
+						throw Error('02');
+					}
+				} else {
+					throw Error('32');
+				}
+			} else {
+				throw Error('42');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -293,11 +156,16 @@ export default class materialController implements IController {
 				'string.pattern.base': '19',
 				'any.required': '17',
 			}),
-		quantity: Joi.number().required().messages({
-			'any.required': '37',
-		}),
-		message: Joi.string().required().messages({
-			'any.required': '39',
+		englishName: Joi.string()
+			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9 ]+$/)
+			.required()
+			.messages({
+				'string.pattern.base': '19',
+				'any.required': '17',
+			}),
+		unit: Joi.string().required().messages({
+			'any.required': '32',
+			'string.empty': '32',
 		}),
 	});
 }

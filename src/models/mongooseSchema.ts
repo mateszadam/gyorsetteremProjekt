@@ -134,23 +134,15 @@ const materialSchema = new Schema<SchemaDefinition>(
 			lowercase: true,
 			trim: true,
 		},
-		quantity: {
-			type: Number,
-			required: [true, 'Quantity is required'],
-		},
-		message: {
+		englishName: {
 			type: String,
-			default: '',
+			required: [true, 'English name is required'],
+			lowercase: true,
+			trim: true,
 		},
-		date: {
-			type: Date,
-			default: new Date(),
-			validate: {
-				validator: function (v: Date) {
-					return v <= new Date();
-				},
-				message: 'You cannot specify a date later than the current date!',
-			},
+		unit: {
+			type: String,
+			required: [true, 'Unit is required'],
 		},
 	},
 	{
@@ -162,19 +154,32 @@ const materialSchema = new Schema<SchemaDefinition>(
 );
 export const materialModel = model('materialId', materialSchema, 'materials');
 
-const unitOfMeasure = new Schema<SchemaDefinition>(
+const materialChangeSchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
-		materialName: {
+		materialId: {
+			type: Schema.Types.ObjectId,
+			required: [true, 'Material is required'],
+			ref: 'materialId',
+		},
+		quantity: {
+			type: Number,
+			required: [true, 'Quantity is required'],
+		},
+		message: {
 			type: String,
-			required: [true, 'Name is required'],
-			unique: [true, 'The material already has a unit of measure'],
-			lowercase: true,
+			default: '',
 			trim: true,
 		},
-		unit: {
-			type: String,
-			required: [true, 'Unit of measure is required'],
+		date: {
+			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v <= new Date() || v === null;
+				},
+				message: 'You cannot specify a date later than the current date!',
+			},
+			default: new Date(),
 		},
 	},
 	{
@@ -258,8 +263,8 @@ const orderSchema = new Schema<SchemaDefinition>(
 export const foodModel = model('foodId', foodSchema, 'foods');
 export const orderModel = model('orderId', orderSchema, 'orders');
 
-export const unitOfMeasureModel = model(
-	'unitId',
-	unitOfMeasure,
-	'unitOfMeasures'
+export const materialChangeModel = model(
+	'materialChangeId',
+	materialChangeSchema,
+	'materialChanges'
 );

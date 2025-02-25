@@ -150,7 +150,7 @@ paths:
 
       responses:
         200:
-          description: Category modifyed
+          description: Category modified
         401:
           description: Unauthorized
   /category/filter:
@@ -362,7 +362,7 @@ paths:
               $ref: '#/components/schemas/Food'
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
+        - name: id
           in: path
           required: true
           schema:
@@ -554,177 +554,125 @@ paths:
       400:
         description: Bad request
 
-# Material
-/material/add:
+# Inventory
+/inventory:
   post:
-    summary: Add new material change to inventory
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-    tags: [Material changes]
+    tags:
+      - Inventory
+    summary: Add a new material change
     security:
       - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                default: kenyér
-              quantity:
-                type: number
-                default: 2
-              message:
-                type: string
-                default: Vásárlás
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: Materials successfully added
-      400:
-        description: Bad request - Invalid input
-      401:
-        description: Unauthorized - Invalid or missing token
-/material/stock:
+      '200':
+        description: Material change added successfully
+      '400':
+        description: Bad request
   get:
-    summary: Get current material stock levels
-    tags: [Material changes]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
+    tags:
+      - Inventory
+    summary: Get all material changes
     security:
       - adminBearerAuth: []
-    responses:
-      200:
-        description: List of materials with stock levels
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  inStock:
-                    type: number
-                  unit:
-                    type: string
-      401:
-        description: Unauthorized access
-/material/all:
-  get:
-    summary: Get all materials from recipes and stock
-    tags: [Material changes]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-    security:
-      - adminBearerAuth: []
+      - name: field
+        in: query
+        description: Field to filter by
+        required: false
+        schema:
+          type: string
+      - name: value
+        in: query
+        description: Value to filter by
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Page number for pagination
+        required: false
+        schema:
+          type: integer
     responses:
-      200:
-        description: Combined list of materials from recipes and stock
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  inStock:
-                    type: number
-                  unit:
-                    type: string
-      401:
-        description: Unauthorized access
-/material/changes:
-  get:
-    summary: Get all materials changes
-    tags: [Material changes]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-    security:
-      - adminBearerAuth: []
-    responses:
-      200:
-        description: Successfully retrieved
-      401:
-        description: Unauthorized access
-/material/update/{id}:
+      '200':
+        description: A list of material changes
+      '400':
+        description: Bad request
   patch:
-    summary: Update material change by ID
-    tags: [Material changes]
+    tags:
+      - Inventory
+    summary: Update a material change
+    security:
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
+      - name: id
+        in: path
         required: true
         schema:
           type: string
-        description: The ID of the material to update
-    security:
-      - adminBearerAuth: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Name of the material
-              quantity:
-                type: number
-                description: Quantity of the material
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: Material updated successfully
-      400:
+      '200':
+        description: Material change updated successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized access
-/material/filter:
-  get:
-    summary: Filter material change by field and value
-    tags: [Material changes]
+  put:
+    tags:
+      - Inventory
+    summary: Update a material change
     security:
       - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: query
-        name: field
+      - name: id
+        in: path
+        required: true
         schema:
           type: string
-        required: true
-        description: The field to filter by
-      - in: query
-        name: value
-        schema:
-          type: string
-        required: true
-        description: The value to filter by
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: List of material changes
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  name:
-                    type: string
-                  quantity:
-                    type: number
-                  message:
-                    type: string
-      400:
+      '200':
+        description: Material change updated successfully
+      '400':
         description: Bad request
+  delete:
+    tags:
+      - Inventory
+    summary: Delete a material change
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Material change deleted successfully
+      '400':
+        description: Bad request
+
 # Order
 /order/new:
   post:
@@ -1011,111 +959,122 @@ paths:
       400:
         description: Token is invalid
 
-# Units
-/unit/add:
+/material:
   post:
-    summary: Add a new unit of measure
-    tags: [Units]
-    security:
-      - adminBearerAuth: []
+    summary: Add a new material
+    tags: [Material]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - materialName
-              - unit
-            properties:
-              materialName:
-                type: string
-                description: Name of the item
-              unit:
-                type: string
-                description: Name of the unit of measure
+            $ref: '#/components/schemas/Material'
     responses:
-      200:
-        description: Unit successfully added
-      400:
+      '200':
+        description: Material added successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/all:
+/material/stock:
   get:
-    summary: Get all units of measure
-    tags: [Units]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
+    summary: Get all materials
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: field
+        schema:
+          type: string
+      - in: query
+        name: value
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
     responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
+      '200':
+        description: List of materials
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/delete/{name}:
+/material/{id}:
   delete:
-    summary: Delete unit of measure by name
-    tags: [Units]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: name
-        schema:
-          type: string
-          required: true
-          description: Unit name
+    summary: Delete a material by ID
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
-    responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
-        description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/update/{name}:
-  patch:
-    summary: Delete unit of measure by name
-    tags: [Units]
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
-        name: name
+        name: id
+        required: true
         schema:
           type: string
-          required: true
-          description: Unit name
+    responses:
+      '200':
+        description: Material deleted successfully
+      '400':
+        description: Bad request
+  patch:
+    summary: Update a material by ID
+    tags: [Material]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - unit
-            properties:
-              unit:
-                type: string
-                default: db
+            $ref: '#/components/schemas/Material'
+    responses:
+      '200':
+        description: Material updated successfully
+      '400':
+        description: Bad request
+  put:
+    summary: Update a material by ID
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Material'
     responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
+      '200':
+        description: Material updated successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
 # User handling
 /user/all:
   get:
@@ -1341,3 +1300,29 @@ components:
         image:
           type: string
           default: no-image.svg
+    MaterialChange:
+      type: object
+      properties:
+        materialId:
+          type: string
+        quantity:
+          type: number
+        message:
+          type: string
+      required:
+        - materialId
+        - quantity
+        - message
+    Material:
+      type: object
+      properties:
+        name:
+          type: string
+        englishName:
+          type: string
+        unit:
+          type: string
+      required:
+        - name
+        - englishName
+        - unit
