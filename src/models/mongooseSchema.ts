@@ -81,10 +81,11 @@ const foodSchema = new Schema<SchemaDefinition>(
 		},
 		materials: [
 			{
-				name: {
-					type: String,
+				_id: {
+					type: Schema.Types.ObjectId,
 					required: true,
 					lowercase: true,
+					ref: 'materialId',
 				},
 				quantity: {
 					type: Number,
@@ -133,6 +134,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 			required: [true, 'Name is required'],
 			lowercase: true,
 			trim: true,
+			unique: [true, 'Material name already exists'],
 		},
 		englishName: {
 			type: String,
@@ -159,8 +161,8 @@ const materialChangeSchema = new Schema<SchemaDefinition>(
 		_id: Schema.Types.ObjectId,
 		materialId: {
 			type: Schema.Types.ObjectId,
+			index: true,
 			required: [true, 'Material is required'],
-			ref: 'materialId',
 		},
 		quantity: {
 			type: Number,
@@ -235,11 +237,10 @@ const orderSchema = new Schema<SchemaDefinition>(
 		},
 		orderedProducts: [
 			{
-				name: {
-					type: String,
+				_id: {
+					type: Schema.Types.ObjectId,
 					required: true,
-					lowercase: true,
-					trim: true,
+					ref: 'foodId',
 				},
 				quantity: {
 					type: Number,

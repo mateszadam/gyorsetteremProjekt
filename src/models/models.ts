@@ -17,16 +17,17 @@ interface ICategory {
 	englishName: string;
 }
 
-interface IMaterial {
+interface IMaterialChange {
 	_id: ObjectId;
 	materialId: ObjectId;
 	quantity: number;
 	message: string;
 }
 
-interface IUnit {
-	_id: ObjectId;
-	materialName: string;
+interface IMaterial {
+	_id?: ObjectId;
+	name: string;
+	englishName: string;
 	unit: string;
 }
 
@@ -38,17 +39,16 @@ interface IFood {
 	englishName: string;
 	isEnabled: boolean;
 	subCategoryId: string[] | undefined;
-	categoryId: string;
+	categoryId: ObjectId;
 }
 
 interface IFoodMaterial {
 	_id: ObjectId;
-	name: string;
 	quantity: number;
 }
 interface IOrder {
 	_id: ObjectId;
-	costumerId: string;
+	costumerId: ObjectId;
 	finishedTime: Date | undefined;
 	orderedTime: Date;
 	finishedCokingTime: Date | undefined;
@@ -62,8 +62,16 @@ interface IController {
 }
 
 interface IOrderedProducts {
-	name: string;
+	_id: ObjectId;
 	quantity: number;
 }
 
-export { IUser, IMaterial, IController, IFood, IOrder, IUnit, ICategory };
+export {
+	IUser,
+	IMaterialChange,
+	IController,
+	IFood,
+	IOrder,
+	IMaterial,
+	ICategory,
+};

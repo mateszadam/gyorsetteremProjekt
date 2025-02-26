@@ -79,7 +79,15 @@
 			"76": "A keresési feltétel nem található az url-ben!",
 			"77": "A keresési feltételre nincs eredmény az adatbázisban!",
 			"78": "Az angol név megadása kötelező",
-			"79": "A jogosultság megadása kötelező"
+			"79": "A jogosultság megadása kötelező",
+			"80": "Az étel nem rendelhető alapanyaghiány miatt!",
+			"81": "A rendelt étel nem létezik!",
+			"82": "A rendelt étel rendelése nincs engedélyezve!",
+			"83": "A keresett mező nem létezik!",
+			"84": "Az alkategória nem található az adatbázisban!",
+			"85": "Az alapanyag nem létezik!",
+			"86": "Az étel neve már foglalt!",
+			"87": "Az alapanyag neve már foglalt!"
 		}
 	],
 	"en-GB": [
@@ -162,7 +170,12 @@
 			"76": "The search condition is not found in the URL!",
 			"77": "No result in the database for the search condition!",
 			"78": "English name is required",
-			"79": "Role is required"
+			"79": "Role is required",
+			"80": "The food is not available due to lack of ingredients!",
+			"81": "The ordered food does not exist!",
+			"82": "Ordering the ordered food is not allowed!",
+			"83": "The searched field does not exist!",
+			"84": "Subcategory not found in the database!"
 		}
 	]
 }

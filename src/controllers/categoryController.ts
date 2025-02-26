@@ -6,35 +6,63 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-import { log } from 'console';
-import { waitForDebugger } from 'inspector';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
 	public endPoint = '/category';
 
 	constructor() {
-		this.router.post('/add', authAdminToken, this.add);
-		this.router.get('/all', authAdminToken, this.getAll);
-		this.router.delete('/:name', authAdminToken, this.deleteOne);
+		this.router.post('', authAdminToken, this.add);
+		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
-		this.router.get('/filter', authToken, this.filterCategory);
+		this.router.get('', authToken, this.filterCategory);
 	}
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
-			const { field, value } = req.query;
+			const { field, value, page } = req.query;
+
+			const allowedFields = ['_id', 'name', 'englishName'];
+			if (field && !allowedFields.includes(field as string)) {
+				throw Error('83');
+			}
+
+			const pageNumber = Number(page) || 1;
+			const itemsPerPage = 10;
+			const skip = (pageNumber - 1) * itemsPerPage;
+
 			if (field && value) {
-				const selectedItems = await this.category.find({
-					[field as string]: value,
-				});
+				const selectedItems = await this.category
+					.find({ [field as string]: value })
+					.skip(skip)
+					.limit(itemsPerPage);
 				if (selectedItems.length > 0) {
-					res.send(selectedItems);
+					res.send({
+						items: selectedItems,
+						pageCount: Math.ceil(
+							(await this.category.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
 				} else {
 					throw Error('77');
 				}
 			} else {
-				throw Error('76');
+				const allItems = await this.category
+					.find({})
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (allItems.length > 0) {
+					res.send({
+						items: allItems,
+						pageCount: Math.ceil(
+							(await this.category.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -65,27 +93,12 @@ export default class categoryController implements IController {
 			);
 		}
 	};
-	private getAll = async (req: Request, res: Response) => {
-		try {
-			const response: ICategory[] = await this.category.find({});
-			if (response) {
-				res.send(response);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 	private deleteOne = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
+			const id = req.params.id;
 
-			if (name) {
-				const response = await this.category.deleteOne({ name: name });
+			if (id) {
+				const response = await this.category.deleteOne({ _id: id });
 				if (response.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {

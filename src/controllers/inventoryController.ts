@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial } from '../models/models';
+import { IController, IMaterial, IMaterialChange } from '../models/models';
 import {
 	foodModel,
 	materialChangeModel,
@@ -9,6 +9,9 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
+import { Mongoose, ObjectId } from 'mongoose';
+import { Schema } from 'mongoose';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -50,7 +53,7 @@ export default class materialController implements IController {
 	private updateMaterialChange = async (req: Request, res: Response) => {
 		try {
 			const materialChangeId = req.params.id;
-			const inputMaterialChange: IMaterial = req.body;
+			const inputMaterialChange: IMaterialChange = req.body;
 			if (materialChangeId) {
 				if (
 					inputMaterialChange.message ||
@@ -65,8 +68,8 @@ export default class materialController implements IController {
 						.lean();
 					if (oldMaterialChange) {
 						Object.keys(inputMaterialChange).forEach((key) => {
-							if (inputMaterialChange[key as keyof IMaterial] === '') {
-								delete inputMaterialChange[key as keyof IMaterial];
+							if (inputMaterialChange[key as keyof IMaterialChange] === '') {
+								delete inputMaterialChange[key as keyof IMaterialChange];
 							}
 						});
 
@@ -111,10 +114,42 @@ export default class materialController implements IController {
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {
-				const selectedItems = await this.materialChanges
-					.find({ [field as string]: value })
-					.skip(skip)
-					.limit(itemsPerPage);
+				const selectedItems = await this.materialChanges.aggregate([
+					{
+						$match: {
+							[field as string]: value,
+						},
+					},
+					{
+						$lookup: {
+							from: 'material',
+							localField: 'materialId',
+							foreignField: 'materialId',
+							as: 'material',
+						},
+					},
+					{
+						$group: {
+							_id: '$materialId',
+							quantity: { $sum: '$quantity' },
+							materialId: { $first: '$materialId' },
+						},
+					},
+					{ $skip: skip },
+					{ $limit: itemsPerPage },
+
+					{
+						$project: {
+							_id: 1,
+							materialId: 1,
+							quantity: 1,
+							message: 1,
+							date: 1,
+							name: { $arrayElemAt: ['$material.name', 0] },
+						},
+					},
+				]);
+
 				if (selectedItems.length > 0) {
 					res.send({
 						items: selectedItems,
@@ -126,13 +161,40 @@ export default class materialController implements IController {
 					throw Error('77');
 				}
 			} else {
-				const allItems = await this.materialChanges
-					.find({})
-					.skip(skip)
-					.limit(itemsPerPage);
+				const allItems = await this.materialChanges;
+				const selectedItems = await this.materialChanges.aggregate([
+					{
+						$lookup: {
+							from: 'material',
+							localField: 'materialId',
+							foreignField: '_id',
+							as: 'material',
+						},
+					},
+					{
+						$group: {
+							_id: '$materialId',
+							quantity: { $sum: '$quantity' },
+							materialId: { $first: '$materialId' },
+						},
+					},
+					{ $skip: skip },
+					{ $limit: itemsPerPage },
+
+					{
+						$project: {
+							_id: 1,
+							materialId: 1,
+							quantity: 1,
+							message: 1,
+							date: 1,
+							name: { $arrayElemAt: ['$material.name', 0] },
+						},
+					},
+				]);
 				if (allItems.length > 0) {
 					res.send({
-						items: allItems,
+						items: selectedItems,
 						pageCount: Math.ceil(
 							(await this.materialChanges.find({})).length / itemsPerPage
 						),
@@ -151,25 +213,28 @@ export default class materialController implements IController {
 
 	private addMaterialChange = async (req: Request, res: Response) => {
 		try {
-			const inputMaterial: IMaterial = req.body;
+			const inputMaterial: IMaterialChange = req.body;
 			await this.materialChangesConstraints.validateAsync(inputMaterial);
 
 			if (inputMaterial.quantity < 0) {
 				const isEnoughMaterial = await this.materialChanges.aggregate([
+					{ $group: { _id: '$materialId', count: { $sum: '$quantity' } } },
+				]);
+				log(isEnoughMaterial);
+				log(inputMaterial.materialId + ' ' + inputMaterial.quantity);
+				const materialAggregation = await this.materialChanges.aggregate([
 					{
-						$match: { materialId: inputMaterial.materialId },
-					},
-					{
-						$group: {
-							_id: 'materialId',
-							inStock: { $sum: '$quantity' },
+						$match: {
+							materialId: inputMaterial.materialId,
 						},
 					},
 				]);
+				log(materialAggregation);
+
 				if (isEnoughMaterial.length === 0) {
 					throw Error('71');
 				}
-				if (isEnoughMaterial[0].inStock + inputMaterial.quantity < 0) {
+				if (isEnoughMaterial[0].inStock + inputMaterial.quantity <= 0) {
 					throw Error('71');
 				}
 			}

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { IController, IUnit } from '../models/models';
+import { IController, IMaterial } from '../models/models';
 import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
@@ -16,7 +16,7 @@ export default class unitController implements IController {
 
 	constructor() {
 		this.router.post('', authAdminToken, this.add);
-		this.router.get('/stock', authAdminToken, this.getAll);
+		this.router.get('', authAdminToken, this.getAll);
 		this.router.delete('/:id', authAdminToken, this.deleteOneById);
 		this.router.patch('/:id', authAdminToken, this.updateByMaterialId);
 		this.router.put('/:id', authAdminToken, this.updateByMaterialId);
@@ -24,10 +24,18 @@ export default class unitController implements IController {
 
 	private add = async (req: Request, res: Response) => {
 		try {
-			const newUnit: IUnit = req.body;
-			await this.materialConstraints.validateAsync(newUnit);
+			const newMaterial: IMaterial = req.body;
+			await this.materialConstraints.validateAsync(newMaterial);
 
-			const response = await this.material.insertMany([newUnit]);
+			if (
+				await this.material.findOne({
+					name: newMaterial.name.toLowerCase(),
+				})
+			) {
+				throw Error('87');
+			}
+
+			const response = await this.material.insertMany([newMaterial]);
 			if (response) {
 				defaultAnswers.ok(res);
 			} else {
@@ -121,7 +129,7 @@ export default class unitController implements IController {
 				if (!oldMaterial) {
 					throw Error('06');
 				}
-				const newUnit: IUnit = {
+				const newUnit: IMaterial = {
 					...oldMaterial,
 					...body,
 					_id: oldMaterial._id,
