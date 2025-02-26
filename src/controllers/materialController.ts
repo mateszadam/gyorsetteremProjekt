@@ -8,7 +8,7 @@ import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
 
-export default class unitController implements IController {
+export default class materialController implements IController {
 	public router = Router();
 	private material = materialModel;
 	private materialChange = materialChangeModel;
@@ -129,14 +129,17 @@ export default class unitController implements IController {
 				if (!oldMaterial) {
 					throw Error('06');
 				}
-				const newUnit: IMaterial = {
+				const mergedMaterial: IMaterial = {
 					...oldMaterial,
 					...body,
 					_id: oldMaterial._id,
 				};
 
-				if (newUnit) {
-					const response = await this.material.findByIdAndUpdate(id, newUnit);
+				if (mergedMaterial) {
+					const response = await this.material.findByIdAndUpdate(
+						id,
+						mergedMaterial
+					);
 					if (response) {
 						defaultAnswers.ok(res);
 					} else {

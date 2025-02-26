@@ -133,24 +133,6 @@ export default class foodController implements IController {
 			);
 		}
 	};
-	private getFood = async (req: Request, res: Response) => {
-		try {
-			const foods = await this.food
-				.find()
-				.populate('categoryId', '-_id')
-				.populate('subCategoryId', '-_id');
-			if (foods) {
-				res.send(foods);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 
 	private deleteFoodById = async (req: Request, res: Response) => {
 		try {
@@ -225,9 +207,11 @@ export default class foodController implements IController {
 					_id: oldFood._id,
 				};
 
+				log(newFoodToStore);
+
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						_id: id,
+						_id: oldFood._id,
 					},
 					{
 						$set: newFoodToStore,
@@ -316,61 +300,6 @@ export default class foodController implements IController {
 				res.send(foods);
 			} else {
 				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByName = async (req: Request, res: Response) => {
-		try {
-			const name = req.params.name;
-			if (name) {
-				const foods = await this.food
-					.findOne({ name: name }, { 'materials._id': 0 })
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
-				if (foods) {
-					res.send(foods);
-				} else {
-					throw Error('73');
-				}
-			} else {
-				throw Error('42');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByCategory = async (req: Request, res: Response) => {
-		try {
-			const category = req.params.category;
-			if (category) {
-				const selectedCategory = await this.category.findOne({
-					name: category,
-				});
-				if (selectedCategory) {
-					const foods = await this.food
-						.find({
-							categoryId: { $in: selectedCategory?._id },
-						})
-						.populate('categoryId', '-_id')
-						.populate('subCategoryId', '-_id');
-					if (foods) {
-						res.send(foods);
-					} else {
-						throw Error('02');
-					}
-				} else {
-					throw Error('44');
-				}
-			} else {
-				throw Error('50');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(

@@ -18,8 +18,9 @@ interface ICategory {
 }
 
 interface IMaterialChange {
-	_id: ObjectId;
-	materialId: ObjectId;
+	_id?: ObjectId;
+	materialId?: ObjectId;
+	name?: string;
 	quantity: number;
 	message: string;
 }

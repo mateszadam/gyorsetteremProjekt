@@ -13,11 +13,11 @@ import { log } from 'console';
 import { Mongoose, ObjectId } from 'mongoose';
 import { Schema } from 'mongoose';
 
-export default class materialController implements IController {
+export default class inventoryController implements IController {
 	public router = Router();
 	public endPoint = '/inventory';
 	private materialChanges = materialChangeModel;
-	private food = foodModel;
+
 	constructor() {
 		this.router.post('', authAdminToken, this.addMaterialChange);
 
@@ -25,8 +25,34 @@ export default class materialController implements IController {
 		this.router.put('/:id', authAdminToken, this.updateMaterialChange);
 		this.router.delete('/:id', authAdminToken, this.deleteMaterialChange);
 
-		this.router.get('', authAdminToken, this.getChanges);
+		this.router.get('', authAdminToken, this.getStock);
+		this.router.get('/changes', authAdminToken, this.getChanges);
 	}
+
+	private getChanges = async (req: Request, res: Response) => {
+		try {
+			const { page = 1, limit = 10 } = req.query;
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
+
+			const totalItems = await this.materialChanges.countDocuments({});
+			const materialChanges = await this.materialChanges
+				.find({})
+				.skip(skip)
+				.limit(itemsPerPage);
+
+			res.send({
+				items: materialChanges,
+				pageCount: Math.ceil(totalItems / itemsPerPage),
+			});
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 
 	private deleteMaterialChange = async (req: Request, res: Response) => {
 		try {
@@ -34,6 +60,7 @@ export default class materialController implements IController {
 			if (materialChangeId) {
 				const databaseAnswer =
 					await this.materialChanges.findByIdAndDelete(materialChangeId);
+				log(databaseAnswer);
 				if (databaseAnswer) {
 					defaultAnswers.ok(res);
 				} else {
@@ -60,19 +87,23 @@ export default class materialController implements IController {
 					inputMaterialChange.quantity ||
 					inputMaterialChange.materialId
 				) {
-					const oldMaterialChange = await this.materialChanges
-						.findOne(
+					const oldMaterialChange: IMaterialChange | null =
+						await this.materialChanges.findOne(
 							{ _id: materialChangeId },
 							{ _id: 0, name: 1, quantity: 1, message: 1, date: 1 }
-						)
-						.lean();
+						);
+					log(materialChangeId);
+					log(await this.materialChanges.find({}));
+
 					if (oldMaterialChange) {
 						Object.keys(inputMaterialChange).forEach((key) => {
 							if (inputMaterialChange[key as keyof IMaterialChange] === '') {
 								delete inputMaterialChange[key as keyof IMaterialChange];
 							}
 						});
-
+						log(inputMaterialChange);
+						log('-------------');
+						log(oldMaterialChange);
 						const newMaterialChange = {
 							...oldMaterialChange,
 							...inputMaterialChange,
@@ -83,7 +114,7 @@ export default class materialController implements IController {
 							materialChangeId,
 							newMaterialChange
 						);
-
+						log(databaseAnswer);
 						if (databaseAnswer?.isModified) {
 							defaultAnswers.ok(res);
 						} else {
@@ -106,7 +137,7 @@ export default class materialController implements IController {
 		}
 	};
 
-	private getChanges = async (req: Request, res: Response) => {
+	private getStock = async (req: Request, res: Response) => {
 		try {
 			const { field, value, page } = req.query;
 			const pageNumber = Number(page) || 1;
@@ -116,15 +147,10 @@ export default class materialController implements IController {
 			if (field && value) {
 				const selectedItems = await this.materialChanges.aggregate([
 					{
-						$match: {
-							[field as string]: value,
-						},
-					},
-					{
 						$lookup: {
 							from: 'material',
 							localField: 'materialId',
-							foreignField: 'materialId',
+							foreignField: '_id',
 							as: 'material',
 						},
 					},
@@ -145,7 +171,7 @@ export default class materialController implements IController {
 							quantity: 1,
 							message: 1,
 							date: 1,
-							name: { $arrayElemAt: ['$material.name', 0] },
+							name: '$material.name',
 						},
 					},
 				]);
@@ -188,7 +214,7 @@ export default class materialController implements IController {
 							quantity: 1,
 							message: 1,
 							date: 1,
-							name: { $arrayElemAt: ['$material.name', 0] },
+							name: '$material.name',
 						},
 					},
 				]);
@@ -196,7 +222,17 @@ export default class materialController implements IController {
 					res.send({
 						items: selectedItems,
 						pageCount: Math.ceil(
-							(await this.materialChanges.find({})).length / itemsPerPage
+							(
+								await this.materialChanges.aggregate([
+									{
+										$group: {
+											_id: '$materialId',
+											quantity: { $sum: '$quantity' },
+											materialId: { $first: '$materialId' },
+										},
+									},
+								])
+							).length / itemsPerPage
 						),
 					});
 				} else {
@@ -214,22 +250,35 @@ export default class materialController implements IController {
 	private addMaterialChange = async (req: Request, res: Response) => {
 		try {
 			const inputMaterial: IMaterialChange = req.body;
+
 			await this.materialChangesConstraints.validateAsync(inputMaterial);
+
+			if (inputMaterial.name) {
+				const material: IMaterial | null = await materialModel.findOne({
+					name: inputMaterial.name.toLowerCase(),
+				});
+				if (material && material._id) {
+					inputMaterial.materialId = material._id;
+				} else {
+					throw Error('85');
+				}
+			}
+			delete inputMaterial.name;
 
 			if (inputMaterial.quantity < 0) {
 				const isEnoughMaterial = await this.materialChanges.aggregate([
-					{ $group: { _id: '$materialId', count: { $sum: '$quantity' } } },
-				]);
-				log(isEnoughMaterial);
-				log(inputMaterial.materialId + ' ' + inputMaterial.quantity);
-				const materialAggregation = await this.materialChanges.aggregate([
 					{
 						$match: {
 							materialId: inputMaterial.materialId,
 						},
 					},
+					{
+						$group: {
+							_id: '$materialId',
+							inStock: { $sum: '$quantity' },
+						},
+					},
 				]);
-				log(materialAggregation);
 
 				if (isEnoughMaterial.length === 0) {
 					throw Error('71');
@@ -298,15 +347,15 @@ export default class materialController implements IController {
 	};
 
 	private materialChangesConstraints = Joi.object({
-		materialId: Joi.string().required().messages({
-			'any.required': '',
-			'string.empty': '',
-		}),
 		quantity: Joi.number().required().messages({
 			'any.required': '37',
 		}),
 		message: Joi.string().required().messages({
 			'any.required': '39',
+		}),
+		name: Joi.string().messages({
+			'any.required': '17',
+			'string.empty': '17',
 		}),
 	});
 }

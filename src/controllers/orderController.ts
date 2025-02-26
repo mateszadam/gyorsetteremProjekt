@@ -26,6 +26,7 @@ export default class orderController implements IController {
 	private order = orderModel;
 	private user = userModel;
 	private materialChanges = materialChangeModel;
+	private material = materialModel;
 	private food = foodModel;
 
 	constructor() {
@@ -81,73 +82,100 @@ export default class orderController implements IController {
 		let newOrderId: ObjectId | null = null;
 		const newOrder = req.body as IOrder;
 		const session = await mongoose.startSession();
+		session.startTransaction();
 
 		try {
-			session.startTransaction();
-
 			await this.orderConstraints.validateAsync(newOrder);
 			const user = await this.user.findById(newOrder.costumerId);
 			if (user) {
 				const newOrderNumber = await this.getNewOrderNumber();
 				newOrder.orderNumber = newOrderNumber;
-				const response = await this.order.create([newOrder], { session });
-
+				// Calculate total price
+				let totalPrice = 0;
+				for (let i = 0; i < newOrder.orderedProducts.length; i++) {
+					const food: IFood | null = await this.food.findById(
+						newOrder.orderedProducts[i]._id
+					);
+					if (food) {
+						totalPrice += food.price * newOrder.orderedProducts[i].quantity;
+					} else {
+						throw Error('06');
+					}
+				}
+				newOrder.totalPrice = totalPrice;
+				const response = await this.order.insertMany([newOrder], { session });
 				if (response) {
-					newOrderId = response[0]._id as ObjectId;
-					newOrder.orderedProducts.forEach(async (orderedProduct) => {
+					// Check if there is enough material
+
+					for (let i = 0; i < newOrder.orderedProducts.length; i++) {
 						const food: IFood | null = await this.food.findById(
-							orderedProduct._id
+							newOrder.orderedProducts[i]._id
 						);
-						if (!food) {
-							throw Error('02');
-						}
-						if (!food.isEnabled) {
+						if (food) {
+							for (let j = 0; j < food.materials.length; j++) {
+								const material = await this.material.findById(
+									food.materials[j]._id
+								);
+								log(food.materials[j]._id);
+								console.log(material);
+
+								if (material) {
+									log('fut');
+									const materialChange = await this.materialChanges.aggregate([
+										{
+											$match: {
+												materialId: material._id,
+											},
+										},
+										{
+											$group: {
+												_id: '$materialId',
+												inStock: { $sum: '$quantity' },
+											},
+										},
+									]);
+									if (materialChange.length === 0) {
+										throw Error('71');
+									}
+									if (
+										materialChange[0].inStock -
+											food.materials[j].quantity *
+												newOrder.orderedProducts[i].quantity <
+										0
+									) {
+										throw Error('71');
+									}
+								} else {
+									throw Error('85');
+								}
+								await this.materialChanges.insertMany(
+									[
+										{
+											materialId: material._id,
+											quantity: -(
+												food.materials[j].quantity *
+												newOrder.orderedProducts[i].quantity
+											),
+											message: 'Order',
+										},
+									],
+									{ session }
+								);
+							}
+						} else {
 							throw Error('81');
 						}
-
-						food.materials.forEach(async (material) => {
-							const materialInStock = await this.materialChanges.aggregate([
-								{
-									$match: {
-										materialId: material._id,
-									},
-								},
-								{
-									$group: {
-										_id: 'materialId',
-										inStock: { $sum: '$quantity' },
-									},
-								},
-							]);
-							if (
-								materialInStock[0].inStock +
-									material.quantity * orderedProduct.quantity <
-								0
-							) {
-								throw Error('80');
-							}
-							await this.materialChanges.create(
-								[
-									{
-										materialId: orderedProduct._id,
-										quantity: -(orderedProduct.quantity * material.quantity),
-										message: 'Rendelés' + newOrderId,
-									},
-								],
-								{ session }
-							);
-						});
-					});
-
-					await session.commitTransaction();
-					webSocetController.sendStateChange('');
-					defaultAnswers.created(res);
+					}
 				} else {
 					throw Error('02');
 				}
 			} else {
 				throw Error('06');
 			}
+			await session.commitTransaction();
+			session.endSession();
+			webSocetController.sendStateChange('');
+			defaultAnswers.created(res);
 		} catch (error: any) {
 			await session.abortTransaction();
 			defaultAnswers.badRequest(
@@ -428,7 +456,7 @@ export default class orderController implements IController {
 		orderedProducts: Joi.array()
 			.items(
 				Joi.object({
-					name: Joi.string().required().messages({
+					_id: Joi.string().required().messages({
 						'string.base': '34',
 						'any.required': '34',
 					}),

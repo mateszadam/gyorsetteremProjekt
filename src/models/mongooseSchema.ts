@@ -84,7 +84,6 @@ const foodSchema = new Schema<SchemaDefinition>(
 				_id: {
 					type: Schema.Types.ObjectId,
 					required: true,
-					lowercase: true,
 					ref: 'materialId',
 				},
 				quantity: {

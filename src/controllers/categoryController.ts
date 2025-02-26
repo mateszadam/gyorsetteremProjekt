@@ -96,7 +96,6 @@ export default class categoryController implements IController {
 	private deleteOne = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-
 			if (id) {
 				const response = await this.category.deleteOne({ _id: id });
 				if (response.deletedCount > 0) {

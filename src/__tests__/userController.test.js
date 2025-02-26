@@ -69,11 +69,11 @@ describe('userController Integration Tests', () => {
 			expect(response.status).toBe(200);
 		});
 	});
-	describe('05 PUT /user/picture/change/:newImageName', () => {
+	describe('05 POST /user/picture/change/:newImageName', () => {
 		it('should change the profile picture of a user', async () => {
 			const newImageName = 'angel-svgrepo-com.svg';
 			const response = await request(baseUrl)
-				.put(`/user/picture/change/${newImageName}`)
+				.post(`/user/picture/change/${newImageName}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 		});
@@ -81,7 +81,7 @@ describe('userController Integration Tests', () => {
 		it('should change the profile picture when image not exist', async () => {
 			const newImageName = 'newProfilePic.jpg';
 			const response = await request(baseUrl)
-				.put(`/user/picture/change/${newImageName}`)
+				.post(`/user/picture/change/${newImageName}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(400);
 			expect(response.body).toEqual({ message: 'Image does not exist!' });
@@ -90,7 +90,7 @@ describe('userController Integration Tests', () => {
 		it('should return error if new image name does not exist', async () => {
 			const newImageName = 'nonExistentPic.jpg';
 			const response = await request(baseUrl)
-				.put(`/user/picture/change/${newImageName}`)
+				.post(`/user/picture/change/${newImageName}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(400);
 		});
@@ -173,6 +173,19 @@ describe('userController Integration Tests', () => {
 				});
 			expect(response.status).toBe(400);
 			expect(response.body).toEqual({ message: 'Email is required!' });
+		});
+		afterAll(async () => {
+			const users = await request(baseUrl)
+				.get('/user/all')
+				.set('Authorization', `Bearer ${token}`);
+
+			users.body.forEach(async (user) => {
+				if (user.name.includes('TestAdmin')) {
+					await request(baseUrl)
+						.delete(`/user/delete/admin/${user._id}`)
+						.set('Authorization', `Bearer ${token}`);
+				}
+			});
 		});
 	});
 });

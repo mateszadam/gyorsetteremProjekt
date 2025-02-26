@@ -47,6 +47,7 @@ export default class userController implements IController {
 			);
 			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
+				log(data);
 				if (newImageName) {
 					if (fs.existsSync(`./src/images/profilePictures/${newImageName}`)) {
 						const updateResult = await this.user.updateOne(
@@ -55,7 +56,8 @@ export default class userController implements IController {
 							},
 							{ $set: { profilePicture: newImageName } }
 						);
-						if (updateResult.modifiedCount > 0) {
+
+						if (updateResult.matchedCount > 0) {
 							defaultAnswers.ok(res);
 						} else {
 							throw Error('06');
@@ -135,6 +137,8 @@ export default class userController implements IController {
 				res.send({
 					token: token,
 					role: databaseUser.role,
+					profilePicture: databaseUser.profilePicture,
+					userId: databaseUser._id,
 				});
 			} else {
 				throw Error('14');
