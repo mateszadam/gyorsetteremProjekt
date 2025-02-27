@@ -11,13 +11,10 @@ let foodId = '';
 describe('foodController Integration Tests', () => {
 	beforeAll(async () => {
 		await request(baseUrl).post('/drop');
-
-		const response = await request(baseUrl).post('/user/login').send({
-			name: 'adminUser',
-			password: 'adminUser!1',
-		});
-
-		await request(baseUrl)
+		const response = await request(baseUrl)
+			.post('/user/login')
+			.send({ name: 'adminUser', password: 'adminUser!1' });
+		const newCategories = await request(baseUrl)
 			.post('/category')
 			.set('Authorization', `Bearer ${response.body.token}`)
 			.send({
@@ -25,28 +22,16 @@ describe('foodController Integration Tests', () => {
 				icon: 'test-icon.svg',
 				englishName: 'TestCategory3',
 			});
-		const categories = await request(baseUrl)
-			.get('/category')
-			.set('Authorization', `Bearer ${response.body.token}`)
-			.send();
-		catId = categories.body.items[0]._id;
+		catId = newCategories.body._id;
 
-		await request(baseUrl)
+		const newMaterials = await request(baseUrl)
 			.post('/material')
 			.set('Authorization', `Bearer ${response.body.token}`)
-			.send({
-				name: 'materialName',
-				englishName: 'materialName',
-				unit: 'kg',
-			});
+			.send({ name: 'materialName', englishName: 'materialName', unit: 'kg' });
 
-		const materials = await request(baseUrl)
-			.get('/material')
-			.set('Authorization', `Bearer ${response.body.token}`)
-			.send();
-		materialId = materials.body.items[0]._id;
+		materialId = newMaterials.body._id;
 
-		const newFood = {
+		const food = {
 			name: 'Test Food3',
 			price: 10,
 			materials: [{ _id: materialId, quantity: 2 }],
@@ -57,15 +42,11 @@ describe('foodController Integration Tests', () => {
 			englishName: 'Test Food English',
 		};
 
-		await request(baseUrl)
+		const newFood = await request(baseUrl)
 			.post('/food')
 			.set('Authorization', `Bearer ${response.body.token}`)
-			.send(newFood);
-
-		const foods = await request(baseUrl)
-			.get('/food')
-			.set('Authorization', `Bearer ${response.body.token}`);
-		foodId = foods.body.items[0]._id;
+			.send(food);
+		foodId = newFood.body._id;
 
 		token = response.body.token;
 	});

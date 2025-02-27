@@ -10,29 +10,20 @@ let orderId = '';
 
 describe('orderController Integration Tests', () => {
 	beforeAll(async () => {
-		const response = await request(baseUrl).post('/user/login').send({
-			name: 'adminUser',
-			password: 'adminUser!1',
-		});
+		const response = await request(baseUrl)
+			.post('/user/login')
+			.send({ name: 'adminUser', password: 'adminUser!1' });
 		await request(baseUrl).post('/drop');
 		token = response.body.token;
 		await request(baseUrl)
 			.post('/material')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'liszt',
-				englishName: 'flour',
-				unit: 'kg',
-			});
+			.send({ name: 'liszt', englishName: 'flour', unit: 'kg' });
 
 		await request(baseUrl)
 			.post('/inventory')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'liszt',
-				quantity: 100,
-				message: 'Initial stock',
-			});
+			.send({ name: 'liszt', quantity: 100, message: 'Initial stock' });
 
 		const materials = await request(baseUrl)
 			.get('/inventory')
@@ -43,11 +34,7 @@ describe('orderController Integration Tests', () => {
 		await request(baseUrl)
 			.post('/category')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'string',
-				icon: 'no-image.svg',
-				englishName: 'string',
-			});
+			.send({ name: 'string', icon: 'no-image.svg', englishName: 'string' });
 		const category = await request(baseUrl)
 			.get('/category')
 			.set('Authorization', `Bearer ${token}`)

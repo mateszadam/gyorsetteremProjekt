@@ -58,8 +58,7 @@ export default class categoryController implements IController {
 					res.send({
 						items: allItems,
 						pageCount: Math.ceil(
-							(await this.category.find({ [field as string]: value })).length /
-								itemsPerPage
+							(await this.category.countDocuments()) / itemsPerPage
 						),
 					});
 				} else {
@@ -82,7 +81,7 @@ export default class categoryController implements IController {
 				const response = await this.category.insertMany([newCategory], {
 					rawResult: true,
 				});
-				log(response);
+
 				if (response) {
 					defaultAnswers.ok(
 						res,
@@ -174,14 +173,15 @@ export default class categoryController implements IController {
 				'string.max': '09',
 				'string.pattern.base': '19',
 			}),
-		icon: Joi.string().required().messages({
-			'string.empty': '20',
-			'any.required': '20',
-		}),
-		englishName: Joi.string().required().messages({
-			'string.empty': '78',
-			'string.pattern.base': '78',
-			'any.required': '78',
-		}),
+		icon: Joi.string()
+			.required()
+			.messages({ 'string.empty': '20', 'any.required': '20' }),
+		englishName: Joi.string()
+			.required()
+			.messages({
+				'string.empty': '78',
+				'string.pattern.base': '78',
+				'any.required': '78',
+			}),
 	});
 }

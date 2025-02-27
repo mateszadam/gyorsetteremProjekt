@@ -11,21 +11,16 @@ describe('inventoryController Integration Tests', () => {
 	beforeAll(async () => {
 		await request(baseUrl).post('/drop');
 
-		const response = await request(baseUrl).post('/user/login').send({
-			name: 'adminUser',
-			password: 'adminUser!1',
-		});
+		const response = await request(baseUrl)
+			.post('/user/login')
+			.send({ name: 'adminUser', password: 'adminUser!1' });
 
 		token = response.body.token;
 
 		await request(baseUrl)
 			.post('/material')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'TestMaterial',
-				englishName: 'TestMaterial',
-				unit: 'kg',
-			});
+			.send({ name: 'TestMaterial', englishName: 'TestMaterial', unit: 'kg' });
 
 		const mat = await request(baseUrl)
 			.get('/material')
@@ -35,11 +30,7 @@ describe('inventoryController Integration Tests', () => {
 		await request(baseUrl)
 			.post('/inventory')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'TestMaterial',
-				quantity: 10,
-				message: 'Initial stock',
-			});
+			.send({ name: 'TestMaterial', quantity: 10, message: 'Initial stock' });
 		const res = await request(baseUrl)
 			.get('/inventory')
 			.set('Authorization', `Bearer ${token}`);
@@ -52,12 +43,8 @@ describe('inventoryController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.post('/inventory')
 				.set('Authorization', `Bearer ${token}`)
-				.send({
-					name: 'TestMaterial',
-					quantity: 10,
-					message: 'Initial stock',
-				});
-			expect(response.status).toBe(200);
+				.send({ name: 'TestMaterial', quantity: 10, message: 'Initial stock' });
+			expect(response.status).toBe(201);
 		});
 	});
 
