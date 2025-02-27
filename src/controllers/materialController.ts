@@ -35,9 +35,14 @@ export default class materialController implements IController {
 				throw Error('87');
 			}
 
-			const response = await this.material.insertMany([newMaterial]);
-			if (response) {
-				defaultAnswers.ok(res);
+			const response = await this.material.insertMany([newMaterial], {
+				rawResult: true,
+			});
+			if (response.insertedCount > 0) {
+				defaultAnswers.ok(
+					res,
+					await this.material.findById(response.insertedIds[0])
+				);
 			} else {
 				throw Error('02');
 			}
@@ -141,7 +146,10 @@ export default class materialController implements IController {
 						mergedMaterial
 					);
 					if (response) {
-						defaultAnswers.ok(res);
+						defaultAnswers.ok(
+							res,
+							await this.material.findById(oldMaterial._id)
+						);
 					} else {
 						throw Error('02');
 					}

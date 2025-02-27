@@ -119,10 +119,15 @@ export default class foodController implements IController {
 				throw Error('85');
 			}
 
-			const inserted = await this.food.insertMany([foodInput]);
+			const inserted = await this.food.insertMany([foodInput], {
+				rawResult: true,
+			});
 
 			if (inserted) {
-				defaultAnswers.ok(res);
+				defaultAnswers.ok(
+					res,
+					await this.food.findOne({ _id: inserted.insertedIds[0] })
+				);
 			} else {
 				throw Error('02');
 			}
@@ -217,8 +222,8 @@ export default class foodController implements IController {
 						$set: newFoodToStore,
 					}
 				);
-				if (foods.modifiedCount > 0) {
-					res.send(foods);
+				if (foods.matchedCount > 0) {
+					defaultAnswers.ok(res, newFoodToStore);
 				} else {
 					throw Error('45');
 				}
@@ -245,7 +250,7 @@ export default class foodController implements IController {
 						$set: { isEnabled: false },
 					}
 				);
-				if (foods.modifiedCount > 0) {
+				if (foods.matchedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('73');
@@ -272,7 +277,7 @@ export default class foodController implements IController {
 						$set: { isEnabled: true },
 					}
 				);
-				if (foods.modifiedCount > 0) {
+				if (foods.matchedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('73');
@@ -292,7 +297,15 @@ export default class foodController implements IController {
 			const foods = await this.food
 				.find(
 					{ isEnabled: true },
-					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 1 }
+					{
+						_id: 0,
+						name: 1,
+						price: 1,
+						image: 1,
+						categoryId: 1,
+						subCategoryId: 1,
+						englishName: 1,
+					}
 				)
 				.populate('categoryId', '-_id')
 				.populate('subCategoryId', '-_id');

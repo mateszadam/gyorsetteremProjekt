@@ -81,6 +81,7 @@ export default class orderController implements IController {
 	private newOrder = async (req: Request, res: Response) => {
 		let newOrderId: ObjectId | null = null;
 		const newOrder = req.body as IOrder;
+		let newId: ObjectId | null = null;
 		const session = await mongoose.startSession();
 		session.startTransaction();
 
@@ -90,7 +91,7 @@ export default class orderController implements IController {
 			if (user) {
 				const newOrderNumber = await this.getNewOrderNumber();
 				newOrder.orderNumber = newOrderNumber;
-				// Calculate total price
+
 				let totalPrice = 0;
 				for (let i = 0; i < newOrder.orderedProducts.length; i++) {
 					const food: IFood | null = await this.food.findById(
@@ -103,7 +104,13 @@ export default class orderController implements IController {
 					}
 				}
 				newOrder.totalPrice = totalPrice;
-				const response = await this.order.insertMany([newOrder], { session });
+				const response = await this.order.insertMany([newOrder], {
+					session,
+					rawResult: true,
+				});
+
+				newId = response.insertedIds[0];
+
 				if (response) {
 					// Check if there is enough material
 
@@ -175,7 +182,7 @@ export default class orderController implements IController {
 			await session.commitTransaction();
 			session.endSession();
 			webSocetController.sendStateChange('');
-			defaultAnswers.created(res);
+			defaultAnswers.created(res, await this.order.findById(newId));
 		} catch (error: any) {
 			await session.abortTransaction();
 			defaultAnswers.badRequest(

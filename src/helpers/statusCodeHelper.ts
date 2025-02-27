@@ -1,11 +1,11 @@
 import { Response } from 'express';
 
 export default class defaultAnswers {
-	static async ok(res: Response, message: string = '') {
+	static async ok(res: Response, message: any = '') {
 		if (message == '') {
 			res.sendStatus(200);
 		} else {
-			res.status(200).json({ message });
+			res.status(200).json(message);
 		}
 	}
 

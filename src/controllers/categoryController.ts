@@ -6,6 +6,8 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
+import mongoose from 'mongoose';
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -77,9 +79,15 @@ export default class categoryController implements IController {
 			const newCategory: ICategory = req.body;
 			await this.categoryConstraints.validateAsync(newCategory);
 			if ((await this.category.find({ name: newCategory.name })).length === 0) {
-				const response = await this.category.insertMany([newCategory]);
+				const response = await this.category.insertMany([newCategory], {
+					rawResult: true,
+				});
+				log(response);
 				if (response) {
-					defaultAnswers.ok(res);
+					defaultAnswers.ok(
+						res,
+						await this.category.findOne({ _id: response.insertedIds[0] })
+					);
 				} else {
 					throw Error('02');
 				}
@@ -135,7 +143,7 @@ export default class categoryController implements IController {
 						}
 					);
 					if (response.matchedCount > 0) {
-						defaultAnswers.ok(res);
+						defaultAnswers.ok(res, await this.category.findOne({ _id: id }));
 					} else {
 						throw Error('44');
 					}

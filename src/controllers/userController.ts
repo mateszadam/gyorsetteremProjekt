@@ -191,6 +191,7 @@ export default class userController implements IController {
 				...userInput,
 				password: hashedPassword,
 			};
+
 			const user = await this.user.insertMany([userData]);
 			if (user) {
 				defaultAnswers.created(res);

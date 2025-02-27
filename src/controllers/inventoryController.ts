@@ -116,7 +116,10 @@ export default class inventoryController implements IController {
 						);
 						log(databaseAnswer);
 						if (databaseAnswer?.isModified) {
-							defaultAnswers.ok(res);
+							defaultAnswers.ok(
+								res,
+								await this.materialChanges.findById(materialChangeId)
+							);
 						} else {
 							throw Error('02');
 						}
@@ -180,7 +183,7 @@ export default class inventoryController implements IController {
 					res.send({
 						items: selectedItems,
 						pageCount: Math.ceil(
-							(await this.materialChanges.find({})).length / itemsPerPage
+							(await this.materialChanges.countDocuments()) / itemsPerPage
 						),
 					});
 				} else {
@@ -287,11 +290,15 @@ export default class inventoryController implements IController {
 					throw Error('71');
 				}
 			}
-			const databaseAnswer = await this.materialChanges.insertMany([
-				inputMaterial,
-			]);
+			const databaseAnswer = await this.materialChanges.insertMany(
+				[inputMaterial],
+				{ rawResult: true }
+			);
 			if (databaseAnswer) {
-				defaultAnswers.ok(res);
+				defaultAnswers.created(
+					res,
+					await this.materialChanges.findById(databaseAnswer.insertedIds[0])
+				);
 			} else {
 				throw Error('02');
 			}
