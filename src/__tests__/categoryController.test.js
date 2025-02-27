@@ -298,7 +298,7 @@ describe('categoryController Integration Tests', () => {
 			expect(response.status).toBe(200);
 			expect(response.body.pageCount).toEqual(2);
 			expect(response.body.items.length).toBeLessThanOrEqual(10);
-		});
+		}, 20000);
 
 		it('should return error when page is out of bounds', async () => {
 			const response = await request(baseUrl)

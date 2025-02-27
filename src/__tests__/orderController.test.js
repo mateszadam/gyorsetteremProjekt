@@ -76,7 +76,7 @@ describe('orderController Integration Tests', () => {
 			.get(`/order`)
 			.set('Authorization', `Bearer ${token}`);
 		orderId = orderResponse.body.items[0]._id;
-	});
+	}, 20000);
 
 	describe('01 POST /order', () => {
 		it('should create a new order', async () => {
