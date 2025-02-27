@@ -212,8 +212,6 @@ export default class foodController implements IController {
 					_id: oldFood._id,
 				};
 
-				log(newFoodToStore);
-
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
 						_id: oldFood._id,

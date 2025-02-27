@@ -87,7 +87,8 @@
 			"84": "Az alkategória nem található az adatbázisban!",
 			"85": "Az alapanyag nem létezik!",
 			"86": "Az étel neve már foglalt!",
-			"87": "Az alapanyag neve már foglalt!"
+			"87": "Az alapanyag neve már foglalt!",
+			"88": "Az oldalszám nem lehet negatív!"
 		}
 	],
 	"en-GB": [

@@ -47,7 +47,6 @@ export default class userController implements IController {
 			);
 			if (data && data?._id) {
 				const newImageName = req.params.newImageName;
-				log(data);
 				if (newImageName) {
 					if (fs.existsSync(`./src/images/profilePictures/${newImageName}`)) {
 						const updateResult = await this.user.updateOne(
@@ -133,7 +132,9 @@ export default class userController implements IController {
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
 				const token: string = await generateToken(databaseUser);
-				console.log(`User ${databaseUser.name} logged in`);
+				console.log(
+					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+				);
 				res.send({
 					token: token,
 					role: databaseUser.role,

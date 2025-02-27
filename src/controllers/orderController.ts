@@ -123,11 +123,8 @@ export default class orderController implements IController {
 								const material = await this.material.findById(
 									food.materials[j]._id
 								);
-								log(food.materials[j]._id);
-								console.log(material);
 
 								if (material) {
-									log('fut');
 									const materialChange = await this.materialChanges.aggregate([
 										{
 											$match: {
@@ -152,22 +149,23 @@ export default class orderController implements IController {
 									) {
 										throw Error('71');
 									}
+
+									await this.materialChanges.insertMany(
+										[
+											{
+												materialId: material._id,
+												quantity: -(
+													food.materials[j].quantity *
+													newOrder.orderedProducts[i].quantity
+												),
+												message: 'Order',
+											},
+										],
+										{ session }
+									);
 								} else {
 									throw Error('85');
 								}
-								await this.materialChanges.insertMany(
-									[
-										{
-											materialId: material._id,
-											quantity: -(
-												food.materials[j].quantity *
-												newOrder.orderedProducts[i].quantity
-											),
-											message: 'Order',
-										},
-									],
-									{ session }
-								);
 							}
 						} else {
 							throw Error('81');

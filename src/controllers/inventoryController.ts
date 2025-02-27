@@ -31,14 +31,16 @@ export default class inventoryController implements IController {
 
 	private getChanges = async (req: Request, res: Response) => {
 		try {
-			const { page = 1, limit = 10 } = req.query;
+			const { page = 1, limit = 10, field, value } = req.query;
 			const pageNumber = Number(page);
 			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
 
-			const totalItems = await this.materialChanges.countDocuments({});
+			const totalItems = await this.materialChanges.countDocuments({
+				[field as string]: value,
+			});
 			const materialChanges = await this.materialChanges
-				.find({})
+				.find({ [field as string]: value })
 				.skip(skip)
 				.limit(itemsPerPage);
 
@@ -60,7 +62,6 @@ export default class inventoryController implements IController {
 			if (materialChangeId) {
 				const databaseAnswer =
 					await this.materialChanges.findByIdAndDelete(materialChangeId);
-				log(databaseAnswer);
 				if (databaseAnswer) {
 					defaultAnswers.ok(res);
 				} else {
@@ -92,8 +93,6 @@ export default class inventoryController implements IController {
 							{ _id: materialChangeId },
 							{ _id: 0, name: 1, quantity: 1, message: 1, date: 1 }
 						);
-					log(materialChangeId);
-					log(await this.materialChanges.find({}));
 
 					if (oldMaterialChange) {
 						Object.keys(inputMaterialChange).forEach((key) => {
@@ -101,9 +100,6 @@ export default class inventoryController implements IController {
 								delete inputMaterialChange[key as keyof IMaterialChange];
 							}
 						});
-						log(inputMaterialChange);
-						log('-------------');
-						log(oldMaterialChange);
 						const newMaterialChange = {
 							...oldMaterialChange,
 							...inputMaterialChange,
@@ -114,7 +110,6 @@ export default class inventoryController implements IController {
 							materialChangeId,
 							newMaterialChange
 						);
-						log(databaseAnswer);
 						if (databaseAnswer?.isModified) {
 							defaultAnswers.ok(
 								res,
@@ -361,6 +356,10 @@ export default class inventoryController implements IController {
 			'any.required': '39',
 		}),
 		name: Joi.string().messages({
+			'any.required': '17',
+			'string.empty': '17',
+		}),
+		materialId: Joi.string().messages({
 			'any.required': '17',
 			'string.empty': '17',
 		}),
