@@ -25,11 +25,12 @@ class languageBasedErrorMessage {
 				message = this.errorMessages[language][0][60];
 			else if (errorCode.includes('Cast to ObjectId failed for value'))
 				message = this.errorMessages[language][0][61];
+			else if (errorCode.includes("BSON field 'skip' value must be >= 0"))
+				message = this.errorMessages[language][0][88];
 			else {
 				message = errorCode;
 			}
 		}
-		console.log(message);
 
 		return message;
 	}

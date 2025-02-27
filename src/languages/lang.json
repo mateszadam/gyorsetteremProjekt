@@ -65,7 +65,7 @@
 			"62": "A kép nem létezik!",
 			"63": "Csak vásárló törlése lehetséges!",
 			"64": "A rendelés Id nem található az adatbázisban!",
-			"65": "Az oldalszámnak nagyobbnak kell lennie mint 0!",
+			"65": "Az oldalszám nem létezik!",
 			"66": "Az alapanyag változás id megadása kötelező!",
 			"67": "Az alapanyag változás id nem található az adatbázisban!",
 			"68": "Az alapanyag változás id nem található az url-ben!",
@@ -79,7 +79,16 @@
 			"76": "A keresési feltétel nem található az url-ben!",
 			"77": "A keresési feltételre nincs eredmény az adatbázisban!",
 			"78": "Az angol név megadása kötelező",
-			"79": "A jogosultság megadása kötelező"
+			"79": "A jogosultság megadása kötelező",
+			"80": "Az étel nem rendelhető alapanyaghiány miatt!",
+			"81": "A rendelt étel nem létezik!",
+			"82": "A rendelt étel rendelése nincs engedélyezve!",
+			"83": "A keresett mező nem létezik!",
+			"84": "Az alkategória nem található az adatbázisban!",
+			"85": "Az alapanyag nem létezik!",
+			"86": "Az étel neve már foglalt!",
+			"87": "Az alapanyag neve már foglalt!",
+			"88": "Az oldalszám nem lehet negatív!"
 		}
 	],
 	"en-GB": [
@@ -98,7 +107,7 @@
 			"12": "The sent food is not among the foods!",
 			"13": "Incorrect password or username!",
 			"14": "Password or username not found in the request!",
-			"15": "Password is required",
+			"15": "Password is required!",
 			"16": "The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character, and must be at least 8 characters long",
 			"17": "Name is required",
 			"18": "The name field must be between 4 and 30 characters.",
@@ -113,7 +122,7 @@
 			"27": "Category is required.",
 			"28": "The sent category is not among the categories!",
 			"29": "Image field is required.",
-			"30": "Email is required",
+			"30": "Email is required!",
 			"31": "Invalid email format!",
 			"32": "Unit of measure is required.",
 			"33": "The ordered products field must be an array!",
@@ -148,7 +157,7 @@
 			"62": "Image does not exist!",
 			"63": "Only customer deletion is possible!",
 			"64": "Order ID not found in the database!",
-			"65": "Page number must be greater than 0!",
+			"65": "Page number is invalid!",
 			"66": "Ingredient change ID is required!",
 			"67": "Ingredient change ID not found in the database!",
 			"68": "Ingredient change ID not found in the URL!",
@@ -162,7 +171,16 @@
 			"76": "The search condition is not found in the URL!",
 			"77": "No result in the database for the search condition!",
 			"78": "English name is required",
-			"79": "Role is required"
+			"79": "Role is required",
+			"80": "The food is not available due to lack of ingredients!",
+			"81": "The ordered food does not exist!",
+			"82": "Ordering the ordered food is not allowed!",
+			"83": "The searched field does not exist!",
+			"84": "Subcategory not found in the database!",
+			"85": "Ingredient does not exist!",
+			"86": "Food name already taken!",
+			"87": "Ingredient name already taken!",
+			"88": "Page number cannot be negative!"
 		}
 	]
 }

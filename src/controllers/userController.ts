@@ -55,7 +55,8 @@ export default class userController implements IController {
 							},
 							{ $set: { profilePicture: newImageName } }
 						);
-						if (updateResult.modifiedCount > 0) {
+
+						if (updateResult.matchedCount > 0) {
 							defaultAnswers.ok(res);
 						} else {
 							throw Error('06');
@@ -131,10 +132,14 @@ export default class userController implements IController {
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
 				const token: string = await generateToken(databaseUser);
-				console.log(`User ${databaseUser.name} logged in`);
+				console.log(
+					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+				);
 				res.send({
 					token: token,
 					role: databaseUser.role,
+					profilePicture: databaseUser.profilePicture,
+					userId: databaseUser._id,
 				});
 			} else {
 				throw Error('14');
@@ -187,6 +192,7 @@ export default class userController implements IController {
 				...userInput,
 				password: hashedPassword,
 			};
+
 			const user = await this.user.insertMany([userData]);
 			if (user) {
 				defaultAnswers.created(res);

@@ -1,9 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController } from '../models/models';
-import { categoryModel, foodModel } from '../models/mongooseSchema';
+import { IFood, IController, ICategory } from '../models/models';
+import {
+	categoryModel,
+	foodModel,
+	materialModel,
+} from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-import { UpdateWriteOpResult } from 'mongoose';
+import { ObjectId, UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
@@ -13,40 +17,74 @@ export default class foodController implements IController {
 	public endPoint = '/food';
 	private food = foodModel;
 	private category = categoryModel;
+	private material = materialModel;
 	constructor() {
-		this.router.post('/add', authAdminToken, this.addFood);
+		this.router.post('', authAdminToken, this.addFood);
 		this.router.get('/allEnabled', authToken, this.getAllEnabledFood);
-		this.router.get('/all', authToken, this.getFood);
 
 		this.router.get('/allToOrder', authToken, this.getFoodToOrder);
-		this.router.get('/name/:name', authToken, this.getFoodByName);
-		this.router.get('/category/:category', authToken, this.getFoodByCategory);
-		this.router.get('/filter', authToken, this.filterFood);
+		this.router.get('', authToken, this.filterFood);
 
-		this.router.put('/update/:id', authAdminToken, this.updateFood);
+		this.router.patch('/disable/:id', authAdminToken, this.disableById);
+		this.router.patch('/enable/:id', authAdminToken, this.enableById);
 
-		this.router.patch('/disable/:name', authAdminToken, this.disableByName);
-		this.router.patch('/enable/:name', authAdminToken, this.enableByName);
+		this.router.put('/:id', authAdminToken, this.updateFood);
+		this.router.patch('/:id', authAdminToken, this.updateFood);
 
-		this.router.delete('/name/:name', authAdminToken, this.deleteFood);
+		this.router.delete('/:id', authAdminToken, this.deleteFoodById);
 	}
 
 	private filterFood = async (req: Request, res: Response) => {
 		try {
-			const { field, value } = req.query;
+			const { field, value, page } = req.query;
+
+			const allowedFields = [
+				'name',
+				'englishName',
+				'price',
+				'categoryId',
+				'subCategoryId',
+			];
+			if (field && !allowedFields.includes(field as string)) {
+				throw Error('83');
+			}
+
+			const pageNumber = Number(page) || 1;
+			const itemsPerPage = 10;
+			const skip = (pageNumber - 1) * itemsPerPage;
+
 			if (field && value) {
-				log(await this.food.find({}));
 				const selectedItems = await this.food
 					.find({ [field as string]: value })
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
+					.skip(skip)
+					.limit(itemsPerPage);
 				if (selectedItems.length > 0) {
-					res.send(selectedItems);
+					res.send({
+						items: selectedItems,
+						pageCount: Math.ceil(
+							(await this.food.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
 				} else {
 					throw Error('77');
 				}
 			} else {
-				throw Error('76');
+				const allItems = await this.food
+					.find({})
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (allItems.length > 0) {
+					res.send({
+						items: allItems,
+						pageCount: Math.ceil(
+							(await this.food.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -59,31 +97,37 @@ export default class foodController implements IController {
 		try {
 			const foodInput: IFood = req.body;
 			await this.foodConstraints.validateAsync(foodInput);
-			if (await this.category.findOne({ _id: foodInput.categoryId })) {
-				const inserted = await this.food.insertMany([foodInput]);
-				if (inserted) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('02');
-				}
-			} else {
+			if (
+				(await this.category.find({ _id: { $in: foodInput.subCategoryId } }))
+					.length !== foodInput.subCategoryId!.length
+			) {
+				throw Error('84');
+			}
+			if (!(await this.category.findOne({ _id: foodInput.categoryId }))) {
 				throw Error('44');
 			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFood = async (req: Request, res: Response) => {
-		try {
-			const foods = await this.food
-				.find()
-				.populate('categoryId', '-_id')
-				.populate('subCategoryId', '-_id');
-			if (foods) {
-				res.send(foods);
+
+			if (await this.food.findOne({ name: foodInput.name })) {
+				throw Error('86');
+			}
+			const materialIds = foodInput.materials.map((material) => material._id);
+
+			const materials = await this.material.find({
+				_id: { $in: materialIds },
+			});
+			if (materials.length !== materialIds.length) {
+				throw Error('85');
+			}
+
+			const inserted = await this.food.insertMany([foodInput], {
+				rawResult: true,
+			});
+
+			if (inserted) {
+				defaultAnswers.ok(
+					res,
+					await this.food.findOne({ _id: inserted.insertedIds[0] })
+				);
 			} else {
 				throw Error('02');
 			}
@@ -95,12 +139,12 @@ export default class foodController implements IController {
 		}
 	};
 
-	private deleteFood = async (req: Request, res: Response) => {
+	private deleteFoodById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
+			const id = req.params.id;
 
-			if (name) {
-				const foodDeleteResponse = await this.food.deleteMany({ name: name });
+			if (id) {
+				const foodDeleteResponse = await this.food.deleteOne({ _id: id });
 				if (foodDeleteResponse.deletedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
@@ -139,27 +183,50 @@ export default class foodController implements IController {
 		try {
 			const newFood: IFood = req.body;
 			const id = req.params.id;
-			await this.foodConstraints.validateAsync(newFood);
+			// await this.foodConstraints.validateAsync(newFood);
 			if (id) {
+				const oldFood = await this.food.findOne({ _id: id });
+
+				if (!oldFood) {
+					throw Error('73');
+				}
+				const category: ICategory | null = await this.category.findOne({
+					_id: newFood.categoryId,
+				});
+				if (!category) {
+					throw Error('44');
+				}
+				const subCategory: ICategory[] | null = await this.category.find({
+					_id: newFood.subCategoryId,
+				});
+				if (
+					subCategory &&
+					newFood.subCategoryId!.length !== subCategory.length
+				) {
+					throw Error('84');
+				}
+
+				const newFoodToStore = {
+					...oldFood,
+					...newFood,
+					_id: oldFood._id,
+				};
+
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						_id: id,
+						_id: oldFood._id,
 					},
 					{
-						name: newFood.name,
-						materials: newFood.materials,
-						price: newFood.price,
-						isEnabled: newFood.isEnabled,
-						categoryId: newFood.categoryId,
+						$set: newFoodToStore,
 					}
 				);
-				if (foods.modifiedCount > 0) {
-					res.send(foods);
+				if (foods.matchedCount > 0) {
+					defaultAnswers.ok(res, newFoodToStore);
 				} else {
 					throw Error('45');
 				}
 			} else {
-				res.status(400).json('07');
+				throw Error('07');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -169,19 +236,19 @@ export default class foodController implements IController {
 		}
 	};
 
-	private disableByName = async (req: Request, res: Response) => {
+	private disableById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
-			if (name) {
+			const id = req.params.id;
+			if (id) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						name: name,
+						_id: id,
 					},
 					{
 						$set: { isEnabled: false },
 					}
 				);
-				if (foods.modifiedCount > 0) {
+				if (foods.matchedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('73');
@@ -196,19 +263,19 @@ export default class foodController implements IController {
 			);
 		}
 	};
-	private enableByName = async (req: Request, res: Response) => {
+	private enableById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
-			if (name) {
+			const id = req.params.id;
+			if (id) {
 				const foods: UpdateWriteOpResult = await this.food.updateOne(
 					{
-						name: name,
+						_id: id,
 					},
 					{
 						$set: { isEnabled: true },
 					}
 				);
-				if (foods.modifiedCount > 0) {
+				if (foods.matchedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('73');
@@ -228,7 +295,15 @@ export default class foodController implements IController {
 			const foods = await this.food
 				.find(
 					{ isEnabled: true },
-					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 1 }
+					{
+						_id: 0,
+						name: 1,
+						price: 1,
+						image: 1,
+						categoryId: 1,
+						subCategoryId: 1,
+						englishName: 1,
+					}
 				)
 				.populate('categoryId', '-_id')
 				.populate('subCategoryId', '-_id');
@@ -236,61 +311,6 @@ export default class foodController implements IController {
 				res.send(foods);
 			} else {
 				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByName = async (req: Request, res: Response) => {
-		try {
-			const name = req.params.name;
-			if (name) {
-				const foods = await this.food
-					.findOne({ name: name }, { 'materials._id': 0 })
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
-				if (foods) {
-					res.send(foods);
-				} else {
-					throw Error('73');
-				}
-			} else {
-				throw Error('42');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByCategory = async (req: Request, res: Response) => {
-		try {
-			const category = req.params.category;
-			if (category) {
-				const selectedCategory = await this.category.findOne({
-					name: category,
-				});
-				if (selectedCategory) {
-					const foods = await this.food
-						.find({
-							categoryId: { $in: selectedCategory?._id },
-						})
-						.populate('categoryId', '-_id')
-						.populate('subCategoryId', '-_id');
-					if (foods) {
-						res.send(foods);
-					} else {
-						throw Error('02');
-					}
-				} else {
-					throw Error('44');
-				}
-			} else {
-				throw Error('50');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -316,7 +336,7 @@ export default class foodController implements IController {
 		materials: Joi.array()
 			.items(
 				Joi.object({
-					name: Joi.string().required().messages({
+					_id: Joi.string().required().messages({
 						'string.empty': '41',
 						'any.required': '41',
 					}),

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { IController, IFood, IOrder } from '../models/models';
 import {
 	foodModel,
+	materialChangeModel,
 	materialModel,
 	orderModel,
 	userModel,
@@ -17,26 +18,22 @@ import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-import { ObjectId } from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
 	private order = orderModel;
 	private user = userModel;
+	private materialChanges = materialChangeModel;
 	private material = materialModel;
 	private food = foodModel;
 
 	constructor() {
-		this.router.post('/new', authToken, this.newOrder);
+		this.router.post('', authToken, this.newOrder);
 
 		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
-		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
-		this.router.get('/finished/:id', authToken, this.getFinishedById);
-		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
-		this.router.get('/all/:id', authToken, this.getById);
-
 		this.router.get('/display', this.getOrdersForDisplay);
 
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
@@ -52,7 +49,8 @@ export default class orderController implements IController {
 			authSalesmanToken,
 			this.revertReceivedOrder
 		);
-		this.router.get('/page/:number', authAdminToken, this.getAllByPage);
+
+		this.router.get('', authAdminToken, this.getAllByPage);
 	}
 
 	private getOrdersForDisplay = async (req: Request, res: Response) => {
@@ -82,118 +80,109 @@ export default class orderController implements IController {
 	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
 		let newOrderId: ObjectId | null = null;
+		const newOrder = req.body as IOrder;
+		let newId: ObjectId | null = null;
+		const session = await mongoose.startSession();
+		session.startTransaction();
+
 		try {
-			const newOrder: IOrder = req.body;
 			await this.orderConstraints.validateAsync(newOrder);
+			const user = await this.user.findById(newOrder.costumerId);
+			if (user) {
+				const newOrderNumber = await this.getNewOrderNumber();
+				newOrder.orderNumber = newOrderNumber;
 
-			const userExists = await this.user.find({
-				_id: newOrder.costumerId,
-			});
-			if (userExists.length > 0) {
-				newOrder.orderNumber = await this.getNewOrderNumber();
-
-				const foodsFromOrder = await this.food.find({
-					name: { $in: newOrder.orderedProducts.map((item) => item.name) },
-				});
-
-				let totalPrice = newOrder.orderedProducts.reduce(
-					(acc, item) =>
-						acc +
-						Number(
-							foodsFromOrder.find((food) => food.name === item.name)?.price
-						) *
-							item.quantity,
-					0
-				);
-				log(totalPrice);
-				if (Number.isNaN(totalPrice)) {
-					log(newOrder.orderedProducts);
-					throw Error('00');
+				let totalPrice = 0;
+				for (let i = 0; i < newOrder.orderedProducts.length; i++) {
+					const food: IFood | null = await this.food.findById(
+						newOrder.orderedProducts[i]._id
+					);
+					if (food) {
+						totalPrice += food.price * newOrder.orderedProducts[i].quantity;
+					} else {
+						throw Error('06');
+					}
 				}
 				newOrder.totalPrice = totalPrice;
-				const insertedOrders = await this.order.insertMany([newOrder], {
+				const response = await this.order.insertMany([newOrder], {
+					session,
 					rawResult: true,
 				});
-				newOrderId = insertedOrders.insertedIds[0];
-				if (insertedOrders.acknowledged) {
-					const newOrderId = insertedOrders.insertedIds[0];
 
-					if (newOrderId) {
-						for (
-							let index = 0;
-							index < newOrder.orderedProducts.length;
-							index++
-						) {
-							const orderedProducts = newOrder.orderedProducts[index];
+				newId = response.insertedIds[0];
 
-							const orderedFood: IFood | null = await this.food.findOne({
-								name: orderedProducts.name,
-							});
-							const materialsInStock = await this.material
-								.aggregate([
-									{
-										$group: {
-											_id: '$name',
-											inStock: { $sum: '$quantity' },
+				if (response) {
+					// Check if there is enough material
+
+					for (let i = 0; i < newOrder.orderedProducts.length; i++) {
+						const food: IFood | null = await this.food.findById(
+							newOrder.orderedProducts[i]._id
+						);
+						if (food) {
+							for (let j = 0; j < food.materials.length; j++) {
+								const material = await this.material.findById(
+									food.materials[j]._id
+								);
+
+								if (material) {
+									const materialChange = await this.materialChanges.aggregate([
+										{
+											$match: {
+												materialId: material._id,
+											},
 										},
-									},
-								])
-								.then((result) => {
-									const stock: { [key: string]: number } = {};
-									result.forEach((item: any) => {
-										stock[item._id] = item.inStock;
-									});
-									return stock;
-								});
-							if (orderedFood) {
-								for (
-									let index = 0;
-									index < orderedFood.materials.length;
-									index++
-								) {
-									const orderedFoodMaterials = orderedFood.materials[index];
-									const materialChange = {
-										name: orderedFoodMaterials.name,
-										quantity:
-											0 -
-											orderedFoodMaterials.quantity * orderedProducts.quantity,
-										message: 'Rendelés ' + newOrderId,
-									};
-									if (
-										materialsInStock[orderedFoodMaterials.name] >=
-										orderedFoodMaterials.quantity * orderedProducts.quantity
-									) {
-										await this.material.insertMany([materialChange]);
-									} else {
-										throw Error('56');
+										{
+											$group: {
+												_id: '$materialId',
+												inStock: { $sum: '$quantity' },
+											},
+										},
+									]);
+									if (materialChange.length === 0) {
+										throw Error('71');
 									}
+									if (
+										materialChange[0].inStock -
+											food.materials[j].quantity *
+												newOrder.orderedProducts[i].quantity <
+										0
+									) {
+										throw Error('71');
+									}
+
+									await this.materialChanges.insertMany(
+										[
+											{
+												materialId: material._id,
+												quantity: -(
+													food.materials[j].quantity *
+													newOrder.orderedProducts[i].quantity
+												),
+												message: 'Order',
+											},
+										],
+										{ session }
+									);
+								} else {
+									throw Error('85');
 								}
-							} else {
-								throw Error('51');
 							}
+						} else {
+							throw Error('81');
 						}
-					} else {
-						throw Error('02');
 					}
 				} else {
-					throw Error('06');
+					throw Error('02');
 				}
-
-				webSocetController.sendStateChange('');
-				defaultAnswers.created(res, {
-					orderId: newOrderId,
-					orderNumber: newOrder.orderNumber,
-					totalPrice: newOrder.totalPrice,
-				});
 			} else {
-				throw Error('02');
+				throw Error('06');
 			}
+			await session.commitTransaction();
+			session.endSession();
+			webSocetController.sendStateChange('');
+			defaultAnswers.created(res, await this.order.findById(newId));
 		} catch (error: any) {
-			log('Rendelés ' + newOrderId);
-			await this.material.deleteMany({
-				message: { $regex: 'Rendelés ' + newOrderId },
-			});
-			await this.order.deleteOne({ _id: newOrderId });
+			await session.abortTransaction();
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)
@@ -201,33 +190,6 @@ export default class orderController implements IController {
 		}
 	};
 
-	private getById = async (req: Request, res: Response) => {
-		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order
-					.find(
-						{
-							costumerId: id,
-						},
-						{ 'orderedProducts._id': 0 }
-					)
-					.sort({ orderedTime: -1 });
-				if (order.length > 0) {
-					res.json(order);
-				} else {
-					throw Error('06');
-				}
-			} else {
-				throw Error('07');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
 			const order = await this.order
@@ -261,64 +223,6 @@ export default class orderController implements IController {
 				res.json(order);
 			} else {
 				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getOngoingById = async (req: Request, res: Response) => {
-		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order
-					.find(
-						{
-							costumerId: id,
-							isFinished: false,
-						},
-						{ 'orderedProducts._id': 0 }
-					)
-					.sort({ orderedTime: -1 });
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('54');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getFinishedById = async (req: Request, res: Response) => {
-		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order
-					.find(
-						{
-							costumerId: id,
-							finishedTime: { $ne: null },
-						},
-						{ 'orderedProducts._id': 0 }
-					)
-					.sort({ orderedTime: -1 });
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('07');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -384,39 +288,7 @@ export default class orderController implements IController {
 			);
 		}
 	};
-	private getAllOrder = async (req: Request, res: Response) => {
-		try {
-			const from: string = req.params.from;
-			let to: string = req.params.to;
-			if (to == '{to}' || to == '' || !to) {
-				const toDate = new Date();
-				toDate.setDate(toDate.getDate() + 1);
-				to = toDate.toJSON().split('T')[0];
-			}
-			if (from) {
-				const order = await this.order
-					.find(
-						{
-							finishedTime: { $gte: new Date(from), $lte: new Date(to) },
-						},
-						{ 'orderedProducts._id': 0 }
-					)
-					.sort({ orderedTime: -1 });
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('53');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
+
 	private receivedOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
@@ -479,28 +351,100 @@ export default class orderController implements IController {
 
 	private getAllByPage = async (req: Request, res: Response) => {
 		try {
-			const number = Number(req.params.number);
-			if (number > 0) {
-				if (number) {
-					const order = await this.order.aggregate([
-						{ $sort: { orderedTime: -1 } },
-						{ $skip: number * 10 },
-						{ $limit: (number + 1) * 10 },
-						{ $project: { 'orderedProducts._id': 0 } },
-					]);
+			const { field, value, page, from, to } = req.query;
+
+			const allowedFields = [
+				'costumerId',
+				'orderNumber',
+				'finishedTime',
+				'orderedTime',
+				'finishedCokingTime',
+				'totalPrice',
+			];
+			if (field && !allowedFields.includes(field as string)) {
+				throw Error('83');
+			}
+
+			const pageNumber = Number(page) || 1;
+			const itemsPerPage = 10;
+			const skip = (pageNumber - 1) * itemsPerPage;
+
+			if (field && value) {
+				const selectedItems = await this.order
+					.find({ [field as string]: value })
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (selectedItems.length > 0) {
+					res.send({
+						items: selectedItems,
+						pageCount: Math.ceil(
+							(await this.order.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
+			} else if (from) {
+				let toTime;
+				if (to == '{to}' || to == '' || !to) {
+					const toDate = new Date();
+					toDate.setDate(toDate.getDate() + 1);
+					toTime = toDate.toJSON().split('T')[0];
+				} else {
+					toTime = new Date(to as string);
+				}
+				if (from) {
+					const order = await this.order
+						.find(
+							{
+								finishedTime: { $gte: new Date(from as string), $lte: toTime },
+							},
+							{ 'orderedProducts._id': 0 }
+						)
+						.sort({ orderedTime: -1 })
+						.skip(skip)
+						.limit(itemsPerPage);
 					if (order) {
-						res.json({
-							pageCount: Math.ceil((await this.order.find()).length / 10) - 1,
-							orders: order,
-						});
+						if (order.length > 0) {
+							res.send({
+								items: order,
+								pageCount: Math.ceil(
+									(
+										await this.order.find({
+											finishedTime: {
+												$gte: new Date(from as string),
+												$lte: toTime,
+											},
+										})
+									).length / itemsPerPage
+								),
+							});
+						} else {
+							throw Error('77');
+						}
 					} else {
 						throw Error('02');
 					}
 				} else {
-					throw Error('55');
+					throw Error('53');
 				}
 			} else {
-				throw Error('65');
+				const allItems = await this.order
+					.find({})
+					.skip(skip)
+					.limit(itemsPerPage);
+				if (allItems.length > 0) {
+					res.send({
+						items: allItems,
+						pageCount: Math.ceil(
+							(await this.order.find({ [field as string]: value })).length /
+								itemsPerPage
+						),
+					});
+				} else {
+					throw Error('77');
+				}
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -517,7 +461,7 @@ export default class orderController implements IController {
 		orderedProducts: Joi.array()
 			.items(
 				Joi.object({
-					name: Joi.string().required().messages({
+					_id: Joi.string().required().messages({
 						'string.base': '34',
 						'any.required': '34',
 					}),

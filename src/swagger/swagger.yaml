@@ -47,7 +47,7 @@ apis: [./src/swagger/swagger.yaml]
 
 paths:
   # Category Paths
-  /category/add:
+  /category:
     post:
       summary: Add a new category
       parameters:
@@ -60,62 +60,56 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - icon
-                - englishName
-              properties:
-                name:
-                  type: string
-                  description: Name of the item
-                icon:
-                  type: string
-                  description: Icon of the category
-                  default: no-image.svg
-                englishName:
-                  type: string
-                  description: English name of the category
+              $ref: '#/components/schemas/Category'
       responses:
-        200:
+        '200':
           description: Category added successfully
-        400:
+        '400':
           description: Bad request
-  /category/all:
     get:
-      summary: Get all categories
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
+      summary: Filter categories
       tags: [Category]
       security:
         - adminBearerAuth: []
-        - customerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - name: field
+          in: query
+          schema:
+            type: string
+        - name: value
+          in: query
+          schema:
+            - $ref: '#/components/parameters/AcceptLanguage'
+        - name: page
+          in: query
+          schema:
+            type: integer
       responses:
-        200:
-          description: A list of categories
-        400:
+        '200':
+          description: Categories retrieved successfully
+        '400':
           description: Bad request
-  /category/{name}:
+  /category/{id}:
     delete:
-      summary: Delete category by name
+      summary: Delete a category
       tags: [Category]
       security:
         - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
+        - name: id
           in: path
           required: true
           schema:
             type: string
       responses:
-        200:
-          description: Category deleted
-        401:
-          description: Unauthorized
-  /category/{id}:
+        '200':
+          description: Category deleted successfully
+        '400':
+          description: Bad request
     put:
-      summary: Modify category
+      summary: Modify a category
       tags: [Category]
       security:
         - adminBearerAuth: []
@@ -131,74 +125,17 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - icon
-                - englishName
-              properties:
-                name:
-                  type: string
-                  description: Name of the item
-                icon:
-                  type: string
-                  description: Icon of the category
-                  default: no-image.svg
-                englishName:
-                  type: string
-                  description: English name of the category
-
+              $ref: '#/components/schemas/Category'
       responses:
-        200:
-          description: Category modifyed
-        401:
-          description: Unauthorized
-  /category/filter:
-    get:
-      summary: Filter category by field and value
-      tags: [Category]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - in: query
-          name: field
-          schema:
-            type: string
-          required: true
-          description: The field to filter by
-        - in: query
-          name: value
-          schema:
-            type: string
-          required: true
-          description: The value to filter by
-      responses:
-        200:
-          description: List of filtered categories
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                    name:
-                      type: string
-                    englishName:
-                      type: string
-                    icon:
-                      type: string
-        400:
+        '200':
+          description: Category modified successfully
+        '400':
           description: Bad request
 
   # Food Paths
-  /food/add:
+  /food:
     post:
-      summary: Add new food items
+      summary: Add a new food item
       tags: [Food]
       security:
         - adminBearerAuth: []
@@ -211,13 +148,45 @@ paths:
             schema:
               $ref: '#/components/schemas/Food'
       responses:
-        200:
-          description: Food items added successfully
-        400:
+        '200':
+          description: Food item added successfully
+        '400':
           description: Bad request
-        401:
-          description: Unauthorized
+    get:
+      summary: Filter food items
+      tags: [Food]
+      security:
+        - adminBearerAuth: []
+        - customerBearerAuth: []
 
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: query
+          name: field
+          schema:
+            type: string
+          description: Field to filter by
+        - in: query
+          name: value
+          schema:
+            type: string
+          description: Value to filter by
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+      responses:
+        '200':
+          description: Filtered food items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
+        '400':
+          description: Bad request
   /food/allEnabled:
     get:
       summary: Get all enabled food items
@@ -228,7 +197,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
       responses:
-        200:
+        '200':
           description: List of enabled food items
           content:
             application/json:
@@ -236,220 +205,120 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Food'
-        401:
-          description: Unauthorized
+        '400':
+          description: Bad request
 
-  /food/all:
-    get:
-      summary: Get all food
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-      responses:
-        200:
-          description: List of enabled food items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Food'
-        401:
-          description: Unauthorized
-
-  /food/allToOrder:
-    get:
-      summary: Get food items for ordering (name and price only)
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      responses:
-        200:
-          description: List of food items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    price:
-                      type: number
-        401:
-          description: Unauthorized
-  /food/name/{name}:
-    get:
-      summary: Get food by name
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Food details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Food'
-        401:
-          description: Unauthorized
-    delete:
-      summary: Delete food by name
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Food deleted
-        401:
-          description: Unauthorized
-  /food/category/{category}:
-    get:
-      summary: Get food by category
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - name: category
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Food details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Food'
-        401:
-          description: Unauthorized
-
-  /food/update/{id}:
+  /food/{id}:
     put:
-      summary: Update food item
+      summary: Update a food item
       tags: [Food]
       security:
         - adminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Food item ID
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Food'
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
-        200:
-          description: Food updated successfully
-        400:
+        '200':
+          description: Food item updated successfully
+        '400':
           description: Bad request
-        401:
-          description: Unauthorized
-
-  /food/disable/{name}:
     patch:
-      summary: Disable food item
+      summary: Update a food item
+      tags: [Food]
+      security:
+        - adminBearerAuth: []
+
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Food item ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Food'
+      responses:
+        '200':
+          description: Food item updated successfully
+        '400':
+          description: Bad request
+    delete:
+      summary: Delete a food item
       tags: [Food]
       security:
         - adminBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
-          in: path
+
+        - in: path
+          name: id
           required: true
           schema:
             type: string
+          description: Food item ID
       responses:
-        200:
-          description: Food disabled successfully
-        400:
+        '200':
+          description: Food item deleted successfully
+        '400':
           description: Bad request
-        401:
-          description: Unauthorized
-
-  /food/enable/{name}:
+  /food/disable/{id}:
     patch:
-      summary: Enable food item
+      summary: Disable a food item
       tags: [Food]
       security:
         - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Food enabled successfully
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-  /food/filter:
-    get:
-      summary: Filter food items by field and value
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - in: query
-          name: field
-          schema:
-            type: string
-          required: true
-          description: The field to filter by
-        - in: query
-          name: value
-          schema:
-            type: string
-          required: true
-          description: The value to filter by
-      responses:
-        200:
-          description: List of filtered food items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Food'
-        400:
-          description: Bad request
 
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Food item ID
+      responses:
+        '200':
+          description: Food item disabled successfully
+        '400':
+          description: Bad request
+  /food/enable/{id}:
+    patch:
+      summary: Enable a food item
+      tags: [Food]
+      security:
+        - adminBearerAuth: []
+
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Food item ID
+      responses:
+        '200':
+          description: Food item enabled successfully
+        '400':
+          description: Bad request
 # Image paths
 /images/name/{imageName}:
   get:
@@ -554,182 +423,180 @@ paths:
       400:
         description: Bad request
 
-# Material
-/material/add:
+# Inventory
+/inventory:
   post:
-    summary: Add new material change to inventory
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-    tags: [Material changes]
+    tags:
+      - Inventory
+    summary: Add a new material change
     security:
       - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                default: kenyér
-              quantity:
-                type: number
-                default: 2
-              message:
-                type: string
-                default: Vásárlás
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: Materials successfully added
-      400:
-        description: Bad request - Invalid input
-      401:
-        description: Unauthorized - Invalid or missing token
-/material/stock:
+      '200':
+        description: Material change added successfully
+      '400':
+        description: Bad request
   get:
-    summary: Get current material stock levels
-    tags: [Material changes]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
+    tags:
+      - Inventory
+    summary: Get all material changes
     security:
       - adminBearerAuth: []
-    responses:
-      200:
-        description: List of materials with stock levels
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  inStock:
-                    type: number
-                  unit:
-                    type: string
-      401:
-        description: Unauthorized access
-/material/all:
-  get:
-    summary: Get all materials from recipes and stock
-    tags: [Material changes]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-    security:
-      - adminBearerAuth: []
+      - name: field
+        in: query
+        description: Field to filter by
+        required: false
+        schema:
+          type: string
+      - name: value
+        in: query
+        description: Value to filter by
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Page number for pagination
+        required: false
+        schema:
+          type: integer
     responses:
-      200:
-        description: Combined list of materials from recipes and stock
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  inStock:
-                    type: number
-                  unit:
-                    type: string
-      401:
-        description: Unauthorized access
-/material/changes:
-  get:
-    summary: Get all materials changes
-    tags: [Material changes]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-    security:
-      - adminBearerAuth: []
-    responses:
-      200:
-        description: Successfully retrieved
-      401:
-        description: Unauthorized access
-/material/update/{id}:
+      '200':
+        description: A list of material changes
+      '400':
+        description: Bad request
   patch:
-    summary: Update material change by ID
-    tags: [Material changes]
+    tags:
+      - Inventory
+    summary: Update a material change
+    security:
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
+      - name: id
+        in: path
         required: true
         schema:
           type: string
-        description: The ID of the material to update
-    security:
-      - adminBearerAuth: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Name of the material
-              quantity:
-                type: number
-                description: Quantity of the material
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: Material updated successfully
-      400:
+      '200':
+        description: Material change updated successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized access
-/material/filter:
-  get:
-    summary: Filter material change by field and value
-    tags: [Material changes]
+  put:
+    tags:
+      - Inventory
+    summary: Update a material change
     security:
       - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: query
-        name: field
+      - name: id
+        in: path
+        required: true
         schema:
           type: string
-        required: true
-        description: The field to filter by
-      - in: query
-        name: value
-        schema:
-          type: string
-        required: true
-        description: The value to filter by
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MaterialChange'
     responses:
-      200:
-        description: List of material changes
+      '200':
+        description: Material change updated successfully
+      '400':
+        description: Bad request
+  delete:
+    tags:
+      - Inventory
+    summary: Delete a material change
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Material change deleted successfully
+      '400':
+        description: Bad request
+/inventory/changes:
+  get:
+    tags:
+      - Inventory
+    summary: Get paginated material changes
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - name: page
+        in: query
+        description: Page number for pagination
+        required: false
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        description: Number of items per page
+        required: false
+        schema:
+          type: integer
+      - name: field
+        in: query
+        description: Field name for filtering
+        required: false
+        schema:
+          type: string
+      - name: value
+        in: query
+        description: Value to filter by
+        required: false
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Paginated list of material changes
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  name:
-                    type: string
-                  quantity:
-                    type: number
-                  message:
-                    type: string
-      400:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/MaterialChange'
+                pageCount:
+                  type: integer
+      '400':
         description: Bad request
-# Order
-/order/new:
+
+  # Order
+/order:
   post:
     summary: Create a new order
-    tags: [Orders]
+    tags: [Order]
+
     security:
       - adminBearerAuth: []
       - customerBearerAuth: []
@@ -740,262 +607,167 @@ paths:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              costumerId:
-                type: string
-                default: 6793bb6219bff92baf980ade
-              orderedProducts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      default: Pizza
-                    quantity:
-                      type: number
-                      default: 2
-                  required:
-                    - name
-                    - quantity
-            required:
-              - costumerId
-              - orderedProducts
+            $ref: '#/components/schemas/Order'
     responses:
-      201:
+      '201':
         description: Order created successfully
-      400:
+      '400':
+        description: Bad request
+  get:
+    summary: Get all orders by page
+    tags: [Order]
+
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - name: field
+        in: query
+        schema:
+          type: string
+      - name: value
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: from
+        in: query
+        schema:
+          type: string
+      - name: to
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of orders
+      '400':
         description: Bad request
 /order/salesman:
   get:
-    summary: Get all orders for salesman
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-    tags: [Orders]
+    summary: Get all ongoing orders for salesman
+    tags: [Order]
     security:
-      - adminBearerAuth: []
       - salesmanBearerAuth: []
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
     responses:
-      200:
+      '200':
         description: List of ongoing orders
-      400:
-        description: Bad request
-/order/page/{page}:
-  get:
-    summary: Get all ongoing orders
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: page
-        schema:
-          type: string
-        required: true
-        description: Page number
-    responses:
-      200:
-        description: List of ongoing orders
-      400:
-        description: Bad request
-/order/ongoing/{id}:
-  get:
-    summary: Get ongoing orders by user id
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: User ID
-    responses:
-      200:
-        description: List of ongoing orders for the user
-      400:
-        description: Bad request
-/order/all/{id}:
-  get:
-    summary: Get an order by user id
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: User ID
-    responses:
-      200:
-        description: Received the orders
-      400:
+      '400':
         description: Bad request
 /order/kitchen:
   get:
     summary: Get all orders for kitchen
-    tags: [Orders]
+    tags: [Order]
+
+    security:
+      - kitchenBearerAuth: []
+      - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-    security:
-      - adminBearerAuth: []
-      - kitchenBearerAuth: []
     responses:
-      200:
+      '200':
         description: List of orders for kitchen
-      400:
+      '400':
         description: Bad request
-/order/finish/{id}:
-  patch:
-    summary: Mark an order as finished
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - kitchenBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: Order ID
-    responses:
-      200:
-        description: Order marked as finished
-      400:
-        description: Bad request
-/order/handover/{id}:
-  patch:
-    summary: Get an order for handover
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - salesmanBearerAuth: []
-
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: Order ID
-    responses:
-      200:
-        description: Order handed over
-      400:
-        description: Bad request
-
-/order/revert/finish/{id}:
-  patch:
-    summary: Mark an order as finished
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - kitchenBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: Order ID
-    responses:
-      200:
-        description: Rever successfully done
-      400:
-        description: Bad request
-
-/order/revert/handover/{id}:
-  patch:
-    summary: Get an order for handover
-    tags: [Orders]
-    security:
-      - adminBearerAuth: []
-      - salesmanBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-        description: Order ID
-    responses:
-      200:
-        description: Rever successfully done
-      400:
-        description: Bad request
-
 /order/display:
   get:
     summary: Get orders for display
-    tags: [Orders]
-    security: []
+    tags: [Order]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     responses:
-      200:
+      '200':
         description: List of orders for display
-      400:
+      '400':
         description: Bad request
+/order/finish/{id}:
+  patch:
+    summary: Mark order as finished by kitchen
+    tags: [Order]
 
-/order/time/{from}/{to}:
-  get:
-    summary: Get all orders within a time range
-    tags: [Orders]
     security:
-      - adminBearerAuth: []
+      - bearerAuth: []
+      - kitchenBearerAuth: []
+
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: from
-        schema:
-          type: string
-          format: date
+      - name: id
+        in: path
         required: true
-        description: Start date of the time range
-      - in: path
-        name: to
         schema:
           type: string
-          format: date
-        description: End date of the time range
     responses:
-      200:
-        description: List of orders within the time range
-      400:
+      '200':
+        description: Order marked as finished
+      '400':
         description: Bad request
-/order/finished/{id}:
-  get:
-    summary: Get finished orders by user id
-    tags: [Orders]
+/order/handover/{id}:
+  patch:
+    summary: Mark order as received by salesman
+    tags: [Order]
+
     security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
+      - bearerAuth: []
+      - salesmanBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
+      - name: id
+        in: path
+        required: true
         schema:
           type: string
-        required: true
-        description: User ID
     responses:
-      200:
-        description: List of finished orders for the user
-      400:
+      '200':
+        description: Order marked as received
+      '400':
+        description: Bad request
+/order/revert/finish/{id}:
+  patch:
+    summary: Revert order finish by kitchen
+    tags: [Order]
+
+    security:
+      - kitchenBearerAuth: []
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Order finish reverted
+      '400':
+        description: Bad request
+/order/revert/handover/{id}:
+  patch:
+    summary: Revert order received by salesman
+    tags: [Order]
+
+    security:
+      - salesmanBearerAuth: []
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Order received reverted
+      '400':
         description: Bad request
 
 # Token validation
@@ -1011,111 +783,121 @@ paths:
       400:
         description: Token is invalid
 
-# Units
-/unit/add:
+/material:
   post:
-    summary: Add a new unit of measure
-    tags: [Units]
-    security:
-      - adminBearerAuth: []
+    summary: Add a new material
+    tags: [Material]
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - materialName
-              - unit
-            properties:
-              materialName:
-                type: string
-                description: Name of the item
-              unit:
-                type: string
-                description: Name of the unit of measure
+            $ref: '#/components/schemas/Material'
     responses:
-      200:
-        description: Unit successfully added
-      400:
+      '200':
+        description: Material added successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/all:
   get:
-    summary: Get all units of measure
-    tags: [Units]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
+    summary: Get all materials
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: field
+        schema:
+          type: string
+      - in: query
+        name: value
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
     responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
+      '200':
+        description: List of materials
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/delete/{name}:
+/material/{id}:
   delete:
-    summary: Delete unit of measure by name
-    tags: [Units]
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: name
-        schema:
-          type: string
-          required: true
-          description: Unit name
+    summary: Delete a material by ID
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
-    responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
-        description: Bad request
-      401:
-        description: Unauthorized
-
-/unit/update/{name}:
-  patch:
-    summary: Delete unit of measure by name
-    tags: [Units]
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
-        name: name
+        name: id
+        required: true
         schema:
           type: string
-          required: true
-          description: Unit name
+    responses:
+      '200':
+        description: Material deleted successfully
+      '400':
+        description: Bad request
+  patch:
+    summary: Update a material by ID
+    tags: [Material]
+    security:
+      - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - unit
-            properties:
-              unit:
-                type: string
-                default: db
+            $ref: '#/components/schemas/Material'
+    responses:
+      '200':
+        description: Material updated successfully
+      '400':
+        description: Bad request
+  put:
+    summary: Update a material by ID
+    tags: [Material]
+
     security:
       - adminBearerAuth: []
+      - customerBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Material'
     responses:
-      200:
-        description: List of all units retrieved successfully
-      400:
+      '200':
+        description: Material updated successfully
+      '400':
         description: Bad request
-      401:
-        description: Unauthorized
-
 # User handling
 /user/all:
   get:
@@ -1321,7 +1103,7 @@ components:
           items:
             type: object
             properties:
-              name:
+              _id:
                 type: string
               quantity:
                 type: number
@@ -1338,6 +1120,65 @@ components:
             default: 679f462818947c0fa463a88f
         englishName:
           type: string
-
         image:
           type: string
+          default: no-image.svg
+    MaterialChange:
+      type: object
+      properties:
+        materialId:
+          type: string
+        quantity:
+          type: number
+        message:
+          type: string
+      required:
+        - materialId
+        - quantity
+        - message
+    Material:
+      type: object
+      properties:
+        name:
+          type: string
+        englishName:
+          type: string
+        unit:
+          type: string
+      required:
+        - name
+        - englishName
+        - unit
+    Category:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        englishName:
+          type: string
+      required:
+        - name
+        - icon
+        - englishName
+    Order:
+      type: object
+      required:
+        - costumerId
+        - orderedProducts
+      properties:
+        costumerId:
+          type: string
+          default: 6793b122d55c7354ff36be8f
+        orderedProducts:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+                default: 67a74ef1b660887ac98cc8f7
+              quantity:
+                type: integer
+                default: 1
