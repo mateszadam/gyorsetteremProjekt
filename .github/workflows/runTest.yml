@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Server and Wait for it to start and start testing
         run: |
-          npm run t
+          npm run autoTest
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
