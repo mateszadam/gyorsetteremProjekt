@@ -179,7 +179,8 @@
 			"84": "Subcategory not found in the database!",
 			"85": "Ingredient does not exist!",
 			"86": "Food name already taken!",
-			"87": "Ingredient name already taken!"
+			"87": "Ingredient name already taken!",
+			"88": "Page number cannot be negative!"
 		}
 	]
 }
