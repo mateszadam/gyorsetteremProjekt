@@ -85,8 +85,7 @@ export default class materialController implements IController {
 					res.send({
 						items: allItems,
 						pageCount: Math.ceil(
-							(await this.material.find({ [field as string]: value })).length /
-								itemsPerPage
+							(await this.material.countDocuments({})) / itemsPerPage
 						),
 					});
 				} else {

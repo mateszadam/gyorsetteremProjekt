@@ -88,7 +88,7 @@ export default class inventoryController implements IController {
 					inputMaterialChange.quantity ||
 					inputMaterialChange.materialId
 				) {
-					const oldMaterialChange: IMaterialChange | null =
+					let oldMaterialChange: IMaterialChange | null =
 						await this.materialChanges.findOne(
 							{ _id: materialChangeId },
 							{ _id: 0, name: 1, quantity: 1, message: 1, date: 1 }
@@ -100,10 +100,11 @@ export default class inventoryController implements IController {
 								delete inputMaterialChange[key as keyof IMaterialChange];
 							}
 						});
-						const newMaterialChange = {
-							...oldMaterialChange,
-							...inputMaterialChange,
-							_id: oldMaterialChange._id,
+						const newMaterialChange: IMaterialChange = {
+							...(oldMaterialChange = {
+								...inputMaterialChange,
+								_id: oldMaterialChange._id,
+							}),
 						};
 
 						const databaseAnswer = await this.materialChanges.findByIdAndUpdate(
