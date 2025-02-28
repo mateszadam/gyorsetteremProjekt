@@ -109,7 +109,7 @@ export default class materialController implements IController {
 				await materialChangeModel.deleteMany({ materialId: id });
 				const response = await this.material.findByIdAndDelete(id);
 				if (response) {
-					defaultAnswers.ok(res);
+					defaultAnswers.ok(res, response);
 				} else {
 					throw Error('02');
 				}
@@ -127,31 +127,34 @@ export default class materialController implements IController {
 	private updateByMaterialId = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			const body = req.body;
+			const incomingMaterial: IMaterial = req.body;
 
 			if (id) {
-				const oldMaterial = await this.material.findById(id);
-				if (!oldMaterial) {
-					throw Error('06');
-				}
-				const mergedMaterial: IMaterial = {
-					...oldMaterial,
-					...body,
-					_id: oldMaterial._id,
-				};
+				if (incomingMaterial) {
+					let oldMaterial: IMaterial | null = await this.material.findById(id);
+					if (!oldMaterial) {
+						throw Error('06');
+					}
+					delete incomingMaterial._id;
+					const mergedMaterial: IMaterial = {
+						...(oldMaterial = { ...incomingMaterial, _id: oldMaterial._id }),
+					};
 
-				if (mergedMaterial) {
-					const response = await this.material.findByIdAndUpdate(
-						id,
-						mergedMaterial
-					);
-					if (response) {
-						defaultAnswers.ok(
-							res,
-							await this.material.findById(oldMaterial._id)
+					if (mergedMaterial) {
+						const response = await this.material.findByIdAndUpdate(
+							id,
+							mergedMaterial
 						);
+						if (response) {
+							defaultAnswers.ok(
+								res,
+								await this.material.findById(oldMaterial._id)
+							);
+						} else {
+							throw Error('02');
+						}
 					} else {
-						throw Error('02');
+						throw Error('');
 					}
 				} else {
 					throw Error('32');

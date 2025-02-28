@@ -88,7 +88,8 @@
 			"85": "Az alapanyag nem létezik!",
 			"86": "Az étel neve már foglalt!",
 			"87": "Az alapanyag neve már foglalt!",
-			"88": "Az oldalszám nem lehet negatív!"
+			"88": "Az oldalszám nem lehet negatív!",
+			"89": "Az alapanyag name található az adatbázisban!"
 		}
 	],
 	"en-GB": [
