@@ -163,7 +163,7 @@ describe('categoryController Integration Tests', () => {
 		});
 	});
 
-	describe('04 DELETE /category/:id', () => {
+	describe('03 DELETE /category/:id', () => {
 		it('should delete category by id', async () => {
 			const categories = await request(baseUrl)
 				.get('/category')
@@ -172,6 +172,14 @@ describe('categoryController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.delete(`/category/${categories.body.items[0]._id}`)
 				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.body).toEqual({
+				_id: expect.any(String),
+				name: expect.any(String),
+				icon: expect.any(String),
+				englishName: expect.any(String),
+			});
+
 			expect(response.status).toBe(200);
 			expect(
 				(
@@ -194,7 +202,7 @@ describe('categoryController Integration Tests', () => {
 		});
 	});
 
-	describe('05 GET /category/filter', () => {
+	describe('04 GET /category', () => {
 		it('should filter categories by field and value', async () => {
 			await request(baseUrl)
 				.post('/category')
@@ -309,6 +317,41 @@ describe('categoryController Integration Tests', () => {
 			expect(response.body.message).toBe(
 				'No result in the database for the search condition!'
 			);
+		});
+		it('should return with limit', async () => {
+			const response = await request(baseUrl)
+				.get('/category')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ limit: 5 });
+			expect(response.status).toBe(200);
+			expect(response.body.pageCount).toEqual(3);
+			expect(response.body.items.length).toBe(5);
+		});
+		it('should return with limit and page', async () => {
+			const response = await request(baseUrl)
+				.get('/category')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ limit: 5, page: 2 });
+			expect(response.status).toBe(200);
+			expect(response.body.pageCount).toEqual(3);
+			expect(response.body.items.length).toBe(5);
+		});
+		it('should return with limit and page and field', async () => {
+			const response = await request(baseUrl)
+				.get('/category')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ limit: 5, page: 2, field: 'icon', value: 'test-icon.svg' });
+			expect(response.status).toBe(200);
+			expect(response.body.pageCount).toEqual(3);
+			expect(response.body.items.length).toBe(5);
+		});
+		it('should return 400 when field is invalid', async () => {
+			const response = await request(baseUrl)
+				.get('/category')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: 'invalidField', value: 'TestCategory3' });
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The searched field does not exist!');
 		});
 	});
 });

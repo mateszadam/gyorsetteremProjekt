@@ -138,9 +138,9 @@ export default class inventoryController implements IController {
 
 	private getStock = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page } = req.query;
+			const { field, value, page, limit } = req.query;
 			const pageNumber = Number(page) || 1;
-			const itemsPerPage = 10;
+			const itemsPerPage = Number(limit) || 10;
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {

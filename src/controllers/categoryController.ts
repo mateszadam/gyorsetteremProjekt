@@ -22,15 +22,15 @@ export default class categoryController implements IController {
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page } = req.query;
+			const { field, value, page, limit } = req.query;
 
-			const allowedFields = ['_id', 'name', 'englishName'];
+			const allowedFields = ['_id', 'name', 'englishName', 'icon'];
 			if (field && !allowedFields.includes(field as string)) {
 				throw Error('83');
 			}
 
 			const pageNumber = Number(page) || 1;
-			const itemsPerPage = 10;
+			const itemsPerPage = Number(limit) || 10;
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {
@@ -104,9 +104,9 @@ export default class categoryController implements IController {
 		try {
 			const id = req.params.id;
 			if (id) {
-				const response = await this.category.deleteOne({ _id: id });
-				if (response.deletedCount > 0) {
-					defaultAnswers.ok(res);
+				const response = await this.category.findByIdAndDelete(id);
+				if (response) {
+					defaultAnswers.ok(res, response);
 				} else {
 					throw Error('43');
 				}
@@ -176,12 +176,10 @@ export default class categoryController implements IController {
 		icon: Joi.string()
 			.required()
 			.messages({ 'string.empty': '20', 'any.required': '20' }),
-		englishName: Joi.string()
-			.required()
-			.messages({
-				'string.empty': '78',
-				'string.pattern.base': '78',
-				'any.required': '78',
-			}),
+		englishName: Joi.string().required().messages({
+			'string.empty': '78',
+			'string.pattern.base': '78',
+			'any.required': '78',
+		}),
 	});
 }
