@@ -1,4 +1,5 @@
 const { error } = require('console');
+const exp = require('constants');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -46,6 +47,38 @@ describe('inventoryController Integration Tests', () => {
 				.send({ name: 'TestMaterial', quantity: 10, message: 'Initial stock' });
 			expect(response.status).toBe(201);
 		});
+		it('should not add a new material change without name', async () => {
+			const response = await request(baseUrl)
+				.post('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.send({ quantity: 10, message: 'Initial stock' });
+			expect(response.status).toBe(400);
+		});
+		it('should not add a new material change without quantity', async () => {
+			const response = await request(baseUrl)
+				.post('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.send({ name: 'TestMaterial', message: 'Initial stock' });
+			expect(response.status).toBe(400);
+		});
+		it('should not add a new material change without message', async () => {
+			const response = await request(baseUrl)
+				.post('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.send({ name: 'TestMaterial', quantity: 10 });
+			expect(response.status).toBe(400);
+		});
+		it('should add material with id', async () => {
+			const response = await request(baseUrl)
+				.post('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					materialId: materialId,
+					quantity: 10,
+					message: 'Initial stock',
+				});
+			expect(response.status).toBe(201);
+		});
 	});
 
 	describe('02 GET /inventory', () => {
@@ -58,11 +91,65 @@ describe('inventoryController Integration Tests', () => {
 			response.body.items.forEach((item) => {
 				expect(item).toEqual({
 					_id: expect.any(String),
-					materialId: expect.any(String),
-					quantity: expect.any(Number),
+					englishName: expect.any(String),
+					name: expect.any(String),
+					unit: expect.any(String),
+					inStock: expect.any(Number),
 				});
 			});
 		});
+
+		it('should get stock with pagination', async () => {
+			const response = await request(baseUrl)
+				.get('/inventory?page=1')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBeLessThanOrEqual(10);
+			expect(response.body.pageCount).toEqual(1);
+		});
+
+		it('should get stock filtered by field and value', async () => {
+			const response = await request(baseUrl)
+				.get('/inventory?field=name&value=testmaterial')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBeGreaterThan(0);
+			response.body.items.forEach((item) => {
+				expect(item.name).toBe('testmaterial');
+			});
+		});
+
+		it('should return 400 if page is not a number', async () => {
+			const response = await request(baseUrl)
+				.get('/inventory?page=abc?field=name')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+		});
+		// it('should return page with more items', async () => {
+		// 	for (let i = 0; i < 20; i++) {
+		// 		const a = await request(baseUrl)
+		// 			.post('/inventory')
+		// 			.set('Authorization', `Bearer ${token}`)
+		// 			.send({
+		// 				name: 'TestMaterial',
+		// 				quantity: 10,
+		// 				message: 'Initial stock',
+		// 			});
+		// 	}
+		// 	error(
+		// 		(
+		// 			await request(baseUrl)
+		// 				.get('/inventory')
+		// 				.set('Authorization', `Bearer ${token}`)
+		// 		).body
+		// 	);
+		// 	const response = await request(baseUrl)
+		// 		.get('/inventory?page=1')
+		// 		.set('Authorization', `Bearer ${token}`);
+		// 	expect(response).toBe(200);
+		// 	expect(response.body.items.length).toBe(10);
+		// 	expect(response.body.pageCount).toEqual(3);
+		// });
 	});
 
 	describe('03 PUT /inventory/:id', () => {

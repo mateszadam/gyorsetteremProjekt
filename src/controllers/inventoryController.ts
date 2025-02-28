@@ -17,7 +17,7 @@ export default class inventoryController implements IController {
 	public router = Router();
 	public endPoint = '/inventory';
 	private materialChanges = materialChangeModel;
-
+	private materials = materialModel;
 	constructor() {
 		this.router.post('', authAdminToken, this.addMaterialChange);
 
@@ -88,7 +88,7 @@ export default class inventoryController implements IController {
 					inputMaterialChange.quantity ||
 					inputMaterialChange.materialId
 				) {
-					const oldMaterialChange: IMaterialChange | null =
+					let oldMaterialChange: IMaterialChange | null =
 						await this.materialChanges.findOne(
 							{ _id: materialChangeId },
 							{ _id: 0, name: 1, quantity: 1, message: 1, date: 1 }
@@ -100,10 +100,11 @@ export default class inventoryController implements IController {
 								delete inputMaterialChange[key as keyof IMaterialChange];
 							}
 						});
-						const newMaterialChange = {
-							...oldMaterialChange,
-							...inputMaterialChange,
-							_id: oldMaterialChange._id,
+						const newMaterialChange: IMaterialChange = {
+							...(oldMaterialChange = {
+								...inputMaterialChange,
+								_id: oldMaterialChange._id,
+							}),
 						};
 
 						const databaseAnswer = await this.materialChanges.findByIdAndUpdate(
@@ -143,35 +144,31 @@ export default class inventoryController implements IController {
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {
-				const selectedItems = await this.materialChanges.aggregate([
+				log('field:', field);
+				log('value:', value);
+				const selectedItems = await this.materials.aggregate([
 					{
 						$lookup: {
-							from: 'material',
-							localField: 'materialId',
-							foreignField: '_id',
-							as: 'material',
+							from: 'materialChanges',
+							localField: '_id',
+							foreignField: 'materialId',
+							as: 'materialChanges',
 						},
 					},
-					{
-						$group: {
-							_id: '$materialId',
-							quantity: { $sum: '$quantity' },
-							materialId: { $first: '$materialId' },
-						},
-					},
-					{ $skip: skip },
-					{ $limit: itemsPerPage },
-
 					{
 						$project: {
 							_id: 1,
-							materialId: 1,
-							quantity: 1,
-							message: 1,
-							date: 1,
-							name: '$material.name',
+							name: 1,
+							englishName: 1,
+							unit: 1,
+							inStock: {
+								$sum: '$materialChanges.quantity',
+							},
 						},
 					},
+					{ $match: { [field as string]: value } },
+					{ $skip: skip },
+					{ $limit: itemsPerPage },
 				]);
 
 				if (selectedItems.length > 0) {
@@ -186,36 +183,31 @@ export default class inventoryController implements IController {
 				}
 			} else {
 				const allItems = await this.materialChanges;
-				const selectedItems = await this.materialChanges.aggregate([
+
+				const selectedItems = await this.materials.aggregate([
 					{
 						$lookup: {
-							from: 'material',
-							localField: 'materialId',
-							foreignField: '_id',
-							as: 'material',
+							from: 'materialChanges',
+							localField: '_id',
+							foreignField: 'materialId',
+							as: 'materialChanges',
 						},
 					},
 					{
-						$group: {
-							_id: '$materialId',
-							quantity: { $sum: '$quantity' },
-							materialId: { $first: '$materialId' },
+						$project: {
+							_id: 1,
+							name: 1,
+							englishName: 1,
+							unit: 1,
+							inStock: {
+								$sum: '$materialChanges.quantity',
+							},
 						},
 					},
 					{ $skip: skip },
 					{ $limit: itemsPerPage },
-
-					{
-						$project: {
-							_id: 1,
-							materialId: 1,
-							quantity: 1,
-							message: 1,
-							date: 1,
-							name: '$material.name',
-						},
-					},
 				]);
+
 				if (allItems.length > 0) {
 					res.send({
 						items: selectedItems,
