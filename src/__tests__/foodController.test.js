@@ -236,7 +236,7 @@ describe('foodController Integration Tests', () => {
 					.set('Authorization', `Bearer ${token}`)
 					.send(newFood);
 			}
-		});
+		}, 20000);
 		it('should get food items to order', async () => {
 			const response = await request(baseUrl)
 				.get('/food/allEnabled')

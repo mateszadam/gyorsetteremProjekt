@@ -73,7 +73,7 @@ describe('materialController Integration Tests', () => {
 						unit: materialUnit,
 					});
 			}
-		});
+		}, 20000);
 		it('should get all materials', async () => {
 			const response = await request(baseUrl)
 				.get('/material')

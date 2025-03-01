@@ -237,7 +237,6 @@ export default class foodController implements IController {
 					id,
 					newFoodToStore
 				);
-				log('foods', foods);
 				if (foods) {
 					defaultAnswers.ok(res, await this.food.findOne({ _id: id }));
 				} else {

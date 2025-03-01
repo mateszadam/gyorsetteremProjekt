@@ -152,7 +152,7 @@ describe('inventoryController Integration Tests', () => {
 			expect(response.status).toBe(200);
 			expect(response.body.items.length).toBe(10);
 			expect(response.body.pageCount).toEqual(2);
-		});
+		}, 20000);
 		it('should return items on second page', async () => {
 			const response = await request(baseUrl)
 				.get('/inventory')

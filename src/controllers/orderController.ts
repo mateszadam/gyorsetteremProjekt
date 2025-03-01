@@ -141,12 +141,6 @@ export default class orderController implements IController {
 									if (materialChange.length === 0) {
 										throw Error('71');
 									}
-									log(materialChange[0].inStock);
-									log(
-										materialChange[0].inStock -
-											food.materials[j].quantity *
-												newOrder.orderedProducts[i].quantity
-									);
 									if (
 										materialChange[0].inStock -
 											food.materials[j].quantity *

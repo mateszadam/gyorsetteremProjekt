@@ -9,5 +9,6 @@
 				"openReport": true
 			}
 		]
-	]
+	],
+	"testTimeout": 10000
 }

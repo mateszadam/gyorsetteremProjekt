@@ -152,8 +152,6 @@ export default class inventoryController implements IController {
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {
-				log('field:', field);
-				log('value:', value);
 				const selectedItems = await this.materials.aggregate([
 					{
 						$lookup: {

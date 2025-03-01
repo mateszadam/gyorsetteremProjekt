@@ -178,8 +178,6 @@ export default class statisticController implements IController {
 				boundaries.sort((a: number, b: number) => a - b);
 			}
 
-			log(boundaries);
-
 			const orders = await this.order.aggregate([
 				{
 					$match: {
