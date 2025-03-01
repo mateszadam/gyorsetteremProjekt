@@ -7,6 +7,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
+import { loadEnvFile } from 'process';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -55,10 +56,17 @@ export default class materialController implements IController {
 	};
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page } = req.query;
+			const { field, value, page, limit } = req.query;
 			const pageNumber = Number(page) || 1;
-			const itemsPerPage = 10;
+			const itemsPerPage = Number(limit) || 10;
 			const skip = (pageNumber - 1) * itemsPerPage;
+
+			if (
+				field &&
+				!['name', 'englishName', 'unit', '_id'].includes(field as string)
+			) {
+				throw Error('83');
+			}
 
 			if (field && value) {
 				const selectedItems = await this.material
@@ -127,9 +135,8 @@ export default class materialController implements IController {
 		try {
 			const id = req.params.id;
 			const incomingMaterial: IMaterial = req.body;
-
 			if (id) {
-				if (incomingMaterial) {
+				if (incomingMaterial && Object.keys(incomingMaterial).length !== 0) {
 					let oldMaterial: IMaterial | null = await this.material.findById(id);
 					if (!oldMaterial) {
 						throw Error('06');
@@ -153,10 +160,10 @@ export default class materialController implements IController {
 							throw Error('02');
 						}
 					} else {
-						throw Error('');
+						throw Error('00');
 					}
 				} else {
-					throw Error('32');
+					throw Error('90');
 				}
 			} else {
 				throw Error('42');

@@ -33,6 +33,22 @@ describe('categoryController Integration Tests', () => {
 					englishName: 'TestCategory',
 				})
 			);
+			expect(
+				(
+					await request(baseUrl)
+						.get('/category')
+						.set('Authorization', `Bearer ${token}`)
+				).body.items
+			).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						_id: expect.any(String),
+						name: 'TestCategory',
+						icon: 'test-icon.svg',
+						englishName: 'TestCategory',
+					}),
+				])
+			);
 		});
 
 		it('should not add a new category without name', async () => {

@@ -36,6 +36,14 @@ export default class inventoryController implements IController {
 			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
 
+			if (
+				field &&
+				!['name', 'quantity', 'message', 'date', '_id'].includes(
+					field as string
+				)
+			) {
+				throw Error('83');
+			}
 			const totalItems = await this.materialChanges.countDocuments({
 				[field as string]: value,
 			});

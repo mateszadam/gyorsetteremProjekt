@@ -80,8 +80,21 @@ export default class userController implements IController {
 
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const data = await this.user.find({}, { password: 0, token: 0 });
-			res.send(data);
+			const { page = 1, limit = 10, role } = req.query;
+			const query: any = {};
+			if (role) {
+				query.role = role;
+			}
+			const data = await this.user
+				.find(query, { password: 0 })
+				.skip((Number(page) - 1) * Number(limit))
+				.limit(Number(limit));
+			const total = await this.user.countDocuments(query);
+			res.send({
+				items: data,
+
+				pageCount: Math.ceil(total / Number(limit)),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,

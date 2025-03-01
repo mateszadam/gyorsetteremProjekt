@@ -89,7 +89,10 @@
 			"86": "Az étel neve már foglalt!",
 			"87": "Az alapanyag neve már foglalt!",
 			"88": "Az oldalszám nem lehet negatív!",
-			"89": "Az alapanyag name található az adatbázisban!"
+			"89": "Az alapanyag name található az adatbázisban!",
+			"90": "Legalább egy változás szükséges!",
+			"91": "Az étel ID nem található.",
+			"92": "A szűrés kezdet és vége dátumának megadása kötelező!"
 		}
 	],
 	"en-GB": [
@@ -181,7 +184,11 @@
 			"85": "Ingredient does not exist!",
 			"86": "Food name already taken!",
 			"87": "Ingredient name already taken!",
-			"88": "Page number cannot be negative!"
+			"88": "Page number cannot be negative!",
+			"89": "Ingredient name is already in the database!",
+			"90": "At least one change is required!",
+			"91": "Product ID not found.",
+			"92": "The start and end date of the filter must be provided!"
 		}
 	]
 }

@@ -1,7 +1,6 @@
 const { error } = require('console');
-const { string } = require('joi');
+
 const request = require('supertest');
-const { ExitStatus } = require('typescript');
 require('dotenv').config();
 
 const baseUrl = process.env.BASE_URL;
@@ -82,6 +81,16 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				englishName: 'Test Food English',
 			});
+			expect(response.body.materials[0].id).toBeDefined();
+			expect(
+				(
+					await request(baseUrl)
+						.get('/food')
+						.set('Authorization', `Bearer ${token}`)
+				).body.items
+			).toEqual(
+				expect.arrayContaining([expect.objectContaining({ name: 'Test Food' })])
+			);
 		});
 
 		it('should return 400 for invalid materialId', async () => {
@@ -415,6 +424,25 @@ describe('foodController Integration Tests', () => {
 				isEnabled: false,
 				englishName: 'Test Food English',
 			});
+
+			expect(
+				(
+					await request(baseUrl)
+						.get('/food')
+						.set('Authorization', `Bearer ${token}`)
+						.query({ field: 'name', value: 'Test Food3' })
+				).body.items[0]
+			).toEqual({
+				_id: foodId,
+				name: 'Test Food3',
+				price: 10,
+				materials: [{ id: expect.any(String), _id: materialId, quantity: 2 }],
+				subCategoryId: [catId],
+				categoryId: catId,
+				image: 'image_url',
+				isEnabled: false,
+				englishName: 'Test Food English',
+			});
 		});
 
 		it('should return 400 for invalid food id', async () => {
@@ -434,6 +462,25 @@ describe('foodController Integration Tests', () => {
 
 			expect(response.status).toBe(200);
 			expect(response.body).toEqual({
+				_id: foodId,
+				name: 'Test Food3',
+				price: 10,
+				materials: [{ id: expect.any(String), _id: materialId, quantity: 2 }],
+				subCategoryId: [catId],
+				categoryId: catId,
+				image: 'image_url',
+				isEnabled: true,
+				englishName: 'Test Food English',
+			});
+
+			expect(
+				(
+					await request(baseUrl)
+						.get('/food')
+						.set('Authorization', `Bearer ${token}`)
+						.query({ field: 'name', value: 'Test Food3' })
+				).body.items[0]
+			).toEqual({
 				_id: foodId,
 				name: 'Test Food3',
 				price: 10,

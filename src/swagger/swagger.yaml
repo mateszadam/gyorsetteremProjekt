@@ -1116,7 +1116,206 @@ paths:
     responses:
       200:
         description: Profile picture changed successfully
+  # Dashboard
+/dashboard/registeredUsers:
+  post:
+    summary: Get registered users
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+        required: true
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/revenue:
+  post:
+    summary: Get revenue
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+        required: true
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/soldProducts:
+  post:
+    summary: Get sold products
+    tags: [Dashboard]
 
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+
+        required: true
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/orderCount:
+  post:
+    summary: Get order count
+    tags: [Dashboard]
+
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+
+        required: true
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/categorizedOrders:
+  post:
+    summary: Get categorized orders
+    tags: [Dashboard]
+
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+
+        required: true
+    requestBody:
+      description: Array of category IDs (optional)
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              category:
+                type: array
+                default: [3000, 6000, 9000]
+                items:
+                  type: number
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/orderTimes:
+  post:
+    summary: Get order times
+    tags: [Dashboard]
+
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: startDate
+        schema:
+          type: string
+          format: date
+          default: 2025-01-01
+        required: true
+      - in: query
+        name: endDate
+        schema:
+          type: string
+          format: date
+          default: 2025-03-01
+
+        required: true
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+/dashboard/totalOrders:
+  post:
+    summary: Get total orders
+    tags: [Dashboard]
+
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
+
+# Components
 components:
   schemas:
     Food:

@@ -182,7 +182,6 @@ describe('inventoryController Integration Tests', () => {
 			const inventory = await request(baseUrl)
 				.get(`/inventory/changes`)
 				.set('Authorization', `Bearer ${token}`);
-			error(inventory.body);
 			const inventoryId = inventory.body.items[0]._id;
 
 			const response = await request(baseUrl)
@@ -251,6 +250,21 @@ describe('inventoryController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/inventory/changes`)
+						.set('Authorization', `Bearer ${token}`)
+						.query({ field: '_id', value: inventoryId })
+				).body.items.length
+			).toBe(0);
+		});
+		it('should not delete the material change with invalid id', async () => {
+			const response = await request(baseUrl)
+				.delete(`/inventory/invalidId`)
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.status).toBe(400);
 		});
 	});
 });

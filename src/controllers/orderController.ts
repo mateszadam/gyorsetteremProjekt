@@ -100,7 +100,7 @@ export default class orderController implements IController {
 					if (food) {
 						totalPrice += food.price * newOrder.orderedProducts[i].quantity;
 					} else {
-						throw Error('06');
+						throw Error('91');
 					}
 				}
 				newOrder.totalPrice = totalPrice;
@@ -141,6 +141,12 @@ export default class orderController implements IController {
 									if (materialChange.length === 0) {
 										throw Error('71');
 									}
+									log(materialChange[0].inStock);
+									log(
+										materialChange[0].inStock -
+											food.materials[j].quantity *
+												newOrder.orderedProducts[i].quantity
+									);
 									if (
 										materialChange[0].inStock -
 											food.materials[j].quantity *
@@ -193,7 +199,15 @@ export default class orderController implements IController {
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
 			const order = await this.order
-				.find({ finishedTime: null }, { 'orderedProducts._id': 0 })
+				.find(
+					{
+						$and: [
+							{ finishedTime: null },
+							{ finishedCokingTime: { $ne: null } },
+						],
+					},
+					{ 'orderedProducts._id': 0 }
+				)
 				.sort({ orderedTime: -1 });
 
 			if (order) {
@@ -354,6 +368,7 @@ export default class orderController implements IController {
 			const { field, value, page, from, to } = req.query;
 
 			const allowedFields = [
+				'_id',
 				'costumerId',
 				'orderNumber',
 				'finishedTime',
