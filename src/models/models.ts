@@ -33,7 +33,7 @@ interface IMaterial {
 }
 
 interface IFood {
-	_id: ObjectId;
+	_id?: ObjectId;
 	materials: IFoodMaterial[];
 	price: number;
 	name: string;

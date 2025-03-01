@@ -1,5 +1,4 @@
 const { error } = require('console');
-const exp = require('constants');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -121,52 +120,122 @@ describe('inventoryController Integration Tests', () => {
 
 		it('should return 400 if page is not a number', async () => {
 			const response = await request(baseUrl)
-				.get('/inventory?page=abc?field=name')
-				.set('Authorization', `Bearer ${token}`);
+				.get('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.query({
+					page: 'abc',
+				});
 			expect(response.status).toBe(200);
 		});
-		// it('should return page with more items', async () => {
-		// 	for (let i = 0; i < 20; i++) {
-		// 		const a = await request(baseUrl)
-		// 			.post('/inventory')
-		// 			.set('Authorization', `Bearer ${token}`)
-		// 			.send({
-		// 				name: 'TestMaterial',
-		// 				quantity: 10,
-		// 				message: 'Initial stock',
-		// 			});
-		// 	}
-		// 	error(
-		// 		(
-		// 			await request(baseUrl)
-		// 				.get('/inventory')
-		// 				.set('Authorization', `Bearer ${token}`)
-		// 		).body
-		// 	);
-		// 	const response = await request(baseUrl)
-		// 		.get('/inventory?page=1')
-		// 		.set('Authorization', `Bearer ${token}`);
-		// 	expect(response).toBe(200);
-		// 	expect(response.body.items.length).toBe(10);
-		// 	expect(response.body.pageCount).toEqual(3);
-		// });
+		it('should return page with more items', async () => {
+			for (let i = 0; i < 10; i++) {
+				const a = await request(baseUrl)
+					.post('/material')
+					.set('Authorization', `Bearer ${token}`)
+					.send({
+						name: 'TestMaterial' + i,
+						englishName: 'TestMaterial',
+						unit: 'kg',
+					});
+				const b = await request(baseUrl)
+					.post('/inventory')
+					.set('Authorization', `Bearer ${token}`)
+					.send({
+						name: 'TestMaterial' + i,
+						quantity: 10,
+						message: 'Initial stock',
+					});
+			}
+			const response = await request(baseUrl)
+				.get('/inventory')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(10);
+			expect(response.body.pageCount).toEqual(2);
+		}, 20000);
+		it('should return items on second page', async () => {
+			const response = await request(baseUrl)
+				.get('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.query({
+					page: 2,
+				});
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(1);
+			expect(response.body.pageCount).toEqual(2);
+		});
+		it('should get stock with limit', async () => {
+			const response = await request(baseUrl)
+				.get('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.query({
+					limit: 1,
+				});
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(1);
+			expect(response.body.pageCount).toEqual(11);
+		});
 	});
 
 	describe('03 PUT /inventory/:id', () => {
 		it('should update the material change by id', async () => {
-			const newQuantity = 20;
-
-			const invResponse = await request(baseUrl)
+			const inventory = await request(baseUrl)
 				.get(`/inventory/changes`)
 				.set('Authorization', `Bearer ${token}`);
-			const inventoryId = invResponse.body.items[0]._id;
+			const inventoryId = inventory.body.items[0]._id;
 
 			const response = await request(baseUrl)
 				.put(`/inventory/${inventoryId}`)
 				.set('Authorization', `Bearer ${token}`)
-				.send({ quantity: newQuantity });
+				.send({ quantity: 300, message: 'Updated stock' });
 
 			expect(response.status).toBe(200);
+			expect(response.body.quantity).toBe(300);
+			expect(response.body.message).toBe('Updated stock');
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/inventory/changes`)
+						.set('Authorization', `Bearer ${token}`)
+						.query({ field: '_id', value: response.body._id })
+				).body.items[0].quantity
+			).toBe(300);
+		});
+
+		it('should not update the material change with invalid id', async () => {
+			const response = await request(baseUrl)
+				.put(`/inventory/invalidId`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({ quantity: 20, message: 'Updated stock' });
+
+			expect(response.status).toBe(400);
+		});
+
+		it('should not update the material change without quantity', async () => {
+			const response = await request(baseUrl)
+				.put(`/inventory/${inventoryId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({ message: 'Updated stock' });
+
+			expect(response.status).toBe(400);
+		});
+
+		it('should not update the material change without message', async () => {
+			const response = await request(baseUrl)
+				.put(`/inventory/${inventoryId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({ quantity: 20 });
+
+			expect(response.status).toBe(400);
+		});
+
+		it('should not update the material change with empty fields', async () => {
+			const response = await request(baseUrl)
+				.put(`/inventory/${inventoryId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send({ quantity: '', message: '' });
+
+			expect(response.status).toBe(400);
 		});
 	});
 
@@ -181,6 +250,21 @@ describe('inventoryController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/inventory/changes`)
+						.set('Authorization', `Bearer ${token}`)
+						.query({ field: '_id', value: inventoryId })
+				).body.items.length
+			).toBe(0);
+		});
+		it('should not delete the material change with invalid id', async () => {
+			const response = await request(baseUrl)
+				.delete(`/inventory/invalidId`)
+				.set('Authorization', `Bearer ${token}`);
+
+			expect(response.status).toBe(400);
 		});
 	});
 });

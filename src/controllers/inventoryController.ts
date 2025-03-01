@@ -36,6 +36,14 @@ export default class inventoryController implements IController {
 			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
 
+			if (
+				field &&
+				!['name', 'quantity', 'message', 'date', '_id'].includes(
+					field as string
+				)
+			) {
+				throw Error('83');
+			}
 			const totalItems = await this.materialChanges.countDocuments({
 				[field as string]: value,
 			});
@@ -138,14 +146,12 @@ export default class inventoryController implements IController {
 
 	private getStock = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page } = req.query;
+			const { field, value, page, limit } = req.query;
 			const pageNumber = Number(page) || 1;
-			const itemsPerPage = 10;
+			const itemsPerPage = Number(limit) || 10;
 			const skip = (pageNumber - 1) * itemsPerPage;
 
 			if (field && value) {
-				log('field:', field);
-				log('value:', value);
 				const selectedItems = await this.materials.aggregate([
 					{
 						$lookup: {

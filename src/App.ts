@@ -21,6 +21,7 @@ import {
 	orderModel,
 	userModel,
 } from './models/mongooseSchema';
+import statisticController from './controllers/statisticController';
 
 require('dotenv').config();
 
@@ -105,6 +106,7 @@ new App([
 	new materialController(),
 	new categoryController(),
 	new imagesController(),
+	new statisticController(),
 ]);
 // TODO: Implement: statistic controller
 // TODO: Implement: 2fa

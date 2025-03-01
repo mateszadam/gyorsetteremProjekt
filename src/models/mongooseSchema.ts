@@ -1,3 +1,4 @@
+import { register } from 'module';
 import { Schema, SchemaDefinition, model } from 'mongoose';
 
 const userSchema = new Schema<SchemaDefinition>(
@@ -24,6 +25,16 @@ const userSchema = new Schema<SchemaDefinition>(
 		profilePicture: {
 			type: String,
 			default: '',
+		},
+		registeredAt: {
+			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v <= new Date();
+				},
+				message: 'You cannot specify a date later than the current date!',
+			},
+			default: new Date(),
 		},
 	},
 	{
@@ -79,6 +90,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 			trim: true,
 			default: '',
 		},
+		// TODO: Remove id property from materials
 		materials: [
 			{
 				_id: {
