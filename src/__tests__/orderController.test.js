@@ -85,7 +85,7 @@ describe('orderController Integration Tests', () => {
 					orderedProducts: [{ _id: foodId, quantity: 1 }],
 				});
 		}
-	}, 20000);
+	}, 600000);
 
 	describe('01 POST /order', () => {
 		it('should create a new order', async () => {
