@@ -39,7 +39,10 @@ describe('materialController Integration Tests', () => {
 				_id: expect.any(String),
 				name: 'testmaterial',
 				englishName: 'testmaterial',
+				inStock: 0,
+				isEnough: false,
 				unit: 'kg',
+				usageOneWeekAgo: 0,
 			});
 		});
 
@@ -87,6 +90,10 @@ describe('materialController Integration Tests', () => {
 					name: expect.any(String),
 					englishName: expect.any(String),
 					unit: expect.any(String),
+					inStock: expect.any(Number),
+					isEnough: expect.any(Boolean),
+					unit: expect.any(String),
+					usageOneWeekAgo: expect.any(Number),
 				});
 			});
 		});
@@ -246,6 +253,9 @@ describe('materialController Integration Tests', () => {
 					name: 'updatedmaterial',
 					englishName: 'updatedmaterial',
 					unit: 'g',
+					inStock: expect.any(Number),
+					isEnough: expect.any(Boolean),
+					usageOneWeekAgo: expect.any(Number),
 				},
 			]);
 		});

@@ -30,6 +30,7 @@ interface IMaterial {
 	name: string;
 	englishName: string;
 	unit: string;
+	usageOneWeekAgo?: number;
 }
 
 interface IFood {

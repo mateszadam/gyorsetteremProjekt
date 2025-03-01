@@ -4,11 +4,14 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { log } from 'console';
+const nocache = require('nocache');
+
 export default class ImplementMiddleware {
 	public static init(app: express.Application) {
 		app.use(express.json());
 		app.use(cors());
 		app.use(morgan('dev'));
+		app.use(nocache());
 		const limiter = rateLimit({
 			windowMs: 15 * 60 * 1000,
 			limit: 200,

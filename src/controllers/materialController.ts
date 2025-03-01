@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial } from '../models/models';
+import { IController, IMaterial, IMaterialChange } from '../models/models';
 import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
@@ -68,37 +68,77 @@ export default class materialController implements IController {
 				throw Error('83');
 			}
 
+			let selectedItems;
+			let countDocuments: number;
 			if (field && value) {
-				const selectedItems = await this.material
+				selectedItems = await this.material
 					.find({ [field as string]: value })
 					.skip(skip)
 					.limit(itemsPerPage);
-				if (selectedItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(await this.material.find({ [field as string]: value })).length /
-								itemsPerPage
-						),
-					});
-				} else {
+				countDocuments = await this.material.countDocuments({
+					[field as string]: value,
+				});
+				if (!selectedItems) {
 					throw Error('77');
 				}
 			} else {
-				const allItems = await this.material
+				selectedItems = await this.material
 					.find({})
 					.skip(skip)
 					.limit(itemsPerPage);
-				if (allItems.length > 0) {
-					res.send({
-						items: allItems,
-						pageCount: Math.ceil(
-							(await this.material.countDocuments({})) / itemsPerPage
-						),
-					});
-				} else {
+				countDocuments = await this.material.countDocuments({});
+				if (selectedItems.length == 0) {
 					throw Error('77');
 				}
+			}
+			const itemsWithUsage = [];
+			const requiredDate = new Date();
+			requiredDate.setDate(requiredDate.getDate() - 7);
+			for (let i = 0; i < selectedItems.length; i++) {
+				const usageOneWeekAgo: IMaterialChange[] | null =
+					await this.materialChange.find({
+						materialId: selectedItems[i]._id,
+						quantity: { $lt: 0 },
+						date: {
+							$gte: new Date(requiredDate.setHours(0, 0, 0, 0)),
+							$lt: new Date(requiredDate.setHours(23, 59, 59, 999)),
+						},
+					});
+				const inventory = await this.materialChange.aggregate([
+					{
+						$match: {
+							materialId: selectedItems[i]._id,
+						},
+					},
+					{
+						$group: {
+							_id: '$materialId',
+							inStock: {
+								$sum: '$quantity',
+							},
+						},
+					},
+				]);
+
+				let usage = usageOneWeekAgo.reduce(
+					(acc, item) => acc + item.quantity,
+					0
+				);
+				itemsWithUsage.push({
+					...selectedItems[i].toObject(),
+					usageOneWeekAgo: usage,
+					inStock: inventory[0]?.inStock || 0,
+					isEnough: inventory[0]?.inStock - usage > 10,
+				});
+			}
+
+			if (itemsWithUsage.length > 0) {
+				res.send({
+					items: itemsWithUsage,
+					pageCount: Math.ceil(countDocuments / itemsPerPage),
+				});
+			} else {
+				throw Error('77');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
