@@ -40,7 +40,7 @@ describe('materialController Integration Tests', () => {
 				name: 'testmaterial',
 				englishName: 'testmaterial',
 				inStock: 0,
-				isEnough: true,
+				isEnough: false,
 				unit: 'kg',
 				usageOneWeekAgo: 0,
 			});
