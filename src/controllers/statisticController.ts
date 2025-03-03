@@ -19,21 +19,21 @@ export default class statisticController implements IController {
 	private user = userModel;
 	private order = orderModel;
 	constructor() {
-		this.router.post(
+		this.router.get(
 			'/registeredUsers',
 			authAdminToken,
 			this.getRegisteredUsers
 		);
-		this.router.post('/revenue', authAdminToken, this.getRevenue);
-		this.router.post('/soldProducts', authAdminToken, this.getSoldProducts);
-		this.router.post('/orderCount', authAdminToken, this.getOrderCount);
-		this.router.post(
+		this.router.get('/revenue', authAdminToken, this.getRevenue);
+		this.router.get('/soldProducts', authAdminToken, this.getSoldProducts);
+		this.router.get('/orderCount', authAdminToken, this.getOrderCount);
+		this.router.get(
 			'/categorizedOrders',
 			authAdminToken,
 			this.getCategorizedOrders
 		);
-		this.router.post('/orderTimes', authAdminToken, this.getOrderTimes);
-		this.router.post('/totalOrders', authAdminToken, this.getTotalOrders);
+		this.router.get('/orderTimes', authAdminToken, this.getOrderTimes);
+		this.router.get('/totalOrders', authAdminToken, this.getTotalOrders);
 	}
 
 	private getRegisteredUsers = async (req: Request, res: Response) => {

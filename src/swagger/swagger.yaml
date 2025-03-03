@@ -260,31 +260,6 @@ paths:
           description: Food item updated successfully
         '400':
           description: Bad request
-    patch:
-      summary: Update a food item
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Food item ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Food'
-      responses:
-        '200':
-          description: Food item updated successfully
-        '400':
-          description: Bad request
     delete:
       summary: Delete a food item
       tags: [Food]
@@ -302,48 +277,6 @@ paths:
       responses:
         '200':
           description: Food item deleted successfully
-        '400':
-          description: Bad request
-  /food/disable/{id}:
-    patch:
-      summary: Disable a food item
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Food item ID
-      responses:
-        '200':
-          description: Food item disabled successfully
-        '400':
-          description: Bad request
-  /food/enable/{id}:
-    patch:
-      summary: Enable a food item
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Food item ID
-      responses:
-        '200':
-          description: Food item enabled successfully
         '400':
           description: Bad request
 # Image paths
@@ -472,67 +405,107 @@ paths:
       '400':
         description: Bad request
   get:
+    summary: Get material changes
     tags:
       - Inventory
-    summary: Get all material changes
     security:
       - adminBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - name: field
-        in: query
-        description: Field to filter by
-        required: false
-        schema:
-          type: string
-      - name: value
-        in: query
-        description: Value to filter by
-        required: false
-        schema:
-          type: string
       - name: page
         in: query
-        description: Page number for pagination
+        description: Page number
         required: false
         schema:
           type: integer
       - name: limit
         in: query
-        description: Items per page
+        description: Number of items per page
         required: false
         schema:
           type: integer
+      - name: _id
+        in: query
+        description: ID of the change
+        required: false
+        schema:
+          type: string
+      - name: materialId
+        in: query
+        description: ID of the material
+        required: false
+        schema:
+          type: string
+      - name: quantity
+        in: query
+        description: Quantity of the material
+        required: false
+        schema:
+          type: number
+      - name: message
+        in: query
+        description: Message associated with the change
+        required: false
+        schema:
+          type: string
+      - name: minDate
+        in: query
+        description: Minimum date for the change
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: maxDate
+        in: query
+        description: Maximum date for the change
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: fields
+        in: query
+        description: Fields to include in the response
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
     responses:
       '200':
         description: A list of material changes
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      materialId:
+                        type: string
+                      quantity:
+                        type: number
+                      message:
+                        type: string
+                      date:
+                        type: string
+                        format: date-time
+                      _id:
+                        type: string
+                pageCount:
+                  type: integer
       '400':
         description: Bad request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
 /inventory/{id}:
-  patch:
-    tags:
-      - Inventory
-    summary: Update a material change
-    security:
-      - adminBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/MaterialChange'
-    responses:
-      '200':
-        description: Material change updated successfully
-      '400':
-        description: Bad request
   put:
     tags:
       - Inventory
@@ -573,55 +546,6 @@ paths:
     responses:
       '200':
         description: Material change deleted successfully
-      '400':
-        description: Bad request
-/inventory/changes:
-  get:
-    tags:
-      - Inventory
-    summary: Get paginated material changes
-    security:
-      - adminBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - name: page
-        in: query
-        description: Page number for pagination
-        required: false
-        schema:
-          type: integer
-      - name: limit
-        in: query
-        description: Number of items per page
-        required: false
-        schema:
-          type: integer
-      - name: field
-        in: query
-        description: Field name for filtering
-        required: false
-        schema:
-          type: string
-      - name: value
-        in: query
-        description: Value to filter by
-        required: false
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Paginated list of material changes
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/MaterialChange'
-                pageCount:
-                  type: integer
       '400':
         description: Bad request
 
@@ -883,30 +807,6 @@ paths:
         description: Material deleted successfully
       '400':
         description: Bad request
-  patch:
-    summary: Update a material by ID
-    tags: [Material]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Material'
-    responses:
-      '200':
-        description: Material updated successfully
-      '400':
-        description: Bad request
   put:
     summary: Update a material by ID
     tags: [Material]
@@ -1118,7 +1018,7 @@ paths:
         description: Profile picture changed successfully
   # Dashboard
 /dashboard/registeredUsers:
-  post:
+  get:
     summary: Get registered users
     tags: [Dashboard]
     security:
@@ -1145,7 +1045,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/revenue:
-  post:
+  get:
     summary: Get revenue
     tags: [Dashboard]
     security:
@@ -1172,7 +1072,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/soldProducts:
-  post:
+  get:
     summary: Get sold products
     tags: [Dashboard]
 
@@ -1201,7 +1101,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/orderCount:
-  post:
+  get:
     summary: Get order count
     tags: [Dashboard]
 
@@ -1230,7 +1130,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/categorizedOrders:
-  post:
+  get:
     summary: Get categorized orders
     tags: [Dashboard]
 
@@ -1272,7 +1172,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/orderTimes:
-  post:
+  get:
     summary: Get order times
     tags: [Dashboard]
 
@@ -1301,7 +1201,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/totalOrders:
-  post:
+  get:
     summary: Get total orders
     tags: [Dashboard]
 

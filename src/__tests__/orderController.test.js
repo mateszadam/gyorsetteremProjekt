@@ -26,7 +26,7 @@ describe('orderController Integration Tests', () => {
 			.send({ name: 'liszt', quantity: 100, message: 'Initial stock' });
 
 		const materials = await request(baseUrl)
-			.get('/inventory')
+			.get('/material')
 			.set('Authorization', `Bearer ${token}`)
 			.send();
 		const materialId = materials.body.items[0]._id;
@@ -111,7 +111,7 @@ describe('orderController Integration Tests', () => {
 			);
 
 			const materialChanges = await request(baseUrl)
-				.get('/inventory')
+				.get('/material')
 				.set('Authorization', `Bearer ${token}`);
 			expect(materialChanges.body.items[0].inStock).toBe(85);
 		});
@@ -154,7 +154,7 @@ describe('orderController Integration Tests', () => {
 			);
 
 			const materialChanges = await request(baseUrl)
-				.get('/inventory')
+				.get('/material')
 				.set('Authorization', `Bearer ${token}`);
 			expect(materialChanges.body.items[0].inStock).toBe(85);
 

@@ -92,7 +92,8 @@
 			"89": "Az alapanyag name található az adatbázisban!",
 			"90": "Legalább egy változás szükséges!",
 			"91": "Az étel ID nem található.",
-			"92": "A szűrés kezdet és vége dátumának megadása kötelező!"
+			"92": "A szűrés kezdet és vége dátumának megadása kötelező!",
+			"93": "Az oldalszámnak és limitnem számnak kell lennie!"
 		}
 	],
 	"en-GB": [
@@ -188,7 +189,8 @@
 			"89": "Ingredient name is already in the database!",
 			"90": "At least one change is required!",
 			"91": "Product ID not found.",
-			"92": "The start and end date of the filter must be provided!"
+			"92": "The start and end date of the filter must be provided!",
+			"93": "Page number and limit must be numbers!"
 		}
 	]
 }

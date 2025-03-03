@@ -25,7 +25,7 @@ describe('statisticController Integration Tests', () => {
 			.send({ name: 'liszt', quantity: 100, message: 'Initial stock' });
 
 		const materials = await request(baseUrl)
-			.get('/inventory')
+			.get('/material')
 			.set('Authorization', `Bearer ${token}`)
 			.send();
 		const materialId = materials.body.items[0]._id;
@@ -77,10 +77,10 @@ describe('statisticController Integration Tests', () => {
 		orderId = orderResponse.body.items[0]._id;
 	}, 30000);
 
-	describe('01 POST /dashboard/registeredUsers', () => {
+	describe('01 GET /dashboard/registeredUsers', () => {
 		it('should return the number of registered users within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/registeredUsers')
+				.get('/dashboard/registeredUsers')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' });
 
@@ -90,10 +90,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('02 POST /dashboard/revenue', () => {
+	describe('02 GET /dashboard/revenue', () => {
 		it('should return the revenue within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/revenue')
+				.get('/dashboard/revenue')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' });
 
@@ -102,10 +102,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('03 POST /dashboard/soldProducts', () => {
+	describe('03 GET /dashboard/soldProducts', () => {
 		it('should return the number of sold products within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/soldProducts')
+				.get('/dashboard/soldProducts')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' });
 
@@ -114,10 +114,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('04 POST /dashboard/orderCount', () => {
+	describe('04 GET /dashboard/orderCount', () => {
 		it('should return the number of orders within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/orderCount')
+				.get('/dashboard/orderCount')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' });
 
@@ -126,10 +126,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('05 POST /dashboard/categorizedOrders', () => {
+	describe('05 GET /dashboard/categorizedOrders', () => {
 		it('should return categorized orders within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/categorizedOrders')
+				.get('/dashboard/categorizedOrders')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' })
 				.send({ category: [1000, 2000, 3000] });
@@ -139,10 +139,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('06 POST /dashboard/orderTimes', () => {
+	describe('06 GET /dashboard/orderTimes', () => {
 		it('should return average cooking and handover times within a date range', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/orderTimes')
+				.get('/dashboard/orderTimes')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ startDate: '2023-01-01', endDate: '2023-12-31' });
 
@@ -152,10 +152,10 @@ describe('statisticController Integration Tests', () => {
 		});
 	});
 
-	describe('07 POST /dashboard/totalOrders', () => {
+	describe('07 GET /dashboard/totalOrders', () => {
 		it('should return the total number of orders', async () => {
 			const response = await request(baseUrl)
-				.post('/dashboard/totalOrders')
+				.get('/dashboard/totalOrders')
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
