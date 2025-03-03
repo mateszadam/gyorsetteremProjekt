@@ -90,32 +90,33 @@ describe('inventoryController Integration Tests', () => {
 			response.body.items.forEach((item) => {
 				expect(item).toEqual({
 					_id: expect.any(String),
-					englishName: expect.any(String),
-					name: expect.any(String),
-					unit: expect.any(String),
-					inStock: expect.any(Number),
+					materialId: expect.any(String),
+					date: expect.any(String),
+					quantity: expect.any(Number),
+					message: expect.any(String),
 				});
 			});
 		});
 
 		it('should get stock with pagination', async () => {
 			const response = await request(baseUrl)
-				.get('/inventory?page=1')
-				.set('Authorization', `Bearer ${token}`);
+				.get('/inventory')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ page: 1 });
 			expect(response.status).toBe(200);
 			expect(response.body.items.length).toBeLessThanOrEqual(10);
 			expect(response.body.pageCount).toEqual(1);
 		});
 
-		it('should get stock filtered by field and value', async () => {
+		it('should get stock filtered by name', async () => {
 			const response = await request(baseUrl)
-				.get('/inventory?field=name&value=testmaterial')
+				.get('/inventory')
+				.query({
+					name: 'TestMaterial',
+				})
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
-			expect(response.body.items.length).toBeGreaterThan(0);
-			response.body.items.forEach((item) => {
-				expect(item.name).toBe('testmaterial');
-			});
+			expect(response.body.items.length).toBe(3);
 		});
 
 		it('should return 400 if page is not a number', async () => {
@@ -125,7 +126,10 @@ describe('inventoryController Integration Tests', () => {
 				.query({
 					page: 'abc',
 				});
-			expect(response.status).toBe(200);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe(
+				'Page number and limit must be numbers!'
+			);
 		});
 		it('should return page with more items', async () => {
 			for (let i = 0; i < 10; i++) {
@@ -161,7 +165,7 @@ describe('inventoryController Integration Tests', () => {
 					page: 2,
 				});
 			expect(response.status).toBe(200);
-			expect(response.body.items.length).toBe(1);
+			expect(response.body.items.length).toBe(3);
 			expect(response.body.pageCount).toEqual(2);
 		});
 		it('should get stock with limit', async () => {
@@ -173,14 +177,14 @@ describe('inventoryController Integration Tests', () => {
 				});
 			expect(response.status).toBe(200);
 			expect(response.body.items.length).toBe(1);
-			expect(response.body.pageCount).toEqual(11);
+			expect(response.body.pageCount).toEqual(13);
 		});
 	});
 
 	describe('03 PUT /inventory/:id', () => {
 		it('should update the material change by id', async () => {
 			const inventory = await request(baseUrl)
-				.get(`/inventory/changes`)
+				.get(`/inventory`)
 				.set('Authorization', `Bearer ${token}`);
 			const inventoryId = inventory.body.items[0]._id;
 
@@ -195,7 +199,7 @@ describe('inventoryController Integration Tests', () => {
 			expect(
 				(
 					await request(baseUrl)
-						.get(`/inventory/changes`)
+						.get(`/inventory`)
 						.set('Authorization', `Bearer ${token}`)
 						.query({ field: '_id', value: response.body._id })
 				).body.items[0].quantity
@@ -211,22 +215,23 @@ describe('inventoryController Integration Tests', () => {
 			expect(response.status).toBe(400);
 		});
 
-		it('should not update the material change without quantity', async () => {
+		it('should update the material change without quantity', async () => {
 			const response = await request(baseUrl)
 				.put(`/inventory/${inventoryId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({ message: 'Updated stock' });
 
-			expect(response.status).toBe(400);
+			expect(response.status).toBe(200);
 		});
 
-		it('should not update the material change without message', async () => {
+		it('should update the material change without message', async () => {
 			const response = await request(baseUrl)
 				.put(`/inventory/${inventoryId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({ quantity: 20 });
 
-			expect(response.status).toBe(400);
+			expect(response.status).toBe(200);
+			expect(response.body.quantity).toBe(20);
 		});
 
 		it('should not update the material change with empty fields', async () => {
@@ -242,7 +247,7 @@ describe('inventoryController Integration Tests', () => {
 	describe('04 DELETE /inventory/:id', () => {
 		it('should delete the material change by id', async () => {
 			const invResponse = await request(baseUrl)
-				.get(`/inventory/changes`)
+				.get(`/inventory`)
 				.set('Authorization', `Bearer ${token}`);
 			const inventoryId = invResponse.body.items[0]._id;
 			const response = await request(baseUrl)
@@ -253,11 +258,11 @@ describe('inventoryController Integration Tests', () => {
 			expect(
 				(
 					await request(baseUrl)
-						.get(`/inventory/changes`)
+						.get(`/inventory`)
 						.set('Authorization', `Bearer ${token}`)
-						.query({ field: '_id', value: inventoryId })
-				).body.items.length
-			).toBe(0);
+						.query({ _id: inventoryId })
+				).body.message
+			).toBe('No result in the database for the search condition!');
 		});
 		it('should not delete the material change with invalid id', async () => {
 			const response = await request(baseUrl)

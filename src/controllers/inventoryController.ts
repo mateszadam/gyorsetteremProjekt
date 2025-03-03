@@ -20,41 +20,109 @@ export default class inventoryController implements IController {
 	private materials = materialModel;
 	constructor() {
 		this.router.post('', authAdminToken, this.addMaterialChange);
-
-		this.router.patch('/:id', authAdminToken, this.updateMaterialChange);
 		this.router.put('/:id', authAdminToken, this.updateMaterialChange);
 		this.router.delete('/:id', authAdminToken, this.deleteMaterialChange);
-
 		this.router.get('', authAdminToken, this.getChanges);
 	}
 
 	private getChanges = async (req: Request, res: Response) => {
 		try {
-			const { page = 1, limit = 10, field, value } = req.query;
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				materialId,
+				name,
+				quantity,
+				message,
+				minDate,
+				maxDate,
+				fields,
+			} = req.query;
+
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
+			}
+
 			const pageNumber = Number(page);
 			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = [
+				'materialId',
+				'quantity',
+				'message',
+				'date',
+				'_id',
+			];
 
-			if (
-				field &&
-				!['name', 'quantity', 'message', 'date', '_id'].includes(
-					field as string
-				)
-			) {
-				throw Error('83');
+			const query: any = {};
+			if (name) {
+				const id = (
+					await this.materials.findOne({
+						name: new RegExp(name as string, 'i'),
+					})
+				)?._id;
+				if (id) query.materialId = id;
+				else throw Error('85');
 			}
-			const totalItems = await this.materialChanges.countDocuments({
-				[field as string]: value,
-			});
-			const materialChanges = await this.materialChanges
-				.find({ [field as string]: value })
-				.skip(skip)
-				.limit(itemsPerPage);
+			if (_id) query._id = _id;
+			if (materialId) query.materialId = materialId;
+			if (quantity) query.quantity = quantity;
+			if (message) query.message = new RegExp(message as string, 'i');
 
-			res.send({
-				items: materialChanges,
-				pageCount: Math.ceil(totalItems / itemsPerPage),
-			});
+			if (minDate && maxDate)
+				query.date = {
+					$gte: new Date(`${minDate}:0:0:0.0`),
+					$lte: new Date(`${maxDate}:23:59:59.999`),
+				};
+			else if (minDate)
+				query.date = {
+					$gte: new Date(`${minDate}:0:0:0.0`),
+					$lte: new Date(),
+				};
+			else if (maxDate)
+				query.date = {
+					$gte: new Date('2000-01-01:0:0:0.0'),
+					$lte: new Date(`${maxDate}:23:59:59.999`),
+				};
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
+			} else {
+				projection = {
+					_id: 1,
+					materialId: 1,
+					quantity: 1,
+					message: 1,
+					date: 1,
+				};
+			}
+			const materialChanges = await this.materialChanges.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+			]);
+			if (materialChanges.length > 0) {
+				res.send({
+					items: materialChanges,
+					pageCount: Math.ceil(
+						(await this.materialChanges.aggregate([{ $match: query }])).length /
+							itemsPerPage
+					),
+				});
+			} else {
+				throw Error('77');
+			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
