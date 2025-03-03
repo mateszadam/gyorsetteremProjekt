@@ -7,8 +7,10 @@ import {
 } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
+import { Types } from 'mongoose';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { log } from 'console';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -25,54 +27,109 @@ export default class foodController implements IController {
 
 	private filterFood = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page, limit } = req.query;
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				name,
+				englishName,
+				minPrice,
+				maxPrice,
+				isEnabled,
+				categoryId,
+				subCategoryId,
+				image,
+				fields,
+			} = req.query;
 
-			const allowedFields = [
-				'name',
-				'englishName',
-				'price',
-				'categoryId',
-				'subCategoryId',
-			];
-			if (field && !allowedFields.includes(field as string)) {
-				throw Error('83');
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
 			}
 
-			const pageNumber = Number(page) || 1;
-			const itemsPerPage = Number(limit) || 10;
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = [
+				'_id',
+				'name',
+				'englishName',
+				'materials',
+				'minPrice',
+				'maxPrice',
+				'isEnabled',
+				'categoryId',
+				'subCategoryId',
+				'image',
+			];
 
-			if (field && value) {
-				const selectedItems = await this.food
-					.find({ [field as string]: value })
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (selectedItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(await this.food.countDocuments({ [field as string]: value })) /
-								itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
+			const query: any = {};
+			if (_id) query._id = new Types.ObjectId(_id as string);
+			if (name) query.name = new RegExp(name as string, 'i');
+			if (englishName)
+				query.englishName = new RegExp(englishName as string, 'i');
+			if (minPrice) query.price = { $gte: Number(minPrice) };
+			if (maxPrice) query.price = { $lte: Number(maxPrice) };
+			if (isEnabled) query.isEnabled = isEnabled;
+
+			if (categoryId) {
+				if (!(await this.category.findOne({ _id: categoryId })))
+					throw Error('44');
+				query.categoryId = new Types.ObjectId(categoryId as string);
+			}
+			if (subCategoryId) {
+				if (
+					(await this.category.find({ _id: subCategoryId })).length !==
+					subCategoryId.length
+				)
+					throw Error('84');
+				query.subCategoryId = new Types.ObjectId(subCategoryId as string);
+			}
+			if (image) query.image = new RegExp(image as string);
+
+			log(query);
+
+			let projection: any = { _id: 1 };
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
 			} else {
-				const allItems = await this.food
-					.find({})
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (allItems.length > 0) {
-					res.send({
-						items: allItems,
-						pageCount: Math.ceil(
-							(await this.food.countDocuments()) / itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
+				projection = {
+					_id: 1,
+					name: 1,
+					englishName: 1,
+					materials: 1,
+					minPrice: 1,
+					maxPrice: 1,
+					isEnabled: 1,
+					categoryId: 1,
+					subCategoryId: 1,
+					image: 1,
+				};
+			}
+			log(projection);
+			log(query);
+
+			const materialChanges = await this.food.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+			]);
+			if (materialChanges.length > 0) {
+				res.send({
+					items: materialChanges,
+					pageCount: Math.ceil(
+						(await this.food.countDocuments(query)) / itemsPerPage
+					),
+				});
+			} else {
+				throw Error('77');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(

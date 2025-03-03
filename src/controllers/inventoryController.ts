@@ -134,8 +134,7 @@ export default class inventoryController implements IController {
 				res.send({
 					items: materialChanges,
 					pageCount: Math.ceil(
-						(await this.materialChanges.aggregate([{ $match: query }])).length /
-							itemsPerPage
+						(await this.materialChanges.countDocuments(query)) / itemsPerPage
 					),
 				});
 			} else {
