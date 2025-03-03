@@ -436,7 +436,19 @@ paths:
         required: false
         schema:
           type: string
-      - name: quantity
+      - name: name
+        in: query
+        description: Name of the material
+        required: false
+        schema:
+          type: string
+      - name: minQuantity
+        in: query
+        description: Quantity of the material
+        required: false
+        schema:
+          type: number
+      - name: maxQuantity
         in: query
         description: Quantity of the material
         required: false
