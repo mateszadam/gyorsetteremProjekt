@@ -10,8 +10,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
-import { Mongoose, ObjectId } from 'mongoose';
-import { Schema } from 'mongoose';
+import { ObjectId } from 'mongoose';
 
 export default class inventoryController implements IController {
 	public router = Router();
@@ -33,7 +32,8 @@ export default class inventoryController implements IController {
 				_id,
 				materialId,
 				name,
-				quantity,
+				minQuantity,
+				maxQuantity,
 				message,
 				minDate,
 				maxDate,
@@ -67,7 +67,6 @@ export default class inventoryController implements IController {
 			}
 			if (_id) query._id = _id;
 			if (materialId) query.materialId = materialId;
-			if (quantity) query.quantity = quantity;
 			if (message) query.message = new RegExp(message as string, 'i');
 
 			if (minDate && maxDate)
@@ -85,6 +84,21 @@ export default class inventoryController implements IController {
 					$gte: new Date('2000-01-01:0:0:0.0'),
 					$lte: new Date(`${maxDate}:23:59:59.999`),
 				};
+
+			if (minQuantity && maxQuantity)
+				query.quantity = {
+					$gte: Number(minQuantity),
+					$lte: Number(maxQuantity),
+				};
+			else if (minQuantity)
+				query.quantity = {
+					$gte: Number(minQuantity),
+				};
+			else if (maxQuantity)
+				query.quantity = {
+					$lte: Number(maxQuantity),
+				};
+
 			let projection: any = { _id: 1 };
 
 			if (typeof fields === 'string') {
@@ -106,6 +120,9 @@ export default class inventoryController implements IController {
 					date: 1,
 				};
 			}
+
+			log(query);
+
 			const materialChanges = await this.materialChanges.aggregate([
 				{ $match: query },
 				{ $project: projection },
