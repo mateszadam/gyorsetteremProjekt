@@ -25,8 +25,7 @@ export default class inventoryController implements IController {
 		this.router.put('/:id', authAdminToken, this.updateMaterialChange);
 		this.router.delete('/:id', authAdminToken, this.deleteMaterialChange);
 
-		this.router.get('', authAdminToken, this.getStock);
-		this.router.get('/changes', authAdminToken, this.getChanges);
+		this.router.get('', authAdminToken, this.getChanges);
 	}
 
 	private getChanges = async (req: Request, res: Response) => {

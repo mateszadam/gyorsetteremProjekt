@@ -575,55 +575,6 @@ paths:
         description: Material change deleted successfully
       '400':
         description: Bad request
-/inventory/changes:
-  get:
-    tags:
-      - Inventory
-    summary: Get paginated material changes
-    security:
-      - adminBearerAuth: []
-    parameters:
-      - $ref: '#/components/parameters/AcceptLanguage'
-      - name: page
-        in: query
-        description: Page number for pagination
-        required: false
-        schema:
-          type: integer
-      - name: limit
-        in: query
-        description: Number of items per page
-        required: false
-        schema:
-          type: integer
-      - name: field
-        in: query
-        description: Field name for filtering
-        required: false
-        schema:
-          type: string
-      - name: value
-        in: query
-        description: Value to filter by
-        required: false
-        schema:
-          type: string
-    responses:
-      '200':
-        description: Paginated list of material changes
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/MaterialChange'
-                pageCount:
-                  type: integer
-      '400':
-        description: Bad request
 
   # Order
 /order:
@@ -1118,7 +1069,7 @@ paths:
         description: Profile picture changed successfully
   # Dashboard
 /dashboard/registeredUsers:
-  post:
+  get:
     summary: Get registered users
     tags: [Dashboard]
     security:
@@ -1145,7 +1096,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/revenue:
-  post:
+  get:
     summary: Get revenue
     tags: [Dashboard]
     security:
@@ -1172,7 +1123,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/soldProducts:
-  post:
+  get:
     summary: Get sold products
     tags: [Dashboard]
 
@@ -1201,7 +1152,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/orderCount:
-  post:
+  get:
     summary: Get order count
     tags: [Dashboard]
 
@@ -1230,7 +1181,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/categorizedOrders:
-  post:
+  get:
     summary: Get categorized orders
     tags: [Dashboard]
 
@@ -1272,7 +1223,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/orderTimes:
-  post:
+  get:
     summary: Get order times
     tags: [Dashboard]
 
@@ -1301,7 +1252,7 @@ paths:
       '400':
         description: Bad request
 /dashboard/totalOrders:
-  post:
+  get:
     summary: Get total orders
     tags: [Dashboard]
 
