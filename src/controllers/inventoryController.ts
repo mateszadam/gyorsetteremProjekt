@@ -10,7 +10,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
-import { ObjectId } from 'mongoose';
+import { Types } from 'mongoose';
 
 export default class inventoryController implements IController {
 	public router = Router();
@@ -65,8 +65,9 @@ export default class inventoryController implements IController {
 				if (id) query.materialId = id;
 				else throw Error('85');
 			}
-			if (_id) query._id = _id;
-			if (materialId) query.materialId = materialId;
+			if (_id) query._id = new Types.ObjectId(_id as string);
+			if (materialId)
+				query.materialId = new Types.ObjectId(materialId as string);
 			if (message) query.message = new RegExp(message as string, 'i');
 
 			if (minDate && maxDate)

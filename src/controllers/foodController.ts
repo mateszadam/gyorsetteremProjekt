@@ -7,10 +7,8 @@ import {
 } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-import { InferId, ObjectId, UpdateWriteOpResult } from 'mongoose';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-import { log } from 'console';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -20,13 +18,8 @@ export default class foodController implements IController {
 	private material = materialModel;
 	constructor() {
 		this.router.post('', authAdminToken, this.addFood);
-		this.router.get('/allEnabled', authToken, this.getAllEnabledFood);
 		this.router.get('', authToken, this.filterFood);
-		this.router.patch('/disable/:id', authAdminToken, this.disableById);
-		this.router.patch('/enable/:id', authAdminToken, this.enableById);
-
 		this.router.put('/:id', authAdminToken, this.updateFood);
-		this.router.patch('/:id', authAdminToken, this.updateFood);
 		this.router.delete('/:id', authAdminToken, this.deleteFoodById);
 	}
 

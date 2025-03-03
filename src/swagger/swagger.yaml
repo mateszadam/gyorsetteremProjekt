@@ -204,36 +204,6 @@ paths:
                   $ref: '#/components/schemas/Food'
         '400':
           description: Bad request
-  /food/allEnabled:
-    get:
-      summary: Get all enabled food items
-      tags: [Food]
-      security:
-        - adminBearerAuth: []
-        - customerBearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: limit
-          schema:
-            type: integer
-          description: Number of items per page
-      responses:
-        '200':
-          description: List of enabled food items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Food'
-        '400':
-          description: Bad request
 
   /food/{id}:
     put:
