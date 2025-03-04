@@ -131,8 +131,11 @@ describe('statisticController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/dashboard/categorizedOrders')
 				.set('Authorization', `Bearer ${token}`)
-				.query({ startDate: '2023-01-01', endDate: '2023-12-31' })
-				.send({ category: [1000, 2000, 3000] });
+				.query({
+					startDate: '2023-01-01',
+					endDate: '2023-12-31',
+					category: [1000, 2000, 3000],
+				});
 
 			expect(response.status).toBe(200);
 			expect(response.body).toBeInstanceOf(Object);

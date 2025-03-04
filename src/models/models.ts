@@ -23,6 +23,7 @@ interface IMaterialChange {
 	name?: string;
 	quantity: number;
 	message: string;
+	inStock?: number;
 }
 
 interface IMaterial {

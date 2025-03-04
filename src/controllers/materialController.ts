@@ -4,10 +4,10 @@ import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
-import Joi from 'joi';
+import Joi, { boolean } from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import { Types } from 'mongoose';
 import { log } from 'console';
-import { loadEnvFile } from 'process';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -19,7 +19,6 @@ export default class materialController implements IController {
 		this.router.post('', authAdminToken, this.add);
 		this.router.get('', authAdminToken, this.getAll);
 		this.router.delete('/:id', authAdminToken, this.deleteOneById);
-		this.router.patch('/:id', authAdminToken, this.updateByMaterialId);
 		this.router.put('/:id', authAdminToken, this.updateByMaterialId);
 	}
 
@@ -56,86 +55,156 @@ export default class materialController implements IController {
 	};
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page, limit } = req.query;
-			const pageNumber = Number(page) || 1;
-			const itemsPerPage = Number(limit) || 10;
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				englishName,
+				unit,
+				name,
+				fields,
+				minInStock,
+				maxInStock,
+				usageOneWeekAgo = 0,
+				isEnough,
+			} = req.query;
+
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
+			}
+
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = ['_id', 'englishName', 'unit', 'name'];
 
-			if (
-				field &&
-				!['name', 'englishName', 'unit', '_id'].includes(field as string)
-			) {
-				throw Error('83');
+			const query: any = {};
+
+			if (_id) query._id = new Types.ObjectId(_id as string);
+			if (englishName)
+				query.englishName = new RegExp(englishName as string, 'i');
+			if (unit) query.unit = new RegExp(unit as string, 'i');
+			if (name) query.name = new RegExp(name as string, 'i');
+			if (minInStock) query.inStock = { $gte: Number(minInStock) };
+			if (maxInStock) query.inStock = { $lte: Number(maxInStock) };
+
+			log(query);
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
 			}
 
-			let selectedItems;
-			let countDocuments: number;
-			if (field && value) {
-				selectedItems = await this.material
-					.find({ [field as string]: value })
-					.skip(skip)
-					.limit(itemsPerPage);
-				countDocuments = await this.material.countDocuments({
-					[field as string]: value,
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
 				});
-				if (!selectedItems) {
-					throw Error('77');
-				}
 			} else {
-				selectedItems = await this.material
-					.find({})
-					.skip(skip)
-					.limit(itemsPerPage);
-				countDocuments = await this.material.countDocuments({});
-				if (selectedItems.length == 0) {
-					throw Error('77');
-				}
+				projection = {
+					_id: 1,
+					name: 1,
+					englishName: 1,
+					unit: 1,
+					inStock: 1,
+				};
 			}
-			const itemsWithUsage = [];
-			const requiredDate = new Date();
-			requiredDate.setDate(requiredDate.getDate() - 7);
-			for (let i = 0; i < selectedItems.length; i++) {
-				const usageOneWeekAgo: IMaterialChange[] | null =
-					await this.materialChange.find({
-						materialId: selectedItems[i]._id,
-						quantity: { $lt: 0 },
-						date: {
-							$gte: new Date(requiredDate.setHours(0, 0, 0, 0)),
-							$lt: new Date(requiredDate.setHours(23, 59, 59, 999)),
-						},
-					});
-				const inventory = await this.materialChange.aggregate([
+
+			const materialChanges: IMaterialChange[] | null =
+				await this.material.aggregate([
 					{
-						$match: {
-							materialId: selectedItems[i]._id,
+						$lookup: {
+							from: 'materialChanges',
+							localField: '_id',
+							foreignField: 'materialId',
+							as: 'materialChanges',
+						},
+					},
+					{
+						$unwind: {
+							path: '$materialChanges',
+							preserveNullAndEmptyArrays: true,
 						},
 					},
 					{
 						$group: {
-							_id: '$materialId',
+							_id: '$_id',
+							name: { $first: '$name' },
+							englishName: { $first: '$englishName' },
+							unit: { $first: '$unit' },
+							materialId: { $first: '$materialChanges.materialId' },
 							inStock: {
-								$sum: '$quantity',
+								$sum: '$materialChanges.quantity',
 							},
 						},
 					},
+					{ $match: query },
+					{ $project: projection },
+					{ $skip: skip },
+					{ $limit: itemsPerPage },
 				]);
+			if (!materialChanges) {
+				throw Error('77');
+			}
 
-				let usage = usageOneWeekAgo.reduce(
-					(acc, item) => acc + item.quantity,
-					0
-				);
-				itemsWithUsage.push({
-					...selectedItems[i].toObject(),
-					usageOneWeekAgo: usage,
-					inStock: inventory[0]?.inStock || 0,
-					isEnough: inventory[0]?.inStock - usage > 10,
-				});
+			const itemsWithUsage = [];
+			const requiredDate = new Date();
+			requiredDate.setDate(requiredDate.getDate() - 7);
+			for (let i = 0; i < materialChanges.length; i++) {
+				let usage = 0;
+				if (
+					(fields && (fields as string[]).includes('usageOneWeekAgo')) ||
+					(fields && (fields as string[]).includes('isEnough')) ||
+					fields == undefined
+				) {
+					const usageLastWeek: IMaterialChange[] | null =
+						await this.materialChange.find({
+							materialId: materialChanges[i]._id,
+							quantity: { $lt: 0 },
+							date: {
+								$gte: new Date(requiredDate.setHours(0, 0, 0, 0)),
+								$lt: new Date(requiredDate.setHours(23, 59, 59, 999)),
+							},
+						});
+					usage = usageLastWeek.reduce((acc, item) => acc + item.quantity, 0);
+				}
+				if (usage >= Number(usageOneWeekAgo)) {
+					if (
+						isEnough == undefined ||
+						(isEnough as string) ===
+							(materialChanges[i].inStock! - usage > 10).toString()
+					)
+						if (fields == undefined) {
+							itemsWithUsage.push({
+								...materialChanges[i],
+								isEnough: materialChanges[i].inStock! - usage > 10,
+								usageOneWeekAgo: usage,
+							});
+						} else if ((fields as string[]).includes('usageOneWeekAgo')) {
+							itemsWithUsage.push({
+								...materialChanges[i],
+								usageOneWeekAgo: usage,
+							});
+						} else if ((fields as string[]).includes('isEnough')) {
+							itemsWithUsage.push({
+								...materialChanges[i],
+								isEnough: materialChanges[i].inStock! - usage > 10,
+							});
+						} else {
+							itemsWithUsage.push({
+								...materialChanges[i],
+							});
+						}
+				}
 			}
 
 			if (itemsWithUsage.length > 0) {
 				res.send({
 					items: itemsWithUsage,
-					pageCount: Math.ceil(countDocuments / itemsPerPage),
+					pageCount: Math.ceil(
+						(await this.material.countDocuments(query)) / itemsPerPage
+					),
 				});
 			} else {
 				throw Error('77');

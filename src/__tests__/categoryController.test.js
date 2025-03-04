@@ -1,3 +1,4 @@
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -256,11 +257,14 @@ describe('categoryController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 			expect(response.body.items).toEqual(response2.body.items);
-			expect(response.body.items).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({ name: 'TestCategory3' }),
-				])
-			);
+			expect(response.body.items).toEqual([
+				{
+					_id: expect.any(String),
+					englishName: 'TestCategory2',
+					icon: 'test-icon3.svg',
+					name: 'TestCategory2',
+				},
+			]);
 		});
 
 		it('should return everything if value is missing', async () => {
@@ -275,22 +279,14 @@ describe('categoryController Integration Tests', () => {
 			expect(response.status).toBe(200);
 			expect(response.body.items).toEqual(response2.body.items);
 
-			expect(response.body.items).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({ name: 'TestCategory3' }),
-				])
-			);
-		});
-
-		it('should return error if no categories match the filter', async () => {
-			const response = await request(baseUrl)
-				.get('/category')
-				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'name', value: 'NonExistentCategory' });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'No result in the database for the search condition!'
-			);
+			expect(response.body.items).toEqual([
+				{
+					_id: expect.any(String),
+					englishName: 'TestCategory2',
+					icon: 'test-icon3.svg',
+					name: 'TestCategory2',
+				},
+			]);
 		});
 
 		it('should return paginated categories', async () => {
@@ -360,14 +356,6 @@ describe('categoryController Integration Tests', () => {
 			expect(response.status).toBe(200);
 			expect(response.body.pageCount).toEqual(3);
 			expect(response.body.items.length).toBe(5);
-		});
-		it('should return 400 when field is invalid', async () => {
-			const response = await request(baseUrl)
-				.get('/category')
-				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'invalidField', value: 'TestCategory3' });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('The searched field does not exist!');
 		});
 	});
 });

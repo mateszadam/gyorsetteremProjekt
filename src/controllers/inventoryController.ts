@@ -10,7 +10,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
-import { ObjectId } from 'mongoose';
+import { Types } from 'mongoose';
 
 export default class inventoryController implements IController {
 	public router = Router();
@@ -65,24 +65,25 @@ export default class inventoryController implements IController {
 				if (id) query.materialId = id;
 				else throw Error('85');
 			}
-			if (_id) query._id = _id;
-			if (materialId) query.materialId = materialId;
+			if (_id) query._id = new Types.ObjectId(_id as string);
+			if (materialId)
+				query.materialId = new Types.ObjectId(materialId as string);
 			if (message) query.message = new RegExp(message as string, 'i');
 
 			if (minDate && maxDate)
 				query.date = {
-					$gte: new Date(`${minDate}:0:0:0.0`),
-					$lte: new Date(`${maxDate}:23:59:59.999`),
+					$gte: new Date(new Date(minDate as string).toISOString()),
+					$lte: new Date(new Date(minDate as string).toISOString()),
 				};
 			else if (minDate)
 				query.date = {
-					$gte: new Date(`${minDate}:0:0:0.0`),
+					$gte: new Date(new Date(minDate as string).toISOString()),
 					$lte: new Date(),
 				};
 			else if (maxDate)
 				query.date = {
 					$gte: new Date('2000-01-01:0:0:0.0'),
-					$lte: new Date(`${maxDate}:23:59:59.999`),
+					$lte: new Date(new Date(minDate as string).toISOString()),
 				};
 
 			if (minQuantity && maxQuantity)
@@ -100,6 +101,8 @@ export default class inventoryController implements IController {
 				};
 
 			let projection: any = { _id: 1 };
+
+			log(query);
 
 			if (typeof fields === 'string') {
 				fields = [fields];
@@ -133,8 +136,7 @@ export default class inventoryController implements IController {
 				res.send({
 					items: materialChanges,
 					pageCount: Math.ceil(
-						(await this.materialChanges.aggregate([{ $match: query }])).length /
-							itemsPerPage
+						(await this.materialChanges.countDocuments(query)) / itemsPerPage
 					),
 				});
 			} else {

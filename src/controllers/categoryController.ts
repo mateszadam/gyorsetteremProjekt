@@ -22,48 +22,68 @@ export default class categoryController implements IController {
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page, limit } = req.query;
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				name,
+				englishName,
+				icon,
+				fields,
+			} = req.query;
 
-			const allowedFields = ['_id', 'name', 'englishName', 'icon'];
-			if (field && !allowedFields.includes(field as string)) {
-				throw Error('83');
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
 			}
 
-			const pageNumber = Number(page) || 1;
-			const itemsPerPage = Number(limit) || 10;
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
 			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = ['_id', 'name', 'englishName', 'icon'];
 
-			if (field && value) {
-				const selectedItems = await this.category
-					.find({ [field as string]: value })
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (selectedItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(await this.category.find({ [field as string]: value })).length /
-								itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
+			const query: any = {};
+			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
+			if (name) query.name = new RegExp(name as string, 'i');
+			if (englishName)
+				query.englishName = new RegExp(englishName as string, 'i');
+			if (icon) query.icon = new RegExp(icon as string, 'i');
+
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
 			} else {
-				const allItems = await this.category
-					.find({})
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (allItems.length > 0) {
-					res.send({
-						items: allItems,
-						pageCount: Math.ceil(
-							(await this.category.countDocuments()) / itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
+				projection = {
+					_id: 1,
+					name: 1,
+					englishName: 1,
+					icon: 1,
+				};
+			}
+
+			const categories = await this.category.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+			]);
+			if (categories.length > 0) {
+				res.send({
+					items: categories,
+					pageCount: Math.ceil(
+						(await this.category.countDocuments(query)) / itemsPerPage
+					),
+				});
+			} else {
+				throw Error('77');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
