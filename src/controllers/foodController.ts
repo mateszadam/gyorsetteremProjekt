@@ -42,7 +42,12 @@ export default class foodController implements IController {
 				fields,
 			} = req.query;
 
-			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+			if (
+				isNaN(Number(page)) ||
+				isNaN(Number(limit)) ||
+				Number(page) < 0 ||
+				Number(limit) < 0
+			) {
 				throw Error('93');
 			}
 
@@ -104,8 +109,7 @@ export default class foodController implements IController {
 					name: 1,
 					englishName: 1,
 					materials: 1,
-					minPrice: 1,
-					maxPrice: 1,
+					price: 1,
 					isEnabled: 1,
 					categoryId: 1,
 					subCategoryId: 1,
@@ -245,15 +249,21 @@ export default class foodController implements IController {
 	};
 	private updateFood = async (req: Request, res: Response) => {
 		try {
-			const newFood: IFood = req.body;
+			const changedData: IFood = req.body;
 			const id = req.params.id;
 			// await this.foodConstraints.validateAsync(newFood);
 
 			if (id) {
-				let oldFood: IFood | null = await this.food.findOne({ _id: id });
+				let oldFood: IFood | null = await this.food.findById(id);
 				if (!oldFood) {
 					throw Error('73');
 				}
+				log(oldFood);
+				log(changedData);
+				const newFood: IFood = {
+					...(oldFood = { ...changedData, _id: oldFood._id }),
+				};
+				console.log(newFood);
 
 				const response = await this.food.find({
 					$and: [{ name: newFood.name }, { _id: { $ne: id } }],

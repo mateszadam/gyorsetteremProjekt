@@ -890,7 +890,7 @@ paths:
         name: usageOneWeekAgo
         schema:
           type: string
-        description: Usage one week ago
+        description: Minimum usage one week ago
       - in: query
         name: isEnough
         schema:

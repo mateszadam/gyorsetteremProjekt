@@ -72,18 +72,18 @@ export default class inventoryController implements IController {
 
 			if (minDate && maxDate)
 				query.date = {
-					$gte: new Date(`${minDate}:0:0:0.0`),
-					$lte: new Date(`${maxDate}:23:59:59.999`),
+					$gte: new Date(new Date(minDate as string).toISOString()),
+					$lte: new Date(new Date(minDate as string).toISOString()),
 				};
 			else if (minDate)
 				query.date = {
-					$gte: new Date(`${minDate}:0:0:0.0`),
+					$gte: new Date(new Date(minDate as string).toISOString()),
 					$lte: new Date(),
 				};
 			else if (maxDate)
 				query.date = {
 					$gte: new Date('2000-01-01:0:0:0.0'),
-					$lte: new Date(`${maxDate}:23:59:59.999`),
+					$lte: new Date(new Date(minDate as string).toISOString()),
 				};
 
 			if (minQuantity && maxQuantity)
@@ -101,6 +101,8 @@ export default class inventoryController implements IController {
 				};
 
 			let projection: any = { _id: 1 };
+
+			log(query);
 
 			if (typeof fields === 'string') {
 				fields = [fields];
