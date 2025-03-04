@@ -102,7 +102,7 @@ describe('materialController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'unit', value: 'kg', page: 1 });
+				.query({ unit: 'kg', page: 1 });
 			expect(response.status).toBe(200);
 			expect(response.body.items.length).toBe(8);
 			expect(response.body.pageCount).toBe(1);
@@ -115,7 +115,7 @@ describe('materialController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'name', value: 'NonExistentMaterial', page: 1 });
+				.query({ name: 'NonExistentMaterial', page: 1 });
 			expect(response.status).toBe(400);
 			expect(response.body.message).toBe(
 				'No result in the database for the search condition!'
@@ -136,7 +136,7 @@ describe('materialController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'unit', value: 'kg', page: 2, limit: 5 });
+				.query({ unit: 'kg', page: 2, limit: 5 });
 			expect(response.status).toBe(200);
 			expect(response.body.items.length).toBe(3);
 			expect(response.body.pageCount).toBe(2);
@@ -151,15 +151,6 @@ describe('materialController Integration Tests', () => {
 			expect(response.body.message).toEqual(
 				'No result in the database for the search condition!'
 			);
-		});
-
-		it('should return 400 if field not valid for filtering', async () => {
-			const response = await request(baseUrl)
-				.get('/material')
-				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'invalidField', value: 'kg' });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('The searched field does not exist!');
 		});
 	});
 
@@ -176,19 +167,25 @@ describe('materialController Integration Tests', () => {
 				});
 			const response = await request(baseUrl)
 				.get('/material')
-				.set('Authorization', `Bearer ${token}`);
+				.set('Authorization', `Bearer ${token}`)
+				.query({ name: 'testmaterial' });
 			materialId = response.body.items[0]._id;
 		});
 
 		it('should delete a material by id', async () => {
+			const material = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ name: 'testmaterial11' });
+			materialId = material.body.items[0]._id;
 			const response = await request(baseUrl)
 				.delete(`/material/${materialId}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
 			expect(response.body).toEqual({
 				_id: materialId,
-				name: 'testmaterial',
-				englishName: 'testmaterial',
+				name: 'testmaterial11',
+				englishName: 'testmaterial11',
 				unit: 'kg',
 			});
 			expect(
@@ -196,7 +193,7 @@ describe('materialController Integration Tests', () => {
 					await request(baseUrl)
 						.get('/material')
 						.set('Authorization', `Bearer ${token}`)
-						.query({ field: '_id', value: materialId })
+						.query({ _id: materialId })
 				).body.message
 			).toBe('No result in the database for the search condition!');
 		});
@@ -210,7 +207,7 @@ describe('materialController Integration Tests', () => {
 		});
 	});
 
-	describe('04 PATCH /material/:id', () => {
+	describe('04 PUT /material/:id', () => {
 		beforeAll(async () => {
 			await request(baseUrl)
 				.post('/material')
@@ -229,7 +226,7 @@ describe('materialController Integration Tests', () => {
 
 		it('should update a material', async () => {
 			const response = await request(baseUrl)
-				.patch(`/material/${materialId}`)
+				.put(`/material/${materialId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'UpdatedMaterial',
@@ -245,7 +242,7 @@ describe('materialController Integration Tests', () => {
 					await request(baseUrl)
 						.get(`/material`)
 						.set('Authorization', `Bearer ${token}`)
-						.query({ field: '_id', value: materialId })
+						.query({ _id: materialId })
 				).body.items
 			).toEqual([
 				{
@@ -262,7 +259,7 @@ describe('materialController Integration Tests', () => {
 
 		it('should not update a material with invalid id', async () => {
 			const response = await request(baseUrl)
-				.patch('/material/67bf345ee82353e877b1f657')
+				.put('/material/67bf345ee82353e877b1f657')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'UpdatedMaterial',
@@ -275,7 +272,7 @@ describe('materialController Integration Tests', () => {
 
 		it('should return 400 if no material data is provided', async () => {
 			const response = await request(baseUrl)
-				.patch(`/material/${materialId}`)
+				.put(`/material/${materialId}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(400);
 			expect(response.body.message).toBe('At least one change is required!');

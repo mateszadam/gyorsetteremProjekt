@@ -323,7 +323,7 @@ describe('foodController Integration Tests', () => {
 				_id: foodId.body._id,
 				name: 'Updated Test Food',
 				price: 15,
-				materials: [{ id: expect.any(String), _id: materialId, quantity: 3 }],
+				materials: [{ id: materialId, _id: materialId, quantity: 3 }],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'updated_image_url',
@@ -333,12 +333,12 @@ describe('foodController Integration Tests', () => {
 			const response2 = await request(baseUrl)
 				.get(`/food`)
 				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'name', value: 'Updated Test Food' });
+				.query({ name: 'Updated Test Food' });
 			expect(response2.body.items[0]).toEqual({
 				_id: foodId.body._id,
 				name: 'Updated Test Food',
 				price: 15,
-				materials: [{ id: expect.any(String), _id: materialId, quantity: 3 }],
+				materials: [{ _id: materialId, quantity: 3 }],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'updated_image_url',

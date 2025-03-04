@@ -1303,19 +1303,11 @@ paths:
           default: 2025-03-01
 
         required: true
-    requestBody:
-      description: Array of category IDs (optional)
-      required: false
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              category:
-                type: array
-                default: [3000, 6000, 9000]
-                items:
-                  type: number
+      - in: query
+        name: categories
+        schema:
+          type: array
+          default: ['3000', '6000', '9000']
     responses:
       '200':
         description: Successful response

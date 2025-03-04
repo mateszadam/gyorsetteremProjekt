@@ -146,13 +146,15 @@ export default class statisticController implements IController {
 	};
 
 	private getCategorizedOrders = async (req: Request, res: Response) => {
-		const { startDate, endDate } = req.query;
-		const category = req.body.category;
+		let { startDate, endDate, categories } = req.query;
+
 		try {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
-			let boundaries = [];
+
+			let boundaries: number[] = [];
+
 			let max = (
 				await this.order.aggregate([
 					{
@@ -163,7 +165,7 @@ export default class statisticController implements IController {
 					},
 				])
 			)[0].max;
-			if (!category) {
+			if (!categories) {
 				let current = 1;
 				do {
 					boundaries.push(current * 1000);
@@ -172,11 +174,16 @@ export default class statisticController implements IController {
 				boundaries.push(max);
 				boundaries.push(max + 1);
 			} else {
-				boundaries = category;
+				if (!isNaN(Number(categories))) {
+					boundaries.push(Number(categories));
+				} else {
+					boundaries = (categories as string[]).map(Number);
+				}
 				boundaries.push(max + 1);
-
-				boundaries.sort((a: number, b: number) => a - b);
 			}
+			boundaries.sort((a: number, b: number) => a - b);
+
+			log(boundaries);
 
 			const orders = await this.order.aggregate([
 				{
