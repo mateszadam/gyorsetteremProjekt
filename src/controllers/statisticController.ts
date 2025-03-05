@@ -317,8 +317,8 @@ export default class statisticController implements IController {
 							$dateToString: { format: '%Y-%m-%d', date: '$orderedTime' },
 						},
 
-						count: { $sum: 1 },
-						total: { $sum: { $sum: '$orderedProducts.quantity' } },
+						orderCount: { $sum: 1 },
+						productCount: { $sum: { $sum: '$orderedProducts.quantity' } },
 					},
 				},
 			]);
@@ -330,11 +330,12 @@ export default class statisticController implements IController {
 				if (!order) {
 					orders.push({
 						_id: dayString,
-						count: 0,
-						total: 0,
+						orderCount: 0,
+						productCount: 0,
 					});
 				}
 			}
+			orders.sort((a, b) => (a._id > b._id ? 1 : -1));
 
 			res.status(200).send({ orders: orders });
 		} catch (error: any) {
@@ -437,6 +438,11 @@ export default class statisticController implements IController {
 					$sort: { _id: 1 },
 				},
 			]);
+
+			orders.forEach((order) => {
+				order.avgCookingTime = order.avgCookingTime || 0;
+				order.avgHandoverTime = order.avgHandoverTime || 0;
+			});
 
 			for (let i = 0; i < daysOfWeek.length; i++) {
 				const day = daysOfWeek[i];
