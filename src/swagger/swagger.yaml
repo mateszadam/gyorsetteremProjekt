@@ -1395,7 +1395,7 @@ paths:
                   description: Error message
 /dashboard/timeOfOrders:
   get:
-    summary: Get time of orders
+    summary: Get production time of orders
     tags: [Dashboard]
     security:
       - adminBearerAuth: []
