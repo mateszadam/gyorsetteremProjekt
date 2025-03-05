@@ -1357,6 +1357,128 @@ paths:
       '400':
         description: Bad request
 
+/dashboard/ordersThisWeek:
+  get:
+    summary: Get orders and sold products for this week
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+          description: Date to determine the week
+        required: true
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orders:
+                  type: integer
+                  description: Number of orders
+      '400':
+        description: Bad request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Error message
+/dashboard/timeOfOrders:
+  get:
+    summary: Get production time of orders
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+          description: Date to determine the week
+        required: true
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orders:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      count:
+                        type: integer
+      '400':
+        description: Bad request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Error message
+/dashboard/cookingTime:
+  get:
+    summary: Get average cooking time for each day of the week
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+          description: Date to determine the week
+        required: true
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orders:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      avgCookingTime:
+                        type: number
+                        description: Average cooking time in hours
+      '400':
+        description: Bad request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Error message
+
 # Components
 components:
   schemas:

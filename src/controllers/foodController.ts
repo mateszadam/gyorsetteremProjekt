@@ -91,8 +91,6 @@ export default class foodController implements IController {
 			}
 			if (image) query.image = new RegExp(image as string);
 
-			log(query);
-
 			let projection: any = { _id: 1 };
 			if (typeof fields === 'string') {
 				fields = [fields];
@@ -116,8 +114,6 @@ export default class foodController implements IController {
 					image: 1,
 				};
 			}
-			log(projection);
-			log(query);
 
 			const materialChanges = await this.food.aggregate([
 				{ $match: query },
@@ -258,12 +254,9 @@ export default class foodController implements IController {
 				if (!oldFood) {
 					throw Error('73');
 				}
-				log(oldFood);
-				log(changedData);
 				const newFood: IFood = {
 					...(oldFood = { ...changedData, _id: oldFood._id }),
 				};
-				console.log(newFood);
 
 				const response = await this.food.find({
 					$and: [{ name: newFood.name }, { _id: { $ne: id } }],

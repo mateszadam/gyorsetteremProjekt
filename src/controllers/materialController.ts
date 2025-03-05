@@ -88,7 +88,6 @@ export default class materialController implements IController {
 			if (minInStock) query.inStock = { $gte: Number(minInStock) };
 			if (maxInStock) query.inStock = { $lte: Number(maxInStock) };
 
-			log(query);
 			let projection: any = { _id: 1 };
 
 			if (typeof fields === 'string') {
@@ -163,8 +162,10 @@ export default class materialController implements IController {
 							materialId: materialChanges[i]._id,
 							quantity: { $lt: 0 },
 							date: {
-								$gte: new Date(requiredDate.setHours(0, 0, 0, 0)),
-								$lt: new Date(requiredDate.setHours(23, 59, 59, 999)),
+								$gte: new Date(requiredDate.setHours(0, 0, 0, 0)).toISOString(),
+								$lt: new Date(
+									requiredDate.setHours(23, 59, 59, 999)
+								).toISOString(),
 							},
 						});
 					usage = usageLastWeek.reduce((acc, item) => acc + item.quantity, 0);
@@ -174,7 +175,7 @@ export default class materialController implements IController {
 						isEnough == undefined ||
 						(isEnough as string) ===
 							(materialChanges[i].inStock! - usage > 10).toString()
-					)
+					) {
 						if (fields == undefined) {
 							itemsWithUsage.push({
 								...materialChanges[i],
@@ -196,6 +197,7 @@ export default class materialController implements IController {
 								...materialChanges[i],
 							});
 						}
+					}
 				}
 			}
 
