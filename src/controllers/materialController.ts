@@ -88,7 +88,6 @@ export default class materialController implements IController {
 			if (minInStock) query.inStock = { $gte: Number(minInStock) };
 			if (maxInStock) query.inStock = { $lte: Number(maxInStock) };
 
-			log(query);
 			let projection: any = { _id: 1 };
 
 			if (typeof fields === 'string') {

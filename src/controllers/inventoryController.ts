@@ -102,8 +102,6 @@ export default class inventoryController implements IController {
 
 			let projection: any = { _id: 1 };
 
-			log(query);
-
 			if (typeof fields === 'string') {
 				fields = [fields];
 			}
@@ -123,8 +121,6 @@ export default class inventoryController implements IController {
 					date: 1,
 				};
 			}
-
-			log(query);
 
 			const materialChanges = await this.materialChanges.aggregate([
 				{ $match: query },
