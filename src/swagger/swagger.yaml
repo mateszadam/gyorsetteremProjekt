@@ -1166,6 +1166,56 @@ paths:
     responses:
       200:
         description: Profile picture changed successfully
+/user/forgetPassword:
+  post:
+    tags: [User handling]
+    summary: Send password change email
+    security: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+    responses:
+      '200':
+        description: Email sent successfully
+      '400':
+        description: Bad request
+
+/user/changePassword:
+  post:
+    tags: [User handling]
+    summary: Change user password
+    security: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - password
+            properties:
+              token:
+                type: string
+              password:
+                type: string
+    responses:
+      '200':
+        description: Password changed successfully
+      '400':
+        description: Bad request
   # Dashboard
 /dashboard/registeredUsers:
   get:

@@ -13,6 +13,7 @@ import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { ObjectId } from 'mongoose';
 import { log } from 'console';
+import forgetPassword from '../helpers/newPasswordManager';
 
 export default class userController implements IController {
 	public router = Router();
@@ -20,6 +21,7 @@ export default class userController implements IController {
 	public endPoint = '/user';
 
 	bcrypt = require('bcrypt');
+
 	constructor() {
 		// TODO: Validáció a user name létezésére
 		this.router.post('/register/customer', this.registerUser);
@@ -37,6 +39,8 @@ export default class userController implements IController {
 			authToken,
 			this.changeProfilePicture
 		);
+		this.router.post('/forgetPassword', this.forgetPassword);
+		this.router.post('/changePassword', this.changePassword);
 	}
 	// https://www.svgrepo.com/collection/people-gestures-and-signs-icons/
 
@@ -263,6 +267,30 @@ export default class userController implements IController {
 			} else {
 				throw Error('07');
 			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private forgetPassword = async (req: Request, res: Response) => {
+		try {
+			const message = await forgetPassword.sendPasswordChange(req);
+			defaultAnswers.ok(res, { message: message });
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private changePassword = async (req: Request, res: Response) => {
+		try {
+			const message = await forgetPassword.changePassword(req);
+			defaultAnswers.ok(res, { message: message });
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
