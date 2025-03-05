@@ -34,6 +34,17 @@ export default class statisticController implements IController {
 		);
 		this.router.get('/orderTimes', authAdminToken, this.getOrderTimes);
 		this.router.get('/totalOrders', authAdminToken, this.getTotalOrders);
+		this.router.get(
+			'/ordersThisWeek',
+			authAdminToken,
+			this.getOrdersAndSoldProductsOnThisWeek
+		);
+		this.router.get('/timeOfOrders', authAdminToken, this.getTimeOfOrders);
+		this.router.get(
+			'/cookingTime',
+			authAdminToken,
+			this.getCookingTimeEachDayOfTheWeek
+		);
 	}
 
 	private getRegisteredUsers = async (req: Request, res: Response) => {
@@ -202,6 +213,15 @@ export default class statisticController implements IController {
 					},
 				},
 			]);
+
+			if (orders.length === 0) {
+				for (let i = 0; i < boundaries.length; i++) {
+					orders.push({
+						_id: boundaries[i],
+						count: 0,
+					});
+				}
+			}
 			defaultAnswers.ok(res, orders);
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -269,4 +289,192 @@ export default class statisticController implements IController {
 			);
 		}
 	};
+
+	private getOrdersAndSoldProductsOnThisWeek = async (
+		req: Request,
+		res: Response
+	) => {
+		try {
+			const inputDate = new Date(req.query.date as string);
+			if (!inputDate) {
+				throw new Error('92');
+			}
+
+			const daysOfWeek = this.getCurrentWeekFromDate(inputDate);
+
+			const orders = await this.order.aggregate([
+				{
+					$match: {
+						orderedTime: {
+							$gte: daysOfWeek[0],
+							$lte: daysOfWeek[6],
+						},
+					},
+				},
+				{
+					$group: {
+						_id: {
+							$dateToString: { format: '%Y-%m-%d', date: '$orderedTime' },
+						},
+
+						count: { $sum: 1 },
+						total: { $sum: { $sum: '$orderedProducts.quantity' } },
+					},
+				},
+			]);
+
+			for (let i = 0; i < daysOfWeek.length; i++) {
+				const day = daysOfWeek[i];
+				const dayString = day.toISOString().split('T')[0];
+				const order = orders.find((o) => o._id === dayString);
+				if (!order) {
+					orders.push({
+						_id: dayString,
+						count: 0,
+						total: 0,
+					});
+				}
+			}
+
+			res.status(200).send({ orders: orders });
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private getTimeOfOrders = async (req: Request, res: Response) => {
+		try {
+			const inputDate = new Date(req.query.date as string);
+			if (!inputDate) {
+				throw new Error('92');
+			}
+
+			const daysOfWeek = this.getCurrentWeekFromDate(inputDate);
+
+			const orders = await this.order.aggregate([
+				{
+					$match: {
+						orderedTime: {
+							$gte: daysOfWeek[0],
+							$lte: daysOfWeek[6],
+						},
+					},
+				},
+				{
+					$group: {
+						_id: {
+							$dateToString: { format: '%H', date: '$orderedTime' },
+						},
+						count: { $sum: 1 },
+					},
+				},
+				{
+					$sort: { _id: 1 },
+				},
+			]);
+
+			res.status(200).send({ orders: orders });
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private getCookingTimeEachDayOfTheWeek = async (
+		req: Request,
+		res: Response
+	) => {
+		try {
+			const inputDate = new Date(req.query.date as string);
+			if (!inputDate) {
+				throw new Error('92');
+			}
+
+			const daysOfWeek = this.getCurrentWeekFromDate(inputDate);
+
+			const orders = await this.order.aggregate([
+				{
+					$match: {
+						orderedTime: {
+							$gte: daysOfWeek[0],
+							$lte: daysOfWeek[6],
+						},
+					},
+				},
+				{
+					$group: {
+						_id: {
+							$dateToString: { format: '%Y-%m-%d', date: '$orderedTime' },
+						},
+						avgCookingTime: {
+							$avg: {
+								$divide: [
+									{
+										$subtract: ['$finishedCokingTime', '$orderedTime'],
+									},
+									1000 * 60 * 60,
+								],
+							},
+						},
+						avgHandoverTime: {
+							$avg: {
+								$divide: [
+									{
+										$subtract: ['$finishedTime', '$finishedCokingTime'],
+									},
+									1000 * 60 * 60,
+								],
+							},
+						},
+					},
+				},
+				{
+					$sort: { _id: 1 },
+				},
+			]);
+
+			for (let i = 0; i < daysOfWeek.length; i++) {
+				const day = daysOfWeek[i];
+				const dayString = day.toISOString().split('T')[0];
+				const order = orders.find((o) => o._id === dayString);
+				if (!order) {
+					orders.push({
+						_id: dayString,
+						avgCookingTime: 0,
+					});
+				}
+			}
+
+			res.status(200).send({ orders: orders });
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
+	private getCurrentWeekFromDate(inputDate: Date): Date[] {
+		const firstDayOfThisWeek = new Date(
+			inputDate.setDate(
+				inputDate.getDate() -
+					inputDate.getDay() +
+					(inputDate.getDay() === 0 ? -6 : 1)
+			)
+		);
+		const daysOfWeek = [];
+
+		for (let i = 0; i < 7; i++) {
+			const date = new Date(firstDayOfThisWeek);
+			date.setHours(firstDayOfThisWeek.getHours() + i * 24);
+			daysOfWeek.push(date);
+		}
+
+		return daysOfWeek;
+	}
 }
