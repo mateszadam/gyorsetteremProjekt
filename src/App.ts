@@ -59,7 +59,7 @@ class App {
 			const swaggerjsdoc = require('swagger-jsdoc');
 			const swagger = require('swagger-ui-express');
 			this.app.use(
-				'/docs',
+				'/',
 				swagger.serve,
 				swagger.setup(swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml')))
 			);
