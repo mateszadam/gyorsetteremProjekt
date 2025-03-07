@@ -17,9 +17,13 @@ export default class ImplementMiddleware {
 			limit: 200,
 			standardHeaders: 'draft-8',
 			legacyHeaders: false,
+
 			message: 'To many requests, please try again later',
 			skip: (req, res) => {
 				if (req.ip == '::1') {
+					return true;
+				}
+				if (req.path.includes('dashboard')) {
 					return true;
 				}
 				return false;

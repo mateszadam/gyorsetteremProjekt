@@ -72,8 +72,18 @@ export default class foodController implements IController {
 			if (name) query.name = new RegExp(name as string, 'i');
 			if (englishName)
 				query.englishName = new RegExp(englishName as string, 'i');
-			if (minPrice) query.price = { $gte: Number(minPrice) };
-			if (maxPrice) query.price = { $lte: Number(maxPrice) };
+
+			if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
+				query.price = { $lte: Number(minPrice) };
+				query.price = { $gte: Number(maxPrice) };
+			} else if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
+				query.price = { $gte: Number(minPrice) };
+				query.price = { $lte: Number(maxPrice) };
+			} else {
+				if (minPrice) query.price = { $gte: Number(minPrice) };
+				if (maxPrice) query.price = { $lte: Number(maxPrice) };
+			}
+
 			if (isEnabled) query.isEnabled = isEnabled;
 
 			if (categoryId) {
@@ -121,16 +131,12 @@ export default class foodController implements IController {
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
-			if (materialChanges.length > 0) {
-				res.send({
-					items: materialChanges,
-					pageCount: Math.ceil(
-						(await this.food.countDocuments(query)) / itemsPerPage
-					),
-				});
-			} else {
-				throw Error('77');
-			}
+			res.send({
+				items: materialChanges,
+				pageCount: Math.ceil(
+					(await this.food.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,

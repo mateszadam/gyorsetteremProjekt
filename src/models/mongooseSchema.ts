@@ -21,6 +21,7 @@ const userSchema = new Schema<SchemaDefinition>(
 		email: {
 			type: String,
 			required: [true, 'Email is required'],
+			unique: [true, 'Email is already taken'],
 		},
 		profilePicture: {
 			type: String,

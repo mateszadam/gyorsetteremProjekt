@@ -320,15 +320,12 @@ describe('categoryController Integration Tests', () => {
 			expect(response.body.items.length).toBeLessThanOrEqual(10);
 		}, 20000);
 
-		it('should return error when page is out of bounds', async () => {
+		it('should not return error when page is out of bounds', async () => {
 			const response = await request(baseUrl)
 				.get('/category')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ page: 100 });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'No result in the database for the search condition!'
-			);
+			expect(response.status).toBe(200);
 		});
 		it('should return with limit', async () => {
 			const response = await request(baseUrl)
