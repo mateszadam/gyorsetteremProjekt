@@ -48,17 +48,24 @@ export default class statisticController implements IController {
 	}
 
 	private getRegisteredUsers = async (req: Request, res: Response) => {
-		const { startDate, endDate } = req.query;
+		let { startDate, endDate } = req.query;
 		try {
 			if (!startDate || !endDate) {
 				throw new Error('92');
+			}
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
+
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
 			}
 
 			const users = await this.user.countDocuments({
 				role: 'customer',
 				registeredAt: {
-					$gte: new Date(startDate as string),
-					$lte: new Date(endDate as string),
+					$gte: startDateObj,
+					$lte: endDateObj,
 				},
 			});
 			const totalUsers = await this.user.countDocuments({
@@ -79,12 +86,21 @@ export default class statisticController implements IController {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
+
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
+
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
+			}
+
 			const revenue = await this.order.aggregate([
 				{
 					$match: {
 						orderedTime: {
-							$gte: new Date(startDate as string),
-							$lte: new Date(endDate as string),
+							$gte: startDateObj,
+							$lte: endDateObj,
 						},
 					},
 				},
@@ -105,12 +121,21 @@ export default class statisticController implements IController {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
+
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
+
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
+			}
+
 			const soldProducts = await this.order.aggregate([
 				{
 					$match: {
 						orderedTime: {
-							$gte: new Date(startDate as string),
-							$lte: new Date(endDate as string),
+							$gte: startDateObj,
+							$lte: endDateObj,
 						},
 					},
 				},
@@ -141,10 +166,17 @@ export default class statisticController implements IController {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
+
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
+			}
 			const orderCount = await this.order.countDocuments({
 				orderedTime: {
-					$gte: new Date(startDate as string),
-					$lte: new Date(endDate as string),
+					$gte: startDateObj,
+					$lte: endDateObj,
 				},
 			});
 			defaultAnswers.ok(res, { orderCount: orderCount });
@@ -163,7 +195,13 @@ export default class statisticController implements IController {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
 
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
+			}
 			let boundaries: number[] = [];
 
 			let max = (
@@ -198,8 +236,8 @@ export default class statisticController implements IController {
 				{
 					$match: {
 						orderedTime: {
-							$gte: new Date(startDate as string),
-							$lte: new Date(endDate as string),
+							$gte: startDateObj,
+							$lte: endDateObj,
 						},
 					},
 				},
@@ -235,10 +273,19 @@ export default class statisticController implements IController {
 			if (!startDate || !endDate) {
 				throw new Error('92');
 			}
+
+			let startDateObj = new Date(startDate as string);
+			let endDateObj = new Date(endDate as string);
+
+			if (startDateObj > endDateObj) {
+				endDateObj = new Date(startDate as string);
+				startDateObj = new Date(endDate as string);
+			}
+
 			const orders: IOrder[] | null = await this.order.find({
 				orderedTime: {
-					$gte: new Date(startDate as string),
-					$lte: new Date(endDate as string),
+					$gte: startDateObj,
+					$lte: endDateObj,
 				},
 			});
 			if (!orders) {

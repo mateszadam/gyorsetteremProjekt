@@ -23,7 +23,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: `TestSalesman${i}`,
 					password: 'Test@1234',
-					email: 'ssas@gmail.com',
+					email: `ssas${i}@gmail.com`,
 					role: 'salesman',
 				});
 			await request(baseUrl)
@@ -33,7 +33,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: `TestKitchen${i}`,
 					password: 'Test@1234',
-					email: 'ssas@gmail.com',
+					email: `ssawws${i}@gmail.com`,
 					role: 'kitchen',
 				});
 			await request(baseUrl)
@@ -43,7 +43,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: `TestCustomer${i}`,
 					password: 'Test@1234',
-					email: 'ssas@gmail.com',
+					email: `ssassss${i}@gmail.com`,
 				});
 		}
 	}, 30000);
@@ -203,7 +203,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: 'TestAdmin0020',
 					password: 'Admin@1234',
-					email: 'testadmin@example.com',
+					email: 'testadmin3@example.com',
 					role: 'admin',
 				});
 			expect(response.status).toBe(201);
@@ -215,7 +215,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: 'TestAdmin220',
 					password: 'Admin@1234',
-					email: 'testadmin@example.com',
+					email: 'testadmin4@example.com',
 					role: 'kitchen',
 				});
 			expect(response.status).toBe(201);
@@ -227,7 +227,7 @@ describe('userController Integration Tests', () => {
 				.send({
 					name: 'TestAdmin330',
 					password: 'Admin@1234',
-					email: 'testadmin@example.com',
+					email: 'testadmin5@example.com',
 					role: 'salesman',
 				});
 			expect(response.status).toBe(201);

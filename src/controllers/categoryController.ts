@@ -75,16 +75,13 @@ export default class categoryController implements IController {
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
-			if (categories.length > 0) {
-				res.send({
-					items: categories,
-					pageCount: Math.ceil(
-						(await this.category.countDocuments(query)) / itemsPerPage
-					),
-				});
-			} else {
-				throw Error('77');
-			}
+
+			res.send({
+				items: categories,
+				pageCount: Math.ceil(
+					(await this.category.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
