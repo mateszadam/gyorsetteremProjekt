@@ -70,21 +70,30 @@ export default class inventoryController implements IController {
 				query.materialId = new Types.ObjectId(materialId as string);
 			if (message) query.message = new RegExp(message as string, 'i');
 
-			if (minDate && maxDate)
+			if (minDate && maxDate) {
+				let minDateObj = new Date(minDate as string);
+				let maxDateObj = new Date(maxDate as string);
+
+				// Swap dates if minDate is greater than maxDate
+				if (minDateObj > maxDateObj) {
+					[minDateObj, maxDateObj] = [maxDateObj, minDateObj];
+				}
+
 				query.date = {
-					$gte: new Date(new Date(minDate as string).toISOString()),
-					$lte: new Date(new Date(minDate as string).toISOString()),
+					$gte: minDateObj,
+					$lte: maxDateObj,
 				};
-			else if (minDate)
+			} else if (minDate) {
 				query.date = {
-					$gte: new Date(new Date(minDate as string).toISOString()),
+					$gte: new Date(minDate as string),
 					$lte: new Date(),
 				};
-			else if (maxDate)
+			} else if (maxDate) {
 				query.date = {
-					$gte: new Date('2000-01-01:0:0:0.0'),
-					$lte: new Date(new Date(minDate as string).toISOString()),
+					$gte: new Date('2000-01-01T00:00:00.000Z'),
+					$lte: new Date(maxDate as string),
 				};
+			}
 
 			if (minQuantity && maxQuantity)
 				query.quantity = {

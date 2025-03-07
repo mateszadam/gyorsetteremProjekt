@@ -201,16 +201,12 @@ export default class materialController implements IController {
 				}
 			}
 
-			if (itemsWithUsage.length > 0) {
-				res.send({
-					items: itemsWithUsage,
-					pageCount: Math.ceil(
-						(await this.material.countDocuments(query)) / itemsPerPage
-					),
-				});
-			} else {
-				throw Error('77');
-			}
+			res.send({
+				items: itemsWithUsage,
+				pageCount: Math.ceil(
+					(await this.material.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
