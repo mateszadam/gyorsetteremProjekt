@@ -6,6 +6,7 @@ import {
 	authToken,
 	generateToken,
 	getDataFromToken,
+	logOutToken,
 } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
@@ -150,7 +151,7 @@ export default class userController implements IController {
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
-				if (databaseUser.role === 'admin') {
+				if (databaseUser.role === 'admin' && process.env.MODE !== 'test') {
 					const token = await emailManager.twoFactorAuth(databaseUser);
 					defaultAnswers.ok(res, { token: token });
 				} else {
@@ -180,7 +181,21 @@ export default class userController implements IController {
 		try {
 			const token = req.params.token;
 			const result = await emailManager.authAdmin(token);
-			defaultAnswers.ok(res, result);
+			let html = '';
+			if (result == 'Admin authenticated') {
+				html = fs.readFileSync(
+					__dirname.replace('controllers', '') + '/static/success.html',
+					'utf8'
+				);
+			} else {
+				html = fs.readFileSync(
+					__dirname.replace('controllers', '') + '/static/failed.html',
+					'utf8'
+				);
+			}
+			res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+			res.write(html);
+			res.end();
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
@@ -191,24 +206,11 @@ export default class userController implements IController {
 
 	private logoutUser = async (req: Request, res: Response) => {
 		try {
-			// TODO: Implement logout
-			defaultAnswers.notImplemented(res);
-			// const token = req.headers.authorization?.replace('Bearer ', '');
-			// if (token) {
-			// 	const updateResult = await this.user.updateOne(
-			// 		{
-			// 			token: token,
-			// 		},
-			// 		{ $set: { token: null } }
-			// 	);
-			// 	if (updateResult.modifiedCount > 0) {
-			// 		defaultAnswers.ok(res);
-			// 	} else {
-			// 		throw Error('Token not found in database');
-			// 	}
-			// } else {
-			// 	throw Error('Token not found in the header');
-			// }
+			if (logOutToken(req)) {
+				defaultAnswers.ok(res);
+			} else {
+				defaultAnswers.notAuthorized(res);
+			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,

@@ -1,7 +1,7 @@
 import { IOrder, IUser } from '../models/models';
-import { v4 as uuidv4 } from 'uuid';
+
 import { orderModel, userModel } from '../models/mongooseSchema';
-import { generateToken } from '../services/tokenService';
+import { generateToken, generateUUID4Token } from '../services/tokenService';
 
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 5006 });
@@ -19,7 +19,7 @@ export default class webSocetController {
 			console.log('New connection!');
 
 			ws.on('message', (message: any) => {
-				const id = uuidv4();
+				const id = generateUUID4Token();
 				message = JSON.parse(message);
 
 				if (message.token) {
@@ -87,25 +87,17 @@ export default class webSocetController {
 					console.log(
 						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
 					);
-					ws.send({
-						token: token,
-						role: databaseUser.role,
-						profilePicture: databaseUser.profilePicture,
-						userId: databaseUser._id,
-					});
+					ws.send(
+						JSON.stringify({
+							token: token,
+							role: databaseUser.role,
+							profilePicture: databaseUser.profilePicture,
+							userId: databaseUser._id,
+						})
+					);
+					this.sendAdminLogin.delete(token);
 				}
 			}
 		}
-	}
-
-	public uuidv4() {
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-			/[xy]/g,
-			function (c) {
-				var r = (Math.random() * 16) | 0,
-					v = c == 'x' ? r : (r & 0x3) | 0x8;
-				return v.toString(16);
-			}
-		);
 	}
 }

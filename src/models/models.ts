@@ -8,6 +8,7 @@ interface IUser {
 	role: string;
 	profilePicture: String;
 	email: string | undefined;
+	tokenId: string | undefined;
 }
 
 interface ICategory {

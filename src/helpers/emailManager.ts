@@ -4,6 +4,7 @@ import { log } from 'console';
 import { userModel } from '../models/mongooseSchema';
 import { IUser } from '../models/models';
 import webSocetController from '../controllers/websocketController';
+import { generateUUID4Token } from '../services/tokenService';
 
 export default class emailManager {
 	private static nodemailer = require('nodemailer');
@@ -30,7 +31,7 @@ export default class emailManager {
 			if (!user) {
 				return 'User not found';
 			}
-			const token = Math.random().toString(36);
+			const token = generateUUID4Token();
 
 			this.tokens.push({ token: token, user: user });
 
@@ -100,8 +101,8 @@ export default class emailManager {
 
 	static async twoFactorAuth(admin: IUser) {
 		try {
-			const token = Math.random().toString(36);
-			const WebSocketToken = Math.random().toString(36);
+			const token = generateUUID4Token();
+			const WebSocketToken = generateUUID4Token();
 
 			log(token);
 			log(WebSocketToken);

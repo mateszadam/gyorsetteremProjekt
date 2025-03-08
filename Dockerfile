@@ -10,6 +10,7 @@ COPY . .
 
 RUN tsc
 
+COPY ./src/static ./dist/static 
 
 EXPOSE 5005
 EXPOSE 5006

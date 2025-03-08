@@ -28,4 +28,4 @@ jobs:
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
-          IS_TEST: TRUE
+          MODE: test

@@ -39,8 +39,8 @@ class App {
 		});
 
 		const mongoUri = process.env.MONGO_URI || '';
-		const isTest: string = process.env.IS_TEST?.toString() || '';
-		if (isTest == 'TRUE' || isTest == 'true') {
+		const mode: string = process.env.MODE?.toString() || '';
+		if (mode === 'test') {
 			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
 			this.app.use('/drop', async (req: Request, res: Response) => {
