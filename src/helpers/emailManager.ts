@@ -113,16 +113,28 @@ export default class emailManager {
 				WebSocketToken: WebSocketToken,
 			});
 
-			var mailOptions = {
-				from: 'Étterem',
+			const mailOptions = {
+				from: 'Étterem <matesz.adam2@gmail.com>',
 				to: admin.email,
-				subject: 'Sending Email using Node.js',
-				html:
-					'<h1>Two factor auth!</h1><p>Kattints a linkre a belépéshez:' +
-					'<a href="http://localhost:5005/user/auth/' +
-					token +
-					'">http://localhost:5005/user/auth/' +
-					'</a></p>',
+				subject: 'Kétlépcsős Hitelesítés - Étterem',
+				html: `
+					<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">
+						<div style="text-align: center; padding: 10px; background-color:rgb(199, 120, 56); color: white; border-radius: 3px;">
+							<h2>Kétlépcsős Hitelesítés</h2>
+						</div>
+						<div style="padding: 20px; background-color: white; border-radius: 3px; margin-top: 15px;">
+							<p>Kedves <b>Admin</b>,</p>
+							<p>A bejelentkezés befejezéséhez kattintson az alábbi gombra:</p>
+							<div style="text-align: center; margin: 25px 0;">
+								<a href="http://localhost:5005/user/auth/${token}" style="background-color: rgb(199, 120, 56); color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Bejelentkezés Megerősítése</a>
+							</div>
+							<p style="font-size: 12px; color: #777;">Ha nem Ön próbált bejelentkezni, kérjük hagyja figyelmen kívül ezt az e-mailt.</p>
+						</div>
+						<div style="text-align: center; margin-top: 20px; font-size: 12px; color: #777;">
+							<p>© ${new Date().getFullYear()} Étterem - Minden jog fenntartva</p>
+						</div>
+					</div>
+				`,
 			};
 			log('Sending email');
 			await this.transporter.sendMail(
@@ -144,8 +156,6 @@ export default class emailManager {
 	}
 	static async authAdmin(token: string) {
 		try {
-			log(token);
-			log(this.adminsWaitingToAuth);
 			if (!token || !this.adminsWaitingToAuth.find((t) => t.token === token)) {
 				return 'Invalid token';
 			}
@@ -153,10 +163,13 @@ export default class emailManager {
 			webSocetController.sendStateChangeToAdmins(
 				this.adminsWaitingToAuth.find((t) => t.token === token)
 			);
-			this.adminsWaitingToAuth.slice(
+			log(this.adminsWaitingToAuth);
+			this.adminsWaitingToAuth.splice(
 				this.adminsWaitingToAuth.findIndex((t) => t.token === token),
 				1
 			);
+			log(this.adminsWaitingToAuth);
+
 			return 'Admin authenticated';
 		} catch (err) {
 			console.log(err);
