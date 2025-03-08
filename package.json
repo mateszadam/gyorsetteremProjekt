@@ -18,6 +18,8 @@
 	"description": "",
 	"dependencies": {
 		"@types/nodemailer": "^6.4.17",
+		"@types/qrcode": "^1.5.5",
+		"@types/speakeasy": "^2.0.10",
 		"bcrypt": "^5.1.1",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
@@ -32,6 +34,8 @@
 		"morgan": "^1.10.0",
 		"nocache": "^4.0.0",
 		"nodemailer": "^6.10.0",
+		"qrcode": "^1.5.4",
+		"speakeasy": "^2.0.0",
 		"sqlite3": "^5.1.7",
 		"swagger-jsdoc": "^6.2.8",
 		"swagger-ui-express": "^5.0.1",

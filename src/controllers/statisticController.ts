@@ -346,7 +346,6 @@ export default class statisticController implements IController {
 			}
 
 			const daysOfWeek = this.getCurrentWeekFromDate(inputDate);
-
 			const orders = await this.order.aggregate([
 				{
 					$match: {
@@ -367,7 +366,6 @@ export default class statisticController implements IController {
 					},
 				},
 			]);
-
 			for (let i = 0; i < daysOfWeek.length; i++) {
 				const day = daysOfWeek[i];
 				const dayString = day.toISOString().split('T')[0];

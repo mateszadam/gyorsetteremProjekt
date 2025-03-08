@@ -13,7 +13,7 @@ import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { ObjectId } from 'mongoose';
 import { log } from 'console';
-import forgetPassword from '../helpers/newPasswordManager';
+import emailManager from '../helpers/emailManager';
 
 export default class userController implements IController {
 	public router = Router();
@@ -41,6 +41,7 @@ export default class userController implements IController {
 		);
 		this.router.post('/forgetPassword', this.forgetPassword);
 		this.router.post('/changePassword', this.changePassword);
+		this.router.get('/auth/:token', this.validate2FA);
 	}
 	// https://www.svgrepo.com/collection/people-gestures-and-signs-icons/
 
@@ -137,6 +138,7 @@ export default class userController implements IController {
 	};
 	private loginUser = async (req: Request, res: Response) => {
 		try {
+			log('Login');
 			let userInput: IUser = req.body;
 			const databaseUser: IUser | null = await this.user.findOne({
 				name: userInput.name,
@@ -148,16 +150,21 @@ export default class userController implements IController {
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
-				const token: string = await generateToken(databaseUser);
-				console.log(
-					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
-				);
-				res.send({
-					token: token,
-					role: databaseUser.role,
-					profilePicture: databaseUser.profilePicture,
-					userId: databaseUser._id,
-				});
+				if (databaseUser.role === 'admin') {
+					const token = await emailManager.twoFactorAuth(databaseUser);
+					defaultAnswers.ok(res, { token: token });
+				} else {
+					const token: string = await generateToken(databaseUser);
+					console.log(
+						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+					);
+					res.send({
+						token: token,
+						role: databaseUser.role,
+						profilePicture: databaseUser.profilePicture,
+						userId: databaseUser._id,
+					});
+				}
 			} else {
 				throw Error('14');
 			}
@@ -168,6 +175,20 @@ export default class userController implements IController {
 			);
 		}
 	};
+
+	private validate2FA = async (req: Request, res: Response) => {
+		try {
+			const token = req.params.token;
+			const result = await emailManager.authAdmin(token);
+			defaultAnswers.ok(res, result);
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+
 	private logoutUser = async (req: Request, res: Response) => {
 		try {
 			// TODO: Implement logout
@@ -277,7 +298,7 @@ export default class userController implements IController {
 
 	private forgetPassword = async (req: Request, res: Response) => {
 		try {
-			const message = await forgetPassword.sendPasswordChange(req);
+			const message = await emailManager.sendPasswordChange(req);
 			defaultAnswers.ok(res, { message: message });
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -289,7 +310,7 @@ export default class userController implements IController {
 
 	private changePassword = async (req: Request, res: Response) => {
 		try {
-			const message = await forgetPassword.changePassword(req);
+			const message = await emailManager.changePassword(req);
 			defaultAnswers.ok(res, { message: message });
 		} catch (error: any) {
 			defaultAnswers.badRequest(

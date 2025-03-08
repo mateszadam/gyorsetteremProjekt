@@ -2,8 +2,10 @@ import fs from 'fs';
 import { Request } from 'express';
 import { log } from 'console';
 import { userModel } from '../models/mongooseSchema';
+import { IUser } from '../models/models';
+import webSocetController from '../controllers/websocketController';
 
-export default class forgetPassword {
+export default class emailManager {
 	private static nodemailer = require('nodemailer');
 	private static bcrypt = require('bcrypt');
 
@@ -15,6 +17,7 @@ export default class forgetPassword {
 		},
 	});
 	private static readonly tokens: any[] = [];
+	private static readonly adminsWaitingToAuth: any[] = [];
 	static async sendPasswordChange(req: Request) {
 		try {
 			const email = req.body.email;
@@ -32,7 +35,7 @@ export default class forgetPassword {
 			this.tokens.push({ token: token, user: user });
 
 			var mailOptions = {
-				from: 'adads@fafa.com',
+				from: 'Étterem',
 				to: user.email,
 				subject: 'Sending Email using Node.js',
 				html:
@@ -89,6 +92,71 @@ export default class forgetPassword {
 			log(a);
 
 			return 'Password changed';
+		} catch (err) {
+			console.log(err);
+			return 'Internal Server Error';
+		}
+	}
+
+	static async twoFactorAuth(admin: IUser) {
+		try {
+			const token = Math.random().toString(36);
+			const WebSocketToken = Math.random().toString(36);
+
+			log(token);
+			log(WebSocketToken);
+
+			this.adminsWaitingToAuth.push({
+				token: token,
+				user: admin,
+				WebSocketToken: WebSocketToken,
+			});
+
+			var mailOptions = {
+				from: 'Étterem',
+				to: admin.email,
+				subject: 'Sending Email using Node.js',
+				html:
+					'<h1>Two factor auth!</h1><p>Kattints a linkre a belépéshez:' +
+					'<a href="http://localhost:5005/user/auth/' +
+					token +
+					'">http://localhost:5005/user/auth/' +
+					'</a></p>',
+			};
+			log('Sending email');
+			await this.transporter.sendMail(
+				mailOptions,
+				function (error: any, info: any) {
+					if (error) {
+						console.log(error);
+					} else {
+						console.log('Email sent: ' + info.response);
+					}
+				}
+			);
+			log(this.adminsWaitingToAuth);
+			return WebSocketToken;
+		} catch (err) {
+			console.log(err);
+			return 'Internal Server Error';
+		}
+	}
+	static async authAdmin(token: string) {
+		try {
+			log(token);
+			log(this.adminsWaitingToAuth);
+			if (!token || !this.adminsWaitingToAuth.find((t) => t.token === token)) {
+				return 'Invalid token';
+			}
+
+			webSocetController.sendStateChangeToAdmins(
+				this.adminsWaitingToAuth.find((t) => t.token === token)
+			);
+			this.adminsWaitingToAuth.slice(
+				this.adminsWaitingToAuth.findIndex((t) => t.token === token),
+				1
+			);
+			return 'Admin authenticated';
 		} catch (err) {
 			console.log(err);
 			return 'Internal Server Error';
