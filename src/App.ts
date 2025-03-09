@@ -108,5 +108,3 @@ new App([
 	new imagesController(),
 	new statisticController(),
 ]);
-// TODO: Implement: statistic controller
-// TODO: Implement: 2fa

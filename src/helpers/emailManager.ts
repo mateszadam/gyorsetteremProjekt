@@ -113,28 +113,29 @@ export default class emailManager {
 				WebSocketToken: WebSocketToken,
 			});
 
+			const currentYear = new Date().getFullYear();
 			const mailOptions = {
 				from: 'Étterem <matesz.adam2@gmail.com>',
 				to: admin.email,
 				subject: 'Kétlépcsős Hitelesítés - Étterem',
 				html: `
-					<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">
-						<div style="text-align: center; padding: 10px; background-color:rgb(199, 120, 56); color: white; border-radius: 3px;">
-							<h2>Kétlépcsős Hitelesítés</h2>
-						</div>
-						<div style="padding: 20px; background-color: white; border-radius: 3px; margin-top: 15px;">
-							<p>Kedves <b>Admin</b>,</p>
-							<p>A bejelentkezés befejezéséhez kattintson az alábbi gombra:</p>
-							<div style="text-align: center; margin: 25px 0;">
-								<a href="http://localhost:5005/user/auth/${token}" style="background-color: rgb(199, 120, 56); color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Bejelentkezés Megerősítése</a>
-							</div>
-							<p style="font-size: 12px; color: #777;">Ha nem Ön próbált bejelentkezni, kérjük hagyja figyelmen kívül ezt az e-mailt.</p>
-						</div>
-						<div style="text-align: center; margin-top: 20px; font-size: 12px; color: #777;">
-							<p>© ${new Date().getFullYear()} Étterem - Minden jog fenntartva</p>
-						</div>
+				<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+					<div style="text-align: center; padding: 20px; background-color: #FF922C; color: white;">
+						<h1 style="margin: 0; font-weight: 600; color:#eee;">Étterem</h1>
+						<h2 style="margin: 10px 0 0; font-weight: 400;">Kétlépcsős Hitelesítés</h2>
 					</div>
-				`,
+					<div style="padding: 30px; background-color: white;">
+						<p style="font-size: 16px; color: #333;">Kedves <b>${admin.name || 'Admin'}</b>,</p>
+						<p style="font-size: 16px; color: #333; line-height: 1.5;">A bejelentkezése majdnem kész. A folyamat befejezéséhez kattintson az alábbi gombra:</p>
+						<div style="text-align: center; margin: 35px 0;">
+							<a href="http://localhost:5005/user/auth/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Bejelentkezés Megerősítése</a>
+						</div>
+						<p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">Ha nem Ön kezdeményezte ezt a bejelentkezést, kérjük hagyja figyelmen kívül ezt az e-mailt, vagy lépjen kapcsolatba az adminisztrátorral.</p>
+					</div>
+					<div style="text-align: center; padding: 15px; background-color: #f8f8f8; font-size: 12px; color: #888;">
+						<p>© ${currentYear} Étterem - Minden jog fenntartva</p>
+					</div>
+				</div>`,
 			};
 			log('Sending email');
 			await this.transporter.sendMail(
