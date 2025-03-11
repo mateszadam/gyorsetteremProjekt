@@ -19,7 +19,6 @@ import {
 	materialChangeModel,
 	materialModel,
 	orderModel,
-	userModel,
 } from './models/mongooseSchema';
 import statisticController from './controllers/statisticController';
 
