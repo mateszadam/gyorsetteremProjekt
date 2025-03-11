@@ -10,14 +10,14 @@
 		"test": "jest -i || ECHO.",
 		"delayTest": "node -e \"setTimeout(() => process.exit(0), 20000)\" && jest -i || ECHO.",
 		"testServer": "npm run compile &&  cross-env IS_TEST=TRUE node ./dist/App.js",
-		"dev": "nodemon -i images/*"
+		"dev": "nodemon -i images/*",
+		"seed": "node ./src/__tests__/seed.js"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
-		"@types/nodemailer": "^6.4.17",
 		"bcrypt": "^5.1.1",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
@@ -43,6 +43,7 @@
 		"yamljs": "^0.3.0"
 	},
 	"devDependencies": {
+		"@types/nodemailer": "^6.4.17",
 		"@types/cors": "^2.8.17",
 		"@types/dotenv": "^6.1.1",
 		"@types/express": "^5.0.0",
