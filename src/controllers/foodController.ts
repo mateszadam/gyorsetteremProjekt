@@ -131,16 +131,12 @@ export default class foodController implements IController {
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
-			if (materialChanges.length > 0) {
-				res.send({
-					items: materialChanges,
-					pageCount: Math.ceil(
-						(await this.food.countDocuments(query)) / itemsPerPage
-					),
-				});
-			} else {
-				throw Error('77');
-			}
+			res.send({
+				items: materialChanges,
+				pageCount: Math.ceil(
+					(await this.food.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,

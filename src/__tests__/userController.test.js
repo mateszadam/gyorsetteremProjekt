@@ -42,7 +42,7 @@ describe('userController Integration Tests', () => {
 
 				.send({
 					name: `TestCustomer${i}`,
-					password: 'Test@1234',
+					password: 'Test0@1234',
 					email: `ssassss${i}@gmail.com`,
 				});
 		}
@@ -53,7 +53,7 @@ describe('userController Integration Tests', () => {
 				.post('/user/register/customer')
 				.send({
 					name: 'TestCustomer2e',
-					password: 'Test@1234',
+					password: 'Test3@1234',
 					email: 'testcustomer@example.com',
 				});
 			expect(response.status).toBe(201);
@@ -64,7 +64,7 @@ describe('userController Integration Tests', () => {
 		it('should login a user', async () => {
 			const response = await request(baseUrl).post('/user/login').send({
 				name: 'TestCustomer2e',
-				password: 'Test@1234',
+				password: 'Test3@1234',
 			});
 			expect(response.status).toBe(200);
 			expect(response.body).toHaveProperty('token');

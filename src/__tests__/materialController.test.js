@@ -111,15 +111,12 @@ describe('materialController Integration Tests', () => {
 			});
 		});
 
-		it('should return 400 if no materials match the query', async () => {
+		it('should return [] if no materials match the query', async () => {
 			const response = await request(baseUrl)
 				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ name: 'NonExistentMaterial', page: 1 });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'No result in the database for the search condition!'
-			);
+			expect(response.status).toBe(200);
 		});
 
 		it('should paginate materials', async () => {
@@ -142,15 +139,12 @@ describe('materialController Integration Tests', () => {
 			expect(response.body.pageCount).toBe(2);
 		});
 
-		it('should return 400 if page number exceeds total pages', async () => {
+		it('should return 200 if page number exceeds total pages', async () => {
 			const response = await request(baseUrl)
 				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
 				.query({ page: 999 });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toEqual(
-				'No result in the database for the search condition!'
-			);
+			expect(response.status).toBe(200);
 		});
 	});
 
@@ -188,14 +182,6 @@ describe('materialController Integration Tests', () => {
 				englishName: 'testmaterial11',
 				unit: 'kg',
 			});
-			expect(
-				(
-					await request(baseUrl)
-						.get('/material')
-						.set('Authorization', `Bearer ${token}`)
-						.query({ _id: materialId })
-				).body.message
-			).toBe('No result in the database for the search condition!');
 		});
 
 		it('should not delete a material with invalid id', async () => {

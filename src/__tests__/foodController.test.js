@@ -447,15 +447,6 @@ describe('foodController Integration Tests', () => {
 				isEnabled: true,
 				englishName: 'Test Food English',
 			});
-
-			const response2 = await request(baseUrl)
-				.get(`/food`)
-				.set('Authorization', `Bearer ${token}`)
-				.query({ name: 'Test Food3' });
-
-			expect(response2.body.message).toBe(
-				'No result in the database for the search condition!'
-			);
 		});
 
 		it('should return 400 for invalid food id', async () => {
