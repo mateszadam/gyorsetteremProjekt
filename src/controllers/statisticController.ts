@@ -287,10 +287,13 @@ export default class statisticController implements IController {
 					$gte: startDateObj,
 					$lte: endDateObj,
 				},
+				finishedCokingTime: { $ne: null },
+				finishedTime: { $ne: null },
 			});
 			if (!orders) {
 				throw new Error('00');
 			}
+			log(orders);
 			const times = orders.map((order: IOrder) => ({
 				cookingTime: Math.floor(
 					Math.abs(
@@ -346,7 +349,6 @@ export default class statisticController implements IController {
 			}
 
 			const daysOfWeek = this.getCurrentWeekFromDate(inputDate);
-
 			const orders = await this.order.aggregate([
 				{
 					$match: {
@@ -367,7 +369,6 @@ export default class statisticController implements IController {
 					},
 				},
 			]);
-
 			for (let i = 0; i < daysOfWeek.length; i++) {
 				const day = daysOfWeek[i];
 				const dayString = day.toISOString().split('T')[0];

@@ -1,4 +1,3 @@
-import { register } from 'module';
 import { Schema, SchemaDefinition, model } from 'mongoose';
 
 const userSchema = new Schema<SchemaDefinition>(

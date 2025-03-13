@@ -1,11 +1,13 @@
-import { IOrder } from '../models/models';
-import { v4 as uuidv4 } from 'uuid';
-import { orderModel } from '../models/mongooseSchema';
+import { IOrder, IUser } from '../models/models';
+
+import { orderModel, userModel } from '../models/mongooseSchema';
+import { generateToken, generateUUID4Token } from '../services/tokenService';
 
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 5006 });
 export default class webSocetController {
 	static clientsToNotifyOnStateChange = new Map();
+	static sendAdminLogin = new Map();
 
 	private static order = orderModel;
 
@@ -17,16 +19,19 @@ export default class webSocetController {
 			console.log('New connection!');
 
 			ws.on('message', (message: any) => {
-				const id = uuidv4();
-
+				const id = generateUUID4Token();
 				message = JSON.parse(message);
 
-				const metadata = {
-					id: id,
-					header: message.header,
-					orderId: message.id,
-				};
-				this.clientsToNotifyOnStateChange.set(ws, metadata);
+				if (message.token) {
+					this.sendAdminLogin.set(message.token, ws);
+				} else {
+					const metadata = {
+						id: id,
+						header: message.header,
+						orderId: message.id,
+					};
+					this.clientsToNotifyOnStateChange.set(ws, metadata);
+				}
 			});
 
 			ws.on('close', () => {
@@ -71,15 +76,28 @@ export default class webSocetController {
 			throw Error('Error in database');
 		}
 	}
-
-	public uuidv4() {
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-			/[xy]/g,
-			function (c) {
-				var r = (Math.random() * 16) | 0,
-					v = c == 'x' ? r : (r & 0x3) | 0x8;
-				return v.toString(16);
+	public static async sendStateChangeToAdmins(user: any) {
+		for (const [token, ws] of this.sendAdminLogin.entries()) {
+			if (token === user.WebSocketToken) {
+				const databaseUser: IUser | null = await userModel.findOne({
+					_id: user.user._id,
+				});
+				if (databaseUser) {
+					const token: string = await generateToken(databaseUser);
+					console.log(
+						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+					);
+					ws.send(
+						JSON.stringify({
+							token: token,
+							role: databaseUser.role,
+							profilePicture: databaseUser.profilePicture,
+							userId: databaseUser._id,
+						})
+					);
+					this.sendAdminLogin.delete(token);
+				}
 			}
-		);
+		}
 	}
 }
