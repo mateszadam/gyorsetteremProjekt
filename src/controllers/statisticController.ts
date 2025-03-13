@@ -287,10 +287,13 @@ export default class statisticController implements IController {
 					$gte: startDateObj,
 					$lte: endDateObj,
 				},
+				finishedCokingTime: { $ne: null },
+				finishedTime: { $ne: null },
 			});
 			if (!orders) {
 				throw new Error('00');
 			}
+			log(orders);
 			const times = orders.map((order: IOrder) => ({
 				cookingTime: Math.floor(
 					Math.abs(

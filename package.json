@@ -9,11 +9,9 @@
 		"autoTest": "concurrently --kill-others --success=first \"npm run testServer\" \"npm run delayTest\"",
 		"test": "jest -i || ECHO.",
 		"delayTest": "node -e \"setTimeout(() => process.exit(0), 20000)\" && jest -i || ECHO.",
-
-		"testServer": "npm run compile &&  cross-env IS_TEST=TRUE node ./dist/App.js",
+		"testServer": "npm run compile &&  cross-env MODE=test node ./dist/App.js",
 		"dev": "nodemon -i images/*",
 		"seed": "node ./src/__tests__/seed.js"
-
 	},
 	"keywords": [],
 	"author": "",

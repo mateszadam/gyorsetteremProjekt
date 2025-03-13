@@ -151,21 +151,22 @@ export default class userController implements IController {
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
-				if (databaseUser.role === 'admin' && process.env.MODE !== 'test') {
-					const token = await emailManager.twoFactorAuth(databaseUser);
-					defaultAnswers.ok(res, { token: token });
-				} else {
-					const token: string = await generateToken(databaseUser);
-					console.log(
-						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
-					);
-					res.send({
-						token: token,
-						role: databaseUser.role,
-						profilePicture: databaseUser.profilePicture,
-						userId: databaseUser._id,
-					});
-				}
+				// Turn off for testing
+				// if (databaseUser.role === 'admin' && process.env.MODE !== 'test') {
+				// 	const token = await emailManager.twoFactorAuth(databaseUser);
+				// 	defaultAnswers.ok(res, { token: token });
+				// } else {
+				const token: string = await generateToken(databaseUser);
+				console.log(
+					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+				);
+				res.send({
+					token: token,
+					role: databaseUser.role,
+					profilePicture: databaseUser.profilePicture,
+					userId: databaseUser._id,
+				});
+				// }
 			} else {
 				throw Error('14');
 			}
