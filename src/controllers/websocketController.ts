@@ -8,6 +8,9 @@ const wss = new WebSocket.Server({ port: 5006 });
 export default class webSocetController {
 	static clientsToNotifyOnStateChange = new Map();
 	static sendAdminLogin = new Map();
+	static kitchen: any[] = [];
+	static display: any[] = [];
+	static salesman: any[] = [];
 
 	private static order = orderModel;
 
@@ -24,6 +27,12 @@ export default class webSocetController {
 
 				if (message.token) {
 					this.sendAdminLogin.set(message.token, ws);
+				} else if (message.role == 'kitchen') {
+					this.kitchen.push(ws);
+				} else if (message.header === 'display') {
+					this.display.push(ws);
+				} else if (message.header === 'salesman') {
+					this.salesman.push(ws);
 				} else {
 					const metadata = {
 						id: id,
@@ -58,24 +67,6 @@ export default class webSocetController {
 		}
 	}
 
-	public static async sendStateChangeToDisplay() {
-		const order: IOrder[] = await this.order.find(
-			{ isFinished: false },
-			{ costumerId: 1, orderedTime: 1, orderedProducts: 1 }
-		);
-		const message = JSON.stringify(order);
-		if (order) {
-			[...this.clientsToNotifyOnStateChange].forEach((client) => {
-				let data = client[1];
-
-				if (data.header === 'display') {
-					client[0].send(message);
-				}
-			});
-		} else {
-			throw Error('Error in database');
-		}
-	}
 	public static async sendStateChangeToAdmins(user: any) {
 		for (const [token, ws] of this.sendAdminLogin.entries()) {
 			if (token === user.WebSocketToken) {
@@ -98,6 +89,26 @@ export default class webSocetController {
 					this.sendAdminLogin.delete(token);
 				}
 			}
+		}
+	}
+	public static async sendStateChangeToSalesman(changedOrder: IOrder) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.salesman) {
+			ws.send(message);
+		}
+		this.sendStateChangeToDisplay(changedOrder);
+	}
+	public static async sendStateChangeToKitchen(changedOrder: IOrder) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.kitchen) {
+			ws.send(message);
+		}
+		this.sendStateChangeToDisplay(changedOrder);
+	}
+	public static async sendStateChangeToDisplay(changedOrder: IOrder) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.display) {
+			ws.send(message);
 		}
 	}
 }

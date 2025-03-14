@@ -179,8 +179,9 @@ export default class orderController implements IController {
 			}
 			await session.commitTransaction();
 			session.endSession();
-			webSocetController.sendStateChange('');
-			defaultAnswers.created(res, await this.order.findById(newId));
+			const newOrderToSend: IOrder | null = await this.order.findById(newId);
+			webSocetController.sendStateChangeToKitchen(newOrderToSend!);
+			defaultAnswers.created(res, newOrderToSend!);
 		} catch (error: any) {
 			await session.abortTransaction();
 			defaultAnswers.badRequest(
@@ -253,7 +254,10 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange(id);
+					const newItem: IOrder | null = await this.order.findOne({
+						_id: id,
+					});
+					webSocetController.sendStateChangeToSalesman(newItem!);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
