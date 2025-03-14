@@ -29,9 +29,9 @@ export default class webSocetController {
 					this.sendAdminLogin.set(message.token, ws);
 				} else if (message.role == 'kitchen') {
 					this.kitchen.push(ws);
-				} else if (message.header === 'display') {
+				} else if (message.role === 'display') {
 					this.display.push(ws);
-				} else if (message.header === 'salesman') {
+				} else if (message.role === 'salesman') {
 					this.salesman.push(ws);
 				} else {
 					const metadata = {

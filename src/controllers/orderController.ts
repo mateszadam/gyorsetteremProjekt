@@ -314,7 +314,9 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange(id);
+					webSocetController.sendStateChangeToDisplay(
+						(await this.order.findOne({ _id: id }))!
+					);
 
 					defaultAnswers.ok(res);
 				} else {
