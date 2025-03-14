@@ -727,7 +727,7 @@ paths:
     tags: [Order]
 
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
       - kitchenBearerAuth: []
 
     parameters:
@@ -748,7 +748,7 @@ paths:
     tags: [Order]
 
     security:
-      - bearerAuth: []
+      - adminBearerAuth: []
       - salesmanBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
