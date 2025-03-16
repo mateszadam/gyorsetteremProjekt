@@ -8,7 +8,7 @@ export default class googleController implements IController {
 
 	private CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 	private CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-	private REDIRECT_URI = '<http://localhost:5005/auth/google/callback>';
+	private REDIRECT_URI = '<https://mateszadam.koyeb.app/auth/google/callback>';
 	axios = require('axios');
 	constructor() {
 		this.router.get('/google', (req, res) => {
