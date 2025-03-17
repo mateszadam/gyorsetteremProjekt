@@ -18,9 +18,11 @@
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
+		"@types/axios": "^0.9.36",
 		"@types/nodemailer": "^6.4.17",
 		"@types/qrcode": "^1.5.5",
 		"@types/speakeasy": "^2.0.10",
+		"axios": "^1.8.3",
 		"bcrypt": "^5.1.1",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
@@ -48,7 +50,6 @@
 		"yamljs": "^0.3.0"
 	},
 	"devDependencies": {
-		"@types/nodemailer": "^6.4.17",
 		"@types/cors": "^2.8.17",
 		"@types/dotenv": "^6.1.1",
 		"@types/express": "^5.0.0",
@@ -58,6 +59,7 @@
 		"@types/jest": "^29.5.12",
 		"@types/morgan": "^1.9.9",
 		"@types/node": "^22.5.2",
+		"@types/nodemailer": "^6.4.17",
 		"@types/sqlite3": "^3.1.11",
 		"@types/supertest": "^6.0.2",
 		"@types/uuid": "^10.0.0",
