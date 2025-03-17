@@ -32,6 +32,7 @@ export default class orderController implements IController {
 	constructor() {
 		this.router.post('', authToken, this.newOrder);
 
+		this.router.get('', authAdminToken, this.getAllByPage);
 		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
 		this.router.get('/display', this.getOrdersForDisplay);
@@ -49,8 +50,6 @@ export default class orderController implements IController {
 			authSalesmanToken,
 			this.revertReceivedOrder
 		);
-
-		this.router.get('', authAdminToken, this.getAllByPage);
 	}
 
 	private getOrdersForDisplay = async (req: Request, res: Response) => {
@@ -193,20 +192,63 @@ export default class orderController implements IController {
 
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order = await this.order
-				.find(
-					{
+			const orders = await this.order.aggregate([
+				{
+					$match: {
 						$and: [
 							{ finishedTime: null },
 							{ finishedCokingTime: { $ne: null } },
 						],
 					},
-					{ 'orderedProducts._id': 0 }
-				)
-				.sort({ orderedTime: -1 });
+				},
 
-			if (order) {
-				res.json(order);
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+				{
+					$sort: { orderedTime: -1 },
+				},
+			]);
+			if (orders) {
+				res.json(orders);
 			} else {
 				throw Error('02');
 			}
@@ -220,16 +262,57 @@ export default class orderController implements IController {
 
 	private getAllForKitchen = async (req: Request, res: Response) => {
 		try {
-			const order = await this.order
-				.find(
-					{
-						finishedCokingTime: null,
+			const orders = await this.order.aggregate([
+				{
+					$match: { finishedTime: null },
+				},
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
 					},
-					{ 'orderedProducts._id': 0 }
-				)
-				.sort({ orderedTime: 1 });
-			if (order) {
-				res.json(order);
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+				{
+					$sort: { orderedTime: -1 },
+				},
+			]);
+			if (orders) {
+				res.json(orders);
 			} else {
 				throw Error('02');
 			}
@@ -365,8 +448,30 @@ export default class orderController implements IController {
 
 	private getAllByPage = async (req: Request, res: Response) => {
 		try {
-			const { field, value, page, from, to } = req.query;
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				orderNumber,
+				costumerId,
+				minTotalPrice,
+				maxTotalPrice,
+				minOrderedTime,
+				maxOrderedTime,
+				minFinishedTime,
+				maxFinishedTime,
+				minFinishedCokingTime,
+				maxFinishedCokingTime,
+				fields,
+			} = req.query;
 
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
+			}
+
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
 			const allowedFields = [
 				'_id',
 				'costumerId',
@@ -375,92 +480,172 @@ export default class orderController implements IController {
 				'orderedTime',
 				'finishedCokingTime',
 				'totalPrice',
+				'orderedProducts',
 			];
-			if (field && !allowedFields.includes(field as string)) {
-				throw Error('83');
+
+			const query: any = {};
+
+			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
+			if (orderNumber) query.orderNumber = Number(orderNumber);
+			if (costumerId)
+				query.costumerId = new mongoose.Types.ObjectId(costumerId as string);
+
+			if (minTotalPrice && maxTotalPrice) {
+				query.totalPrice = {
+					$gte: Number(minTotalPrice),
+					$lte: Number(maxTotalPrice),
+				};
+			} else if (minTotalPrice) {
+				query.totalPrice = { $gte: Number(minTotalPrice) };
+			} else if (maxTotalPrice) {
+				query.totalPrice = { $lte: Number(maxTotalPrice) };
 			}
 
-			const pageNumber = Number(page) || 1;
-			const itemsPerPage = 10;
-			const skip = (pageNumber - 1) * itemsPerPage;
+			if (minOrderedTime && maxOrderedTime) {
+				let minDate = new Date(minOrderedTime as string);
+				let maxDate = new Date(maxOrderedTime as string);
 
-			if (field && value) {
-				const selectedItems = await this.order
-					.find({ [field as string]: value })
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (selectedItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(await this.order.find({ [field as string]: value })).length /
-								itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
 				}
-			} else if (from) {
-				let toTime;
-				if (to == '{to}' || to == '' || !to) {
-					const toDate = new Date();
-					toDate.setDate(toDate.getDate() + 1);
-					toTime = toDate.toJSON().split('T')[0];
-				} else {
-					toTime = new Date(to as string);
+
+				query.orderedTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minOrderedTime) {
+				query.orderedTime = {
+					$gte: new Date(minOrderedTime as string),
+				};
+			} else if (maxOrderedTime) {
+				query.orderedTime = {
+					$lte: new Date(maxOrderedTime as string),
+				};
+			}
+
+			if (minFinishedTime && maxFinishedTime) {
+				let minDate = new Date(minFinishedTime as string);
+				let maxDate = new Date(maxFinishedTime as string);
+
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
 				}
-				if (from) {
-					const order = await this.order
-						.find(
-							{
-								finishedTime: { $gte: new Date(from as string), $lte: toTime },
-							},
-							{ 'orderedProducts._id': 0 }
-						)
-						.sort({ orderedTime: -1 })
-						.skip(skip)
-						.limit(itemsPerPage);
-					if (order) {
-						if (order.length > 0) {
-							res.send({
-								items: order,
-								pageCount: Math.ceil(
-									(
-										await this.order.find({
-											finishedTime: {
-												$gte: new Date(from as string),
-												$lte: toTime,
-											},
-										})
-									).length / itemsPerPage
-								),
-							});
-						} else {
-							throw Error('77');
-						}
-					} else {
-						throw Error('02');
+
+				query.finishedTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minFinishedTime) {
+				query.finishedTime = {
+					$gte: new Date(minFinishedTime as string),
+				};
+			} else if (maxFinishedTime) {
+				query.finishedTime = {
+					$lte: new Date(maxFinishedTime as string),
+				};
+			}
+
+			if (minFinishedCokingTime && maxFinishedCokingTime) {
+				let minDate = new Date(minFinishedCokingTime as string);
+				let maxDate = new Date(maxFinishedCokingTime as string);
+
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
+				}
+
+				query.finishedCokingTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minFinishedCokingTime) {
+				query.finishedCokingTime = {
+					$gte: new Date(minFinishedCokingTime as string),
+				};
+			} else if (maxFinishedCokingTime) {
+				query.finishedCokingTime = {
+					$lte: new Date(maxFinishedCokingTime as string),
+				};
+			}
+
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
 					}
-				} else {
-					throw Error('53');
-				}
+				});
 			} else {
-				const allItems = await this.order
-					.find({})
-					.skip(skip)
-					.limit(itemsPerPage);
-				if (allItems.length > 0) {
-					res.send({
-						items: allItems,
-						pageCount: Math.ceil(
-							(await this.order.find({ [field as string]: value })).length /
-								itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
+				projection = {
+					_id: 1,
+					costumerId: 1,
+					orderNumber: 1,
+					finishedTime: 1,
+					orderedTime: 1,
+					finishedCokingTime: 1,
+					totalPrice: 1,
+					orderedProducts: 1,
+				};
 			}
+
+			const orders = await this.order.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+			]);
+
+			res.send({
+				items: orders,
+				pageCount: Math.ceil(
+					(await this.order.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
