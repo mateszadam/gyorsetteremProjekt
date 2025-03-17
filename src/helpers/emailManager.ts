@@ -25,9 +25,7 @@ export default class emailManager {
 			if (!email) {
 				return 'Email is required';
 			}
-			log('Finding user');
 			const user = await userModel.findOne({ email: email });
-			log(user);
 			if (!user) {
 				return 'User not found';
 			}
