@@ -5,6 +5,7 @@ import {
 	authAdminToken,
 	authToken,
 	generateToken,
+	generateUUID4Token,
 	getDataFromToken,
 	logOutToken,
 } from '../services/tokenService';
@@ -21,8 +22,13 @@ export default class userController implements IController {
 	private user = userModel;
 	public endPoint = '/user';
 
-	bcrypt = require('bcrypt');
+	private CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+	private CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+	private REDIRECT_URI = 'http://localhost:5005/user/google/callback';
+	axios = require('axios');
 
+	bcrypt = require('bcrypt');
+	private usersWaitingForAuth = new Map();
 	constructor() {
 		// TODO: Validáció a user name létezésére
 		this.router.post('/register/customer', this.registerUser);
@@ -43,6 +49,10 @@ export default class userController implements IController {
 		this.router.post('/forgetPassword', this.forgetPassword);
 		this.router.post('/changePassword', this.changePassword);
 		this.router.get('/auth/:token', this.validate2FA);
+
+		this.router.get('/google/callback', this.googleCallback);
+		this.router.get('/google', this.googleLogin);
+		this.router.get('/google/auth/:token', this.sendGoogleAuthToken);
 	}
 	// https://www.svgrepo.com/collection/people-gestures-and-signs-icons/
 
@@ -157,6 +167,7 @@ export default class userController implements IController {
 				// 	defaultAnswers.ok(res, { token: token });
 				// } else {
 				const token: string = await generateToken(databaseUser);
+
 				console.log(
 					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
 				);
@@ -323,6 +334,88 @@ export default class userController implements IController {
 		}
 	};
 
+	// Google login
+	private googleLogin = async (req: Request, res: Response) => {
+		const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${this.CLIENT_ID}&redirect_uri=${this.REDIRECT_URI}&response_type=code&scope=profile email`;
+		res.redirect(url);
+	};
+
+	private googleCallback = async (req: Request, res: Response) => {
+		{
+			const { code } = req.query;
+			try {
+				const { data } = await this.axios.post(
+					'https://oauth2.googleapis.com/token',
+					{
+						client_id: this.CLIENT_ID,
+						client_secret: this.CLIENT_SECRET,
+						code,
+						redirect_uri: this.REDIRECT_URI,
+						grant_type: 'authorization_code',
+					}
+				);
+				log(data);
+				const { access_token, id_token } = data;
+
+				const { data: profile } = await this.axios.get(
+					'https://www.googleapis.com/oauth2/v1/userinfo',
+					{
+						headers: { Authorization: `Bearer ${access_token}` },
+					}
+				);
+
+				const user: IUser | null = await userModel.findOne({
+					email: profile.email,
+				});
+
+				if (user === null) {
+					userModel.insertMany([
+						{
+							email: profile.email,
+							name: profile.name,
+							password: this.bcrypt.hashSync(profile.id, 12),
+							role: 'customer',
+							profilePicture: profile.picture,
+						},
+					]);
+				}
+				const newUser: IUser | null = await userModel.findOne({
+					email: profile.email,
+				});
+
+				const token = await generateUUID4Token();
+				this.usersWaitingForAuth.set(token, newUser);
+
+				res.redirect('/' + token);
+			} catch (error: any) {
+				console.error('Error:', error);
+				res.redirect('/login');
+			}
+		}
+	};
+
+	private sendGoogleAuthToken = async (req: Request, res: Response) => {
+		try {
+			const token = req.params.token;
+			const user = this.usersWaitingForAuth.get(token);
+			if (user) {
+				const token = await generateToken(user);
+				res.send({
+					token: token,
+					role: user.role,
+					profilePicture: user.profilePicture,
+					userId: user._id,
+				});
+			} else {
+				throw Error('07');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 	private userConstraints = Joi.object({
 		name: Joi.string().min(4).required().messages({
 			'string.base': '17',

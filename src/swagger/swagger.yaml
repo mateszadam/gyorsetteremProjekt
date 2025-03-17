@@ -630,7 +630,6 @@ paths:
   post:
     summary: Create a new order
     tags: [Order]
-
     security:
       - adminBearerAuth: []
       - customerBearerAuth: []
@@ -650,35 +649,101 @@ paths:
   get:
     summary: Get all orders by page
     tags: [Order]
-
     security:
       - adminBearerAuth: []
       - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
-      - name: field
-        in: query
-        schema:
-          type: string
-      - name: value
-        in: query
-        schema:
-          type: string
       - name: page
         in: query
         schema:
           type: integer
-      - name: from
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+        description: Number of items per page
+      - name: _id
         in: query
         schema:
           type: string
-      - name: to
+        description: Filter by order ID
+      - name: orderNumber
+        in: query
+        schema:
+          type: integer
+        description: Filter by order number
+      - name: costumerId
         in: query
         schema:
           type: string
+        description: Filter by customer ID
+      - name: minTotalPrice
+        in: query
+        schema:
+          type: number
+        description: Minimum total price
+      - name: maxTotalPrice
+        in: query
+        schema:
+          type: number
+        description: Maximum total price
+      - name: minOrderedTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Minimum ordered time
+      - name: maxOrderedTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Maximum ordered time
+      - name: minFinishedTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Minimum finished time
+      - name: maxFinishedTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Maximum finished time
+      - name: minFinishedCokingTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Minimum finished cooking time
+      - name: maxFinishedCokingTime
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Maximum finished cooking time
+      - name: fields
+        in: query
+        schema:
+          type: array
+        description: Fields to include in the response
     responses:
       '200':
         description: List of orders
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                pageCount:
+                  type: integer
       '400':
         description: Bad request
 /order/salesman:

@@ -21,7 +21,6 @@ import {
 	orderModel,
 } from './models/mongooseSchema';
 import statisticController from './controllers/statisticController';
-import googleController from './controllers/googleAuthController';
 
 require('dotenv').config();
 
@@ -107,5 +106,4 @@ new App([
 	new categoryController(),
 	new imagesController(),
 	new statisticController(),
-	new googleController(),
 ]);
