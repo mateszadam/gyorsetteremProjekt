@@ -264,7 +264,7 @@ export default class orderController implements IController {
 		try {
 			const orders = await this.order.aggregate([
 				{
-					$match: { finishedTime: null },
+					$match: { finishedCokingTime: null },
 				},
 				{
 					$lookup: {
