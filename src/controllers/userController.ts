@@ -24,7 +24,7 @@ export default class userController implements IController {
 
 	private CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 	private CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-	private REDIRECT_URI = 'http://localhost:5005/user/google/callback';
+	private REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 	axios = require('axios');
 
 	bcrypt = require('bcrypt');
@@ -354,7 +354,6 @@ export default class userController implements IController {
 						grant_type: 'authorization_code',
 					}
 				);
-				log(data);
 				const { access_token, id_token } = data;
 
 				const { data: profile } = await this.axios.get(
