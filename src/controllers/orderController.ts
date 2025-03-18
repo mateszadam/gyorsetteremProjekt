@@ -1,5 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { IController, IFood, IOrder } from '../models/models';
+import {
+	IController,
+	IFood,
+	IOrder,
+	IOrderedProductFull,
+	IUser,
+} from '../models/models';
 import {
 	foodModel,
 	materialChangeModel,
@@ -12,13 +18,14 @@ import {
 	authKitchenToken,
 	authToken,
 	authAdminToken,
+	getDataFromToken,
 } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose, { ObjectId, Types } from 'mongoose';
 
 export default class orderController implements IController {
 	public router = Router();
@@ -32,7 +39,7 @@ export default class orderController implements IController {
 	constructor() {
 		this.router.post('', authToken, this.newOrder);
 
-		this.router.get('', authAdminToken, this.getAllByPage);
+		this.router.get('', authToken, this.getAllByPage);
 		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
 		this.router.get('/display', this.getOrdersForDisplay);
@@ -83,9 +90,10 @@ export default class orderController implements IController {
 		let newId: ObjectId | null = null;
 		const session = await mongoose.startSession();
 		session.startTransaction();
-
 		try {
 			await this.orderConstraints.validateAsync(newOrder);
+			newOrder.orderedTime = new Date(Date.now() + 1 * 60 * 60 * 1000);
+
 			const user = await this.user.findById(newOrder.costumerId);
 			if (user) {
 				const newOrderNumber = await this.getNewOrderNumber();
@@ -178,9 +186,11 @@ export default class orderController implements IController {
 			}
 			await session.commitTransaction();
 			session.endSession();
-			const newOrderToSend: IOrder | null = await this.order.findById(newId);
-			webSocetController.sendStateChangeToKitchen(newOrderToSend!);
-			defaultAnswers.created(res, newOrderToSend!);
+			const newOrderResponse: IOrderedProductFull = await this.getOrderDetails(
+				new Types.ObjectId(`${newId}`)
+			);
+			webSocetController.sendStateChangeToKitchen(newOrderResponse);
+			defaultAnswers.created(res, newOrderResponse);
 		} catch (error: any) {
 			await session.abortTransaction();
 			defaultAnswers.badRequest(
@@ -264,7 +274,9 @@ export default class orderController implements IController {
 		try {
 			const orders = await this.order.aggregate([
 				{
-					$match: { finishedTime: null },
+					$match: {
+						$and: [{ finishedTime: null }, { finishedCokingTime: null }],
+					},
 				},
 				{
 					$lookup: {
@@ -333,14 +345,15 @@ export default class orderController implements IController {
 						_id: id,
 					},
 					{
-						$set: { finishedCokingTime: Date.now() },
+						$set: {
+							finishedCokingTime: new Date(Date.now() + 1 * 60 * 60 * 1000),
+						},
 					}
 				);
 				if (order.modifiedCount > 0) {
-					const newItem: IOrder | null = await this.order.findOne({
-						_id: id,
-					});
-					webSocetController.sendStateChangeToSalesman(newItem!);
+					webSocetController.sendStateChangeToSalesman(
+						await this.getOrderDetails(new Types.ObjectId(id))
+					);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
@@ -368,7 +381,6 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange(id);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
@@ -393,12 +405,12 @@ export default class orderController implements IController {
 						_id: id,
 					},
 					{
-						$set: { finishedTime: Date.now() },
+						$set: { finishedTime: new Date(Date.now() + 1 * 60 * 60 * 1000) },
 					}
 				);
 				if (order.modifiedCount > 0) {
 					webSocetController.sendStateChangeToDisplay(
-						(await this.order.findOne({ _id: id }))!
+						await this.getOrderDetails(new Types.ObjectId(id))
 					);
 
 					defaultAnswers.ok(res);
@@ -429,8 +441,6 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange(id);
-
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('54');
@@ -464,6 +474,15 @@ export default class orderController implements IController {
 				maxFinishedCokingTime,
 				fields,
 			} = req.query;
+
+			const data = getDataFromToken(
+				req.headers.authorization?.replace('Bearer ', '')!
+			);
+
+			const user: IUser | null = await this.user.findById(data?._id);
+			if (user?.role !== 'admin' && costumerId != user?._id) {
+				throw Error('94');
+			}
 
 			if (isNaN(Number(page)) || isNaN(Number(limit))) {
 				throw Error('93');
@@ -692,4 +711,58 @@ export default class orderController implements IController {
 			return 1000;
 		}
 	};
+	private async getOrderDetails(
+		_id: Types.ObjectId
+	): Promise<IOrderedProductFull> {
+		return (
+			await this.order.aggregate([
+				{
+					$match: {
+						_id: _id,
+					},
+				},
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+			])
+		)[0];
+	}
 }

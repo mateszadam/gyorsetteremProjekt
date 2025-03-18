@@ -149,7 +149,6 @@ export default class userController implements IController {
 	};
 	private loginUser = async (req: Request, res: Response) => {
 		try {
-			log('Login');
 			let userInput: IUser = req.body;
 			const databaseUser: IUser | null = await this.user.findOne({
 				name: userInput.name,
@@ -354,7 +353,6 @@ export default class userController implements IController {
 						grant_type: 'authorization_code',
 					}
 				);
-				log(data);
 				const { access_token, id_token } = data;
 
 				const { data: profile } = await this.axios.get(
@@ -425,9 +423,7 @@ export default class userController implements IController {
 			'any.required': '17',
 		}),
 		password: Joi.string()
-			.pattern(
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-			)
+			.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W)[A-Za-z\d\W]{8,}$/)
 			.required()
 			.messages({
 				'string.empty': '15',

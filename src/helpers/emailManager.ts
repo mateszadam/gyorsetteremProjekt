@@ -25,9 +25,7 @@ export default class emailManager {
 			if (!email) {
 				return 'Email is required';
 			}
-			log('Finding user');
 			const user = await userModel.findOne({ email: email });
-			log(user);
 			if (!user) {
 				return 'User not found';
 			}
@@ -47,7 +45,6 @@ export default class emailManager {
 					token +
 					'</a></p>',
 			};
-			log('Sending email');
 			await this.transporter.sendMail(
 				mailOptions,
 				function (error: any, info: any) {
@@ -67,8 +64,6 @@ export default class emailManager {
 		try {
 			const token = req.body.token;
 			const password = req.body.password;
-			log(this.tokens);
-			log(token);
 			if (!token || !password || !this.tokens.find((t) => t.token === token)) {
 				return 'Invalid token';
 			}

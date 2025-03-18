@@ -70,6 +70,21 @@ interface IOrderedProducts {
 	quantity: number;
 }
 
+interface IOrderedProductFull {
+	_id: string;
+	costumerId: string;
+	orderedTime: string;
+	totalPrice: number;
+	finishedCokingTime: any;
+	finishedTime: any;
+	orderedProducts: IOrderedProduct[];
+	orderNumber: number;
+}
+interface IOrderedProduct {
+	quantity: number;
+	details: IFood;
+}
+
 export {
 	IUser,
 	IMaterialChange,
@@ -78,4 +93,5 @@ export {
 	IOrder,
 	IMaterial,
 	ICategory,
+	IOrderedProductFull,
 };

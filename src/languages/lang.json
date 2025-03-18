@@ -93,7 +93,8 @@
 			"90": "Legalább egy változás szükséges!",
 			"91": "Az étel ID nem található.",
 			"92": "A szűrés kezdet és vége dátumának megadása kötelező!",
-			"93": "Az oldalszámnak és limitnek számnak kell lennie!"
+			"93": "Az oldalszámnak és limitnek számnak kell lennie!",
+			"94": "A felhasználó csak a saját rendelését láthatja!"
 		}
 	],
 	"en-GB": [
@@ -190,7 +191,8 @@
 			"90": "At least one change is required!",
 			"91": "Product ID not found.",
 			"92": "The start and end date of the filter must be provided!",
-			"93": "Page number and limit must be numbers!"
+			"93": "Page number and limit must be numbers!",
+			"94": "The user can only see their own orders!"
 		}
 	]
 }

@@ -293,7 +293,6 @@ export default class statisticController implements IController {
 			if (!orders) {
 				throw new Error('00');
 			}
-			log(orders);
 			const times = orders.map((order: IOrder) => ({
 				cookingTime: Math.floor(
 					Math.abs(
