@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "incremental": true,
         "resolveJsonModule": true,
         "target": "esnext",
         "strict": true,
@@ -33,6 +34,10 @@
     "include": [
         "src/**/*.ts",
         "**/test/**/*.ts",
-        "__tests__/categoryController.test.ts",
+        "src/**/*.html",
+        "src/static/**/*",
+        "src/static/failed.html",
+        "src/static/success.html",
+        "src/static/*.html",
     ]
 }

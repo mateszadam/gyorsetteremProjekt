@@ -1,45 +1,69 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { IController } from './models/models';
 import userController from './controllers/userController';
 import orderController from './controllers/orderController';
-import materialController from './controllers/materialController';
+import inventoryController from './controllers/inventoryController';
 import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
-import unitController from './controllers/unitController';
+import materialController from './controllers/materialController';
 import categoryController from './controllers/categoryController';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
 import webSocetController from './controllers/websocketController';
 import YAML from 'yamljs';
 import ImplementMiddleware from './helpers/middlewareHelper';
+import {
+	categoryModel,
+	foodModel,
+	materialChangeModel,
+	materialModel,
+	orderModel,
+} from './models/mongooseSchema';
+import statisticController from './controllers/statisticController';
 
 require('dotenv').config();
 
 class App {
 	public app: express.Application;
-	private swaggerjsdoc = require('swagger-jsdoc');
-	private swagger = require('swagger-ui-express');
+	private startTime: number;
+
 	constructor(controllers: IController[]) {
+		this.startTime = Date.now();
+
 		this.app = express();
-
 		ImplementMiddleware.init(this.app);
-		GoogleDriveManager.init();
-		webSocetController.init();
-
-		this.connectToTheDatabase();
-
 		controllers.forEach((controller) => {
 			this.app.use(`${controller.endPoint}`, controller.router);
 		});
 
-		this.app.use(
-			'/',
-			this.swagger.serve,
-			this.swagger.setup(
-				this.swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml'))
-			)
-		);
+		const mongoUri = process.env.MONGO_URI || '';
+		const mode: string = process.env.MODE?.toString() || '';
+		if (mode === 'test') {
+			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
+			this.connectToTheDatabase(mongoUri + 'Test');
+			this.app.use('/drop', async (req: Request, res: Response) => {
+				await categoryModel.collection.drop();
+				await foodModel.collection.drop();
+				await orderModel.collection.drop();
+				await materialModel.collection.drop();
+				await materialChangeModel.collection.drop();
+				console.log('\x1b[42m%s\x1b[0m', 'Database dropped');
+				res.send('Database dropped');
+			});
+		} else {
+			this.connectToTheDatabase(mongoUri);
+			GoogleDriveManager.init();
+			webSocetController.init();
+			const swaggerjsdoc = require('swagger-jsdoc');
+			const swagger = require('swagger-ui-express');
+			this.app.use(
+				'/',
+				swagger.serve,
+				swagger.setup(swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml')))
+			);
+		}
+		console.log('App started in', Date.now() - this.startTime, 'ms');
 	}
 
 	public listen(): void {
@@ -48,9 +72,8 @@ class App {
 		});
 	}
 
-	private connectToTheDatabase() {
+	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
-		const mongoUri = process.env.MONGO_URI || '';
 		mongoose
 			.connect(mongoUri)
 			.catch(() =>
@@ -76,12 +99,11 @@ class App {
 new App([
 	new userController(),
 	new orderController(),
-	new materialController(),
+	new inventoryController(),
 	new foodController(),
 	new tokenValidationController(),
-	new unitController(),
+	new materialController(),
 	new categoryController(),
 	new imagesController(),
+	new statisticController(),
 ]);
-// TODO: Implement: statistic controller
-// TODO: Implement: 2fa

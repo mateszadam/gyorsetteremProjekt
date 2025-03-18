@@ -1,127 +1,77 @@
 import { Router, Request, Response } from 'express';
-import { IController, IFood, IOrder } from '../models/models';
+import {
+	IController,
+	IFood,
+	IOrder,
+	IOrderedProductFull,
+	IUser,
+} from '../models/models';
 import {
 	foodModel,
+	materialChangeModel,
 	materialModel,
 	orderModel,
 	userModel,
 } from '../models/mongooseSchema';
 import {
-	authKioskToken,
+	authSalesmanToken,
 	authKitchenToken,
 	authToken,
+	authAdminToken,
+	getDataFromToken,
 } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocetController from './websocketController';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
+import mongoose, { ObjectId, Types } from 'mongoose';
 
 export default class orderController implements IController {
 	public router = Router();
 	public endPoint = '/order';
 	private order = orderModel;
 	private user = userModel;
+	private materialChanges = materialChangeModel;
 	private material = materialModel;
 	private food = foodModel;
 
 	constructor() {
-		this.router.post('/new', authToken, this.newOrder);
+		this.router.post('', authToken, this.newOrder);
 
-		this.router.get('/ongoing', authKioskToken, this.getAllOngoingOrder);
-		this.router.get('/ongoing/:id', authToken, this.getOngoingById);
-		this.router.get('/finished/:id', authToken, this.getFinishedById);
-		this.router.get('/time/:from/:to', authToken, this.getAllOrder);
+		this.router.get('', authToken, this.getAllByPage);
+		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
-		this.router.get('/:id', authToken, this.getById);
+		this.router.get('/display', this.getOrdersForDisplay);
 
 		this.router.patch('/finish/:id', authKitchenToken, this.kitchenFinishOrder);
-		this.router.patch('/handover/:id', authKioskToken, this.receivedOrder);
-		this.router.get('/page/:number', authKioskToken, this.getAllByPage);
+		this.router.patch('/handover/:id', authSalesmanToken, this.receivedOrder);
+
+		this.router.patch(
+			'/revert/finish/:id',
+			authKitchenToken,
+			this.revertKitchenFinishOrder
+		);
+		this.router.patch(
+			'/revert/handover/:id',
+			authSalesmanToken,
+			this.revertReceivedOrder
+		);
 	}
 
-	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
-	private newOrder = async (req: Request, res: Response) => {
+	private getOrdersForDisplay = async (req: Request, res: Response) => {
 		try {
-			const newOrder: IOrder = req.body;
-			await this.orderConstraints.validateAsync(newOrder);
+			const order = await this.order
+				.find(
+					{
+						finishedTime: null,
+					},
+					{ _id: 0, finishedCokingTime: 1, orderNumber: 1 }
+				)
+				.sort({ orderedTime: 1 });
 
-			const userExists = await this.user.find({
-				_id: newOrder.costumerId,
-			});
-			if (userExists.length > 0) {
-				const insertedOrders = await this.order.insertMany([newOrder], {
-					rawResult: true,
-				});
-				if (insertedOrders.acknowledged) {
-					const newOrderId = insertedOrders.insertedIds[0];
-
-					if (newOrderId) {
-						for (
-							let index = 0;
-							index < newOrder.orderedProducts.length;
-							index++
-						) {
-							const orderedProducts = newOrder.orderedProducts[index];
-
-							const orderedFood: IFood | null = await this.food.findOne({
-								name: orderedProducts.name,
-							});
-							const materialsInStock = await this.material
-								.aggregate([
-									{
-										$group: {
-											_id: '$name',
-											inStock: { $sum: '$quantity' },
-										},
-									},
-								])
-								.then((result) => {
-									const stock: { [key: string]: number } = {};
-									result.forEach((item: any) => {
-										stock[item._id] = item.inStock;
-									});
-									return stock;
-								});
-							if (orderedFood) {
-								for (
-									let index = 0;
-									index < orderedFood.materials.length;
-									index++
-								) {
-									const orderedFoodMaterials = orderedFood.materials[index];
-									const materialChange = {
-										name: orderedFoodMaterials.name,
-										quantity:
-											0 -
-											orderedFoodMaterials.quantity * orderedProducts.quantity,
-										message: 'Rendelés ' + newOrderId,
-									};
-									if (
-										materialsInStock[orderedFoodMaterials.name] >=
-										orderedFoodMaterials.quantity * orderedProducts.quantity
-									) {
-										await this.material.insertMany([materialChange]);
-									} else {
-										await this.material.deleteMany({
-											message: { $regex: newOrderId },
-										});
-										await this.order.deleteOne({ _id: newOrderId });
-										throw Error('56');
-									}
-								}
-							} else {
-								throw Error('51');
-							}
-						}
-					} else {
-						throw Error('02');
-					}
-				} else {
-					throw Error('06');
-				}
-				webSocetController.sendStateChange();
-				defaultAnswers.created(res);
+			if (order) {
+				res.json(order);
 			} else {
 				throw Error('02');
 			}
@@ -133,35 +83,182 @@ export default class orderController implements IController {
 		}
 	};
 
-	private getById = async (req: Request, res: Response) => {
+	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
+	private newOrder = async (req: Request, res: Response) => {
+		let newOrderId: ObjectId | null = null;
+		const newOrder = req.body as IOrder;
+		let newId: ObjectId | null = null;
+		const session = await mongoose.startSession();
+		session.startTransaction();
 		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order
-					.find({
-						_id: id,
-					})
-					.populate('costumerId');
-				if (order.length > 0) {
-					res.json(order);
+			await this.orderConstraints.validateAsync(newOrder);
+			newOrder.orderedTime = new Date(Date.now() + 1 * 60 * 60 * 1000);
+
+			const user = await this.user.findById(newOrder.costumerId);
+			if (user) {
+				const newOrderNumber = await this.getNewOrderNumber();
+				newOrder.orderNumber = newOrderNumber;
+
+				let totalPrice = 0;
+				for (let i = 0; i < newOrder.orderedProducts.length; i++) {
+					const food: IFood | null = await this.food.findById(
+						newOrder.orderedProducts[i]._id
+					);
+					if (food) {
+						totalPrice += food.price * newOrder.orderedProducts[i].quantity;
+					} else {
+						throw Error('91');
+					}
+				}
+				newOrder.totalPrice = totalPrice;
+				const response = await this.order.insertMany([newOrder], {
+					session,
+					rawResult: true,
+				});
+
+				newId = response.insertedIds[0];
+
+				if (response) {
+					// Check if there is enough material
+
+					for (let i = 0; i < newOrder.orderedProducts.length; i++) {
+						const food: IFood | null = await this.food.findById(
+							newOrder.orderedProducts[i]._id
+						);
+						if (food) {
+							for (let j = 0; j < food.materials.length; j++) {
+								const material = await this.material.findById(
+									food.materials[j]._id
+								);
+
+								if (material) {
+									const materialChange = await this.materialChanges.aggregate([
+										{
+											$match: {
+												materialId: material._id,
+											},
+										},
+										{
+											$group: {
+												_id: '$materialId',
+												inStock: { $sum: '$quantity' },
+											},
+										},
+									]);
+									if (materialChange.length === 0) {
+										throw Error('71');
+									}
+									if (
+										materialChange[0].inStock -
+											food.materials[j].quantity *
+												newOrder.orderedProducts[i].quantity <
+										0
+									) {
+										throw Error('71');
+									}
+
+									await this.materialChanges.insertMany(
+										[
+											{
+												materialId: material._id,
+												quantity: -(
+													food.materials[j].quantity *
+													newOrder.orderedProducts[i].quantity
+												),
+												message: 'Order',
+											},
+										],
+										{ session }
+									);
+								} else {
+									throw Error('85');
+								}
+							}
+						} else {
+							throw Error('81');
+						}
+					}
 				} else {
-					throw Error('54');
+					throw Error('02');
 				}
 			} else {
-				throw Error('52');
+				throw Error('06');
 			}
+			await session.commitTransaction();
+			session.endSession();
+			const newOrderResponse: IOrderedProductFull = await this.getOrderDetails(
+				new Types.ObjectId(`${newId}`)
+			);
+			webSocetController.sendStateChangeToKitchen(newOrderResponse);
+			defaultAnswers.created(res, newOrderResponse);
 		} catch (error: any) {
+			await session.abortTransaction();
 			defaultAnswers.badRequest(
 				res,
 				languageBasedErrorMessage.getError(req, error.message)
 			);
 		}
 	};
+
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const order: IOrder[] = await this.order.find({ finishedTole: null });
-			if (order) {
-				res.json(order);
+			const orders = await this.order.aggregate([
+				{
+					$match: {
+						$and: [
+							{ finishedTime: null },
+							{ finishedCokingTime: { $ne: null } },
+						],
+					},
+				},
+
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+				{
+					$sort: { orderedTime: -1 },
+				},
+			]);
+			if (orders) {
+				res.json(orders);
 			} else {
 				throw Error('02');
 			}
@@ -175,61 +272,61 @@ export default class orderController implements IController {
 
 	private getAllForKitchen = async (req: Request, res: Response) => {
 		try {
-			const order: IOrder[] = await this.order.find({
-				finishedCokingTime: null,
-			});
-			if (order) {
-				res.json(order);
+			const orders = await this.order.aggregate([
+				{
+					$match: {
+						$and: [{ finishedTime: null }, { finishedCokingTime: null }],
+					},
+				},
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+				{
+					$sort: { orderedTime: -1 },
+				},
+			]);
+			if (orders) {
+				res.json(orders);
 			} else {
 				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getOngoingById = async (req: Request, res: Response) => {
-		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order.find({
-					costumerId: id,
-					isFinished: false,
-				});
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('54');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getFinishedById = async (req: Request, res: Response) => {
-		try {
-			const id = req.params.id;
-			if (id) {
-				const order = await this.order.find({
-					costumerId: id,
-					finishedTime: { $ne: null },
-				});
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('07');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -248,11 +345,15 @@ export default class orderController implements IController {
 						_id: id,
 					},
 					{
-						$set: { finishedCokingTime: Date.now() },
+						$set: {
+							finishedCokingTime: new Date(Date.now() + 1 * 60 * 60 * 1000),
+						},
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChangeToSalesman(
+						await this.getOrderDetails(new Types.ObjectId(id))
+					);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
@@ -267,26 +368,25 @@ export default class orderController implements IController {
 			);
 		}
 	};
-	private getAllOrder = async (req: Request, res: Response) => {
+	private revertKitchenFinishOrder = async (req: Request, res: Response) => {
 		try {
-			const from: string = req.params.from;
-			let to: string = req.params.to;
-			if (to == '{to}' || to == '' || !to) {
-				const toDate = new Date();
-				toDate.setDate(toDate.getDate() + 1);
-				to = toDate.toJSON().split('T')[0];
-			}
-			if (from) {
-				const order = await this.order.find({
-					finishedTime: { $gte: new Date(from), $lte: new Date(to) },
-				});
-				if (order) {
-					res.json(order);
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.updateOne(
+					{
+						_id: id,
+					},
+					{
+						$set: { finishedCokingTime: null },
+					}
+				);
+				if (order.modifiedCount > 0) {
+					defaultAnswers.ok(res);
 				} else {
-					throw Error('02');
+					throw Error('64');
 				}
 			} else {
-				throw Error('53');
+				defaultAnswers.badRequest(res);
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -295,6 +395,7 @@ export default class orderController implements IController {
 			);
 		}
 	};
+
 	private receivedOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
@@ -304,12 +405,42 @@ export default class orderController implements IController {
 						_id: id,
 					},
 					{
-						$set: { finishedTime: Date.now() },
+						$set: { finishedTime: new Date(Date.now() + 1 * 60 * 60 * 1000) },
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChange();
+					webSocetController.sendStateChangeToDisplay(
+						await this.getOrderDetails(new Types.ObjectId(id))
+					);
 
+					defaultAnswers.ok(res);
+				} else {
+					throw Error('54');
+				}
+			} else {
+				throw Error('54');
+			}
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
+	private revertReceivedOrder = async (req: Request, res: Response) => {
+		try {
+			const id = req.params.id;
+			if (id) {
+				const order = await this.order.updateOne(
+					{
+						_id: id,
+					},
+
+					{
+						$set: { finishedTime: null },
+					}
+				);
+				if (order.modifiedCount > 0) {
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('54');
@@ -327,20 +458,213 @@ export default class orderController implements IController {
 
 	private getAllByPage = async (req: Request, res: Response) => {
 		try {
-			const number = Number(req.params.number);
-			if (number) {
-				const order = await this.order.aggregate([
-					{ $skip: number * 10 },
-					{ $limit: (number + 1) * 10 },
-				]);
-				if (order) {
-					res.json(order);
-				} else {
-					throw Error('02');
-				}
-			} else {
-				throw Error('55');
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				orderNumber,
+				costumerId,
+				minTotalPrice,
+				maxTotalPrice,
+				minOrderedTime,
+				maxOrderedTime,
+				minFinishedTime,
+				maxFinishedTime,
+				minFinishedCokingTime,
+				maxFinishedCokingTime,
+				fields,
+			} = req.query;
+
+			const data = getDataFromToken(
+				req.headers.authorization?.replace('Bearer ', '')!
+			);
+
+			const user: IUser | null = await this.user.findById(data?._id);
+			if (user?.role !== 'admin' && costumerId != user?._id) {
+				throw Error('94');
 			}
+
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
+			}
+
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = [
+				'_id',
+				'costumerId',
+				'orderNumber',
+				'finishedTime',
+				'orderedTime',
+				'finishedCokingTime',
+				'totalPrice',
+				'orderedProducts',
+			];
+
+			const query: any = {};
+
+			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
+			if (orderNumber) query.orderNumber = Number(orderNumber);
+			if (costumerId)
+				query.costumerId = new mongoose.Types.ObjectId(costumerId as string);
+
+			if (minTotalPrice && maxTotalPrice) {
+				query.totalPrice = {
+					$gte: Number(minTotalPrice),
+					$lte: Number(maxTotalPrice),
+				};
+			} else if (minTotalPrice) {
+				query.totalPrice = { $gte: Number(minTotalPrice) };
+			} else if (maxTotalPrice) {
+				query.totalPrice = { $lte: Number(maxTotalPrice) };
+			}
+
+			if (minOrderedTime && maxOrderedTime) {
+				let minDate = new Date(minOrderedTime as string);
+				let maxDate = new Date(maxOrderedTime as string);
+
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
+				}
+
+				query.orderedTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minOrderedTime) {
+				query.orderedTime = {
+					$gte: new Date(minOrderedTime as string),
+				};
+			} else if (maxOrderedTime) {
+				query.orderedTime = {
+					$lte: new Date(maxOrderedTime as string),
+				};
+			}
+
+			if (minFinishedTime && maxFinishedTime) {
+				let minDate = new Date(minFinishedTime as string);
+				let maxDate = new Date(maxFinishedTime as string);
+
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
+				}
+
+				query.finishedTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minFinishedTime) {
+				query.finishedTime = {
+					$gte: new Date(minFinishedTime as string),
+				};
+			} else if (maxFinishedTime) {
+				query.finishedTime = {
+					$lte: new Date(maxFinishedTime as string),
+				};
+			}
+
+			if (minFinishedCokingTime && maxFinishedCokingTime) {
+				let minDate = new Date(minFinishedCokingTime as string);
+				let maxDate = new Date(maxFinishedCokingTime as string);
+
+				if (minDate > maxDate) {
+					[minDate, maxDate] = [maxDate, minDate];
+				}
+
+				query.finishedCokingTime = {
+					$gte: minDate,
+					$lte: maxDate,
+				};
+			} else if (minFinishedCokingTime) {
+				query.finishedCokingTime = {
+					$gte: new Date(minFinishedCokingTime as string),
+				};
+			} else if (maxFinishedCokingTime) {
+				query.finishedCokingTime = {
+					$lte: new Date(maxFinishedCokingTime as string),
+				};
+			}
+
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
+			} else {
+				projection = {
+					_id: 1,
+					costumerId: 1,
+					orderNumber: 1,
+					finishedTime: 1,
+					orderedTime: 1,
+					finishedCokingTime: 1,
+					totalPrice: 1,
+					orderedProducts: 1,
+				};
+			}
+
+			const orders = await this.order.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+			]);
+
+			res.send({
+				items: orders,
+				pageCount: Math.ceil(
+					(await this.order.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
@@ -356,7 +680,7 @@ export default class orderController implements IController {
 		orderedProducts: Joi.array()
 			.items(
 				Joi.object({
-					name: Joi.string().required().messages({
+					_id: Joi.string().required().messages({
 						'string.base': '34',
 						'any.required': '34',
 					}),
@@ -374,4 +698,71 @@ export default class orderController implements IController {
 				'number.greater': '35',
 			}),
 	});
+
+	private getNewOrderNumber = async () => {
+		const order = await this.order
+			.find({ finishedTime: null })
+			.sort({ orderNumber: -1 })
+			.limit(1)
+			.select('orderNumber');
+		if (order.length > 0) {
+			return Number(order[0].orderNumber) + 1;
+		} else {
+			return 1000;
+		}
+	};
+	private async getOrderDetails(
+		_id: Types.ObjectId
+	): Promise<IOrderedProductFull> {
+		return (
+			await this.order.aggregate([
+				{
+					$match: {
+						_id: _id,
+					},
+				},
+				{
+					$lookup: {
+						from: 'foods',
+						localField: 'orderedProducts._id',
+						foreignField: '_id',
+						as: 'foodDetails',
+					},
+				},
+				{
+					$addFields: {
+						orderedProducts: {
+							$map: {
+								input: '$orderedProducts',
+								as: 'orderItem',
+								in: {
+									_id: '$$orderItem._id',
+									quantity: '$$orderItem.quantity',
+									details: {
+										$arrayElemAt: [
+											{
+												$filter: {
+													input: '$foodDetails',
+													as: 'food',
+													cond: { $eq: ['$$food._id', '$$orderItem._id'] },
+												},
+											},
+											0,
+										],
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					$project: {
+						foodDetails: 0,
+						'orderedProducts._id': 0,
+						'orderedProducts.details._id': 0,
+					},
+				},
+			])
+		)[0];
+	}
 }

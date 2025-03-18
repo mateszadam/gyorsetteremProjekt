@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongoose';
 
 interface IUser {
 	_id: ObjectId;
@@ -8,48 +8,57 @@ interface IUser {
 	role: string;
 	profilePicture: String;
 	email: string | undefined;
+	tokenId: string | undefined;
 }
 
 interface ICategory {
 	_id: ObjectId;
 	name: string;
 	icon: string;
+	englishName: string;
+}
+
+interface IMaterialChange {
+	_id?: ObjectId;
+	materialId?: ObjectId;
+	name?: string;
+	quantity: number;
+	message: string;
+	inStock?: number;
 }
 
 interface IMaterial {
-	_id: ObjectId;
+	_id?: ObjectId;
 	name: string;
-	quantity: number;
-	message: string;
-}
-
-interface IUnit {
-	_id: ObjectId;
-	materialName: string;
+	englishName: string;
 	unit: string;
+	usageOneWeekAgo?: number;
 }
 
 interface IFood {
-	_id: ObjectId;
+	_id?: ObjectId;
 	materials: IFoodMaterial[];
 	price: number;
 	name: string;
+	englishName: string;
 	isEnabled: boolean;
-	categoryId: string | undefined;
+	subCategoryId: string[] | undefined;
+	categoryId: ObjectId;
 }
 
 interface IFoodMaterial {
 	_id: ObjectId;
-	name: string;
 	quantity: number;
 }
 interface IOrder {
 	_id: ObjectId;
-	costumerId: string;
+	costumerId: ObjectId;
 	finishedTime: Date | undefined;
 	orderedTime: Date;
 	finishedCokingTime: Date | undefined;
 	orderedProducts: IOrderedProducts[];
+	orderNumber?: Number;
+	totalPrice: number;
 }
 interface IController {
 	router: Router;
@@ -57,8 +66,32 @@ interface IController {
 }
 
 interface IOrderedProducts {
-	name: string;
+	_id: ObjectId;
 	quantity: number;
 }
 
-export { IUser, IMaterial, IController, IFood, IOrder, IUnit, ICategory };
+interface IOrderedProductFull {
+	_id: string;
+	costumerId: string;
+	orderedTime: string;
+	totalPrice: number;
+	finishedCokingTime: any;
+	finishedTime: any;
+	orderedProducts: IOrderedProduct[];
+	orderNumber: number;
+}
+interface IOrderedProduct {
+	quantity: number;
+	details: IFood;
+}
+
+export {
+	IUser,
+	IMaterialChange,
+	IController,
+	IFood,
+	IOrder,
+	IMaterial,
+	ICategory,
+	IOrderedProductFull,
+};

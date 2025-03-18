@@ -1,11 +1,17 @@
-import { IOrder } from '../models/models';
-import { v4 as uuidv4 } from 'uuid';
-import { orderModel } from '../models/mongooseSchema';
+import { IOrder, IOrderedProductFull, IUser } from '../models/models';
+
+import { orderModel, userModel } from '../models/mongooseSchema';
+import { generateToken, generateUUID4Token } from '../services/tokenService';
 
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 5006 });
 export default class webSocetController {
 	static clientsToNotifyOnStateChange = new Map();
+	static sendAdminLogin = new Map();
+	static kitchen: any[] = [];
+	static display: any[] = [];
+	static salesman: any[] = [];
+
 	private static order = orderModel;
 
 	// ws://localhost:5006/ws
@@ -13,13 +19,29 @@ export default class webSocetController {
 		console.log('Websocket is listening on ws://localhost:5006/ws');
 
 		wss.on('connection', (ws: any) => {
-			const id = uuidv4();
-			const metadata = { id };
-			console.log(ws.header);
-
 			console.log('New connection!');
 
-			this.clientsToNotifyOnStateChange.set(ws, metadata);
+			ws.on('message', (message: any) => {
+				const id = generateUUID4Token();
+				message = JSON.parse(message);
+
+				if (message.token) {
+					this.sendAdminLogin.set(message.token, ws);
+				} else if (message.role == 'kitchen') {
+					this.kitchen.push(ws);
+				} else if (message.role === 'display') {
+					this.display.push(ws);
+				} else if (message.role === 'salesman') {
+					this.salesman.push(ws);
+				} else {
+					const metadata = {
+						id: id,
+						header: message.header,
+						orderId: message.id,
+					};
+					this.clientsToNotifyOnStateChange.set(ws, metadata);
+				}
+			});
 
 			ws.on('close', () => {
 				console.log('Closed');
@@ -29,30 +51,70 @@ export default class webSocetController {
 		});
 	}
 
-	public static async sendStateChange() {
-		const order: IOrder[] = await this.order.find(
-			{ isFinished: false },
-			{ 'orderedProducts._id': 0 }
-		);
-		console.log(order);
+	public static async sendStateChange(id: string) {
+		const order: IOrder[] = await this.order.find({ orderId: id });
 		const message = JSON.stringify(order);
 		if (order) {
-			[...this.clientsToNotifyOnStateChange.keys()].forEach((client) => {
-				client.send(message);
+			[...this.clientsToNotifyOnStateChange].forEach((client) => {
+				let data = client[1];
+
+				if (data.header === 'order' && data.orderId === id) {
+					client[0].send(message);
+				}
 			});
 		} else {
 			throw Error('Error in database');
 		}
 	}
 
-	public uuidv4() {
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-			/[xy]/g,
-			function (c) {
-				var r = (Math.random() * 16) | 0,
-					v = c == 'x' ? r : (r & 0x3) | 0x8;
-				return v.toString(16);
+	public static async sendStateChangeToAdmins(user: any) {
+		for (const [token, ws] of this.sendAdminLogin.entries()) {
+			if (token === user.WebSocketToken) {
+				const databaseUser: IUser | null = await userModel.findOne({
+					_id: user.user._id,
+				});
+				if (databaseUser) {
+					const token: string = await generateToken(databaseUser);
+					console.log(
+						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+					);
+					ws.send(
+						JSON.stringify({
+							token: token,
+							role: databaseUser.role,
+							profilePicture: databaseUser.profilePicture,
+							userId: databaseUser._id,
+						})
+					);
+					this.sendAdminLogin.delete(token);
+				}
 			}
-		);
+		}
+	}
+	public static async sendStateChangeToSalesman(
+		changedOrder: IOrderedProductFull
+	) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.salesman) {
+			ws.send(message);
+		}
+		this.sendStateChangeToDisplay(changedOrder);
+	}
+	public static async sendStateChangeToKitchen(
+		changedOrder: IOrderedProductFull
+	) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.kitchen) {
+			ws.send(message);
+		}
+		this.sendStateChangeToDisplay(changedOrder);
+	}
+	public static async sendStateChangeToDisplay(
+		changedOrder: IOrderedProductFull
+	) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.display) {
+			ws.send(message);
+		}
 	}
 }

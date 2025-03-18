@@ -1,5 +1,4 @@
 import { Schema, SchemaDefinition, model } from 'mongoose';
-
 const userSchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
@@ -20,10 +19,21 @@ const userSchema = new Schema<SchemaDefinition>(
 		email: {
 			type: String,
 			required: [true, 'Email is required'],
+			unique: [true, 'Email is already taken'],
 		},
 		profilePicture: {
 			type: String,
 			default: '',
+		},
+		registeredAt: {
+			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
+				},
+				message: 'You cannot specify a date later than the current date!',
+			},
+			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
 		},
 	},
 	{
@@ -42,6 +52,13 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Category name already exists'],
+			trim: true,
+		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
 		},
 		icon: {
 			type: String,
@@ -64,13 +81,21 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Name is required'],
 			unique: [true, 'Food name is already taken'],
+			trim: true,
 		},
+		englishName: {
+			type: String,
+			required: [true, 'English name is required'],
+			trim: true,
+			default: '',
+		},
+		// TODO: Remove id property from materials
 		materials: [
 			{
-				name: {
-					type: String,
+				_id: {
+					type: Schema.Types.ObjectId,
 					required: true,
-					lowercase: true,
+					ref: 'materialId',
 				},
 				quantity: {
 					type: Number,
@@ -86,7 +111,12 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: Boolean,
 			default: true,
 		},
-		categoryId: [
+		categoryId: {
+			type: Schema.Types.ObjectId,
+			required: [true, 'Category is required'],
+			ref: 'categoryId',
+		},
+		subCategoryId: [
 			{
 				type: Schema.Types.ObjectId,
 				required: [true, 'Category is required'],
@@ -114,24 +144,17 @@ const materialSchema = new Schema<SchemaDefinition>(
 			required: [true, 'Name is required'],
 			lowercase: true,
 			trim: true,
+			unique: [true, 'Material name already exists'],
 		},
-		quantity: {
-			type: Number,
-			required: [true, 'Quantity is required'],
-		},
-		message: {
+		englishName: {
 			type: String,
-			default: '',
+			required: [true, 'English name is required'],
+			lowercase: true,
+			trim: true,
 		},
-		date: {
-			type: Date,
-			default: new Date(),
-			validate: {
-				validator: function (v: Date) {
-					return v <= new Date();
-				},
-				message: 'You cannot specify a date later than the current date!',
-			},
+		unit: {
+			type: String,
+			required: [true, 'Unit is required'],
 		},
 	},
 	{
@@ -143,19 +166,32 @@ const materialSchema = new Schema<SchemaDefinition>(
 );
 export const materialModel = model('materialId', materialSchema, 'materials');
 
-const unitOfMeasure = new Schema<SchemaDefinition>(
+const materialChangeSchema = new Schema<SchemaDefinition>(
 	{
 		_id: Schema.Types.ObjectId,
-		materialName: {
+		materialId: {
+			type: Schema.Types.ObjectId,
+			index: true,
+			required: [true, 'Material is required'],
+		},
+		quantity: {
+			type: Number,
+			required: [true, 'Quantity is required'],
+		},
+		message: {
 			type: String,
-			required: [true, 'Name is required'],
-			unique: [true, 'The material already has a unit of measure'],
-			lowercase: true,
+			default: '',
 			trim: true,
 		},
-		unit: {
-			type: String,
-			required: [true, 'Unit of measure is required'],
+		date: {
+			type: Date,
+			validate: {
+				validator: function (v: Date) {
+					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+				},
+				message: 'You cannot specify a date later than the current date!',
+			},
+			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
 		},
 	},
 	{
@@ -176,39 +212,45 @@ const orderSchema = new Schema<SchemaDefinition>(
 		},
 		orderedTime: {
 			type: Date,
-			default: Date.now(),
+			default: Date.now() + 1 * 60 * 60 * 1000,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date();
+					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
+		},
+		totalPrice: {
+			type: Number,
+			required: [true, 'Total price is required'],
+			min: [0, 'Price cannot be negative'],
 		},
 		finishedCokingTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date();
+					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		finishedTime: {
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v >= new Date();
+					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
 				},
-				message: 'You cannot specify a date earlier than the current date!',
+				message: 'You cannot specify a date later than the current date!',
 			},
+			default: null,
 		},
 		orderedProducts: [
 			{
-				name: {
-					type: String,
+				_id: {
+					type: Schema.Types.ObjectId,
 					required: true,
-					lowercase: true,
-					trim: true,
+					ref: 'foodId',
 				},
 				quantity: {
 					type: Number,
@@ -216,6 +258,10 @@ const orderSchema = new Schema<SchemaDefinition>(
 				},
 			},
 		],
+		orderNumber: {
+			type: Number,
+			required: [true, 'Order number is required'],
+		},
 	},
 	{
 		versionKey: false,
@@ -226,10 +272,11 @@ const orderSchema = new Schema<SchemaDefinition>(
 );
 
 export const foodModel = model('foodId', foodSchema, 'foods');
+
 export const orderModel = model('orderId', orderSchema, 'orders');
 
-export const unitOfMeasureModel = model(
-	'unitId',
-	unitOfMeasure,
-	'unitOfMeasures'
+export const materialChangeModel = model(
+	'materialChangeId',
+	materialChangeSchema,
+	'materialChanges'
 );

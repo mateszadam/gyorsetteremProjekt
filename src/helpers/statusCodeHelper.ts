@@ -1,16 +1,20 @@
 import { Response } from 'express';
 
 export default class defaultAnswers {
-	static async ok(res: Response, message: string = '') {
+	static async ok(res: Response, message: any = '') {
 		if (message == '') {
 			res.sendStatus(200);
 		} else {
-			res.status(200).json({ message });
+			res.status(200).json(message);
 		}
 	}
 
-	static async created(res: Response) {
-		res.sendStatus(201);
+	static async created(res: Response, message: any = '') {
+		if (message == '') {
+			res.sendStatus(201);
+		} else {
+			res.status(201).json(message);
+		}
 	}
 
 	static async notAuthorized(res: Response) {
