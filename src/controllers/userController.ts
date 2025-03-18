@@ -149,7 +149,6 @@ export default class userController implements IController {
 	};
 	private loginUser = async (req: Request, res: Response) => {
 		try {
-			log('Login');
 			let userInput: IUser = req.body;
 			const databaseUser: IUser | null = await this.user.findOne({
 				name: userInput.name,
@@ -388,7 +387,7 @@ export default class userController implements IController {
 				res.redirect('/' + token);
 			} catch (error: any) {
 				console.error('Error:', error);
-				res.redirect('/login');
+				res.redirect('/bejelentkezes');
 			}
 		}
 	};
@@ -399,6 +398,7 @@ export default class userController implements IController {
 			const user = this.usersWaitingForAuth.get(token);
 			if (user) {
 				const token = await generateToken(user);
+				this.usersWaitingForAuth.delete(token);
 				res.send({
 					token: token,
 					role: user.role,
@@ -423,9 +423,7 @@ export default class userController implements IController {
 			'any.required': '17',
 		}),
 		password: Joi.string()
-			.pattern(
-				/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-			)
+			.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W)[A-Za-z\d\W]{8,}$/)
 			.required()
 			.messages({
 				'string.empty': '15',

@@ -45,7 +45,6 @@ export default class emailManager {
 					token +
 					'</a></p>',
 			};
-			log('Sending email');
 			await this.transporter.sendMail(
 				mailOptions,
 				function (error: any, info: any) {
@@ -65,8 +64,6 @@ export default class emailManager {
 		try {
 			const token = req.body.token;
 			const password = req.body.password;
-			log(this.tokens);
-			log(token);
 			if (!token || !password || !this.tokens.find((t) => t.token === token)) {
 				return 'Invalid token';
 			}

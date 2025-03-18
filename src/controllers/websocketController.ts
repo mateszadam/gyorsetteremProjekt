@@ -1,4 +1,4 @@
-import { IOrder, IUser } from '../models/models';
+import { IOrder, IOrderedProductFull, IUser } from '../models/models';
 
 import { orderModel, userModel } from '../models/mongooseSchema';
 import { generateToken, generateUUID4Token } from '../services/tokenService';
@@ -91,21 +91,27 @@ export default class webSocetController {
 			}
 		}
 	}
-	public static async sendStateChangeToSalesman(changedOrder: IOrder) {
+	public static async sendStateChangeToSalesman(
+		changedOrder: IOrderedProductFull
+	) {
 		const message = JSON.stringify(changedOrder);
 		for (const ws of this.salesman) {
 			ws.send(message);
 		}
 		this.sendStateChangeToDisplay(changedOrder);
 	}
-	public static async sendStateChangeToKitchen(changedOrder: IOrder) {
+	public static async sendStateChangeToKitchen(
+		changedOrder: IOrderedProductFull
+	) {
 		const message = JSON.stringify(changedOrder);
 		for (const ws of this.kitchen) {
 			ws.send(message);
 		}
 		this.sendStateChangeToDisplay(changedOrder);
 	}
-	public static async sendStateChangeToDisplay(changedOrder: IOrder) {
+	public static async sendStateChangeToDisplay(
+		changedOrder: IOrderedProductFull
+	) {
 		const message = JSON.stringify(changedOrder);
 		for (const ws of this.display) {
 			ws.send(message);
