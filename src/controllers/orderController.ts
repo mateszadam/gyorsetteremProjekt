@@ -201,15 +201,6 @@ export default class orderController implements IController {
 						],
 					},
 				},
-
-				{
-					$lookup: {
-						from: 'foods',
-						localField: 'orderedProducts._id',
-						foreignField: '_id',
-						as: 'foodDetails',
-					},
-				},
 				{
 					$addFields: {
 						orderedProducts: {
@@ -265,14 +256,6 @@ export default class orderController implements IController {
 			const orders = await this.order.aggregate([
 				{
 					$match: { finishedCokingTime: null },
-				},
-				{
-					$lookup: {
-						from: 'foods',
-						localField: 'orderedProducts._id',
-						foreignField: '_id',
-						as: 'foodDetails',
-					},
 				},
 				{
 					$addFields: {

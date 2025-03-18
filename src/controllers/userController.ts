@@ -389,7 +389,7 @@ export default class userController implements IController {
 				res.redirect('/' + token);
 			} catch (error: any) {
 				console.error('Error:', error);
-				res.redirect('/login');
+				res.redirect('/bejelentkezes');
 			}
 		}
 	};
@@ -400,6 +400,7 @@ export default class userController implements IController {
 			const user = this.usersWaitingForAuth.get(token);
 			if (user) {
 				const token = await generateToken(user);
+				this.usersWaitingForAuth.delete(token);
 				res.send({
 					token: token,
 					role: user.role,
