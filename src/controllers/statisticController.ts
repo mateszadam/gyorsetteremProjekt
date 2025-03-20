@@ -501,6 +501,7 @@ export default class statisticController implements IController {
 				}
 			}
 
+			orders.sort((a, b) => (a._id > b._id ? 1 : -1));
 			res.status(200).send({ orders: orders });
 		} catch (error: any) {
 			defaultAnswers.badRequest(
