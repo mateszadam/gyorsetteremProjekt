@@ -235,105 +235,6 @@ export default class inventoryController implements IController {
 		}
 	};
 
-	private getStock = async (req: Request, res: Response) => {
-		try {
-			const { field, value, page, limit } = req.query;
-			const pageNumber = Number(page) || 1;
-			const itemsPerPage = Number(limit) || 10;
-			const skip = (pageNumber - 1) * itemsPerPage;
-
-			if (field && value) {
-				const selectedItems = await this.materials.aggregate([
-					{
-						$lookup: {
-							from: 'materialChanges',
-							localField: '_id',
-							foreignField: 'materialId',
-							as: 'materialChanges',
-						},
-					},
-					{
-						$project: {
-							_id: 1,
-							name: 1,
-							englishName: 1,
-							unit: 1,
-							inStock: {
-								$sum: '$materialChanges.quantity',
-							},
-						},
-					},
-					{ $match: { [field as string]: value } },
-					{ $skip: skip },
-					{ $limit: itemsPerPage },
-				]);
-
-				if (selectedItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(await this.materialChanges.countDocuments()) / itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
-			} else {
-				const allItems = await this.materialChanges;
-
-				const selectedItems = await this.materials.aggregate([
-					{
-						$lookup: {
-							from: 'materialChanges',
-							localField: '_id',
-							foreignField: 'materialId',
-							as: 'materialChanges',
-						},
-					},
-					{
-						$project: {
-							_id: 1,
-							name: 1,
-							englishName: 1,
-							unit: 1,
-							inStock: {
-								$sum: '$materialChanges.quantity',
-							},
-						},
-					},
-					{ $skip: skip },
-					{ $limit: itemsPerPage },
-				]);
-
-				if (allItems.length > 0) {
-					res.send({
-						items: selectedItems,
-						pageCount: Math.ceil(
-							(
-								await this.materialChanges.aggregate([
-									{
-										$group: {
-											_id: '$materialId',
-											quantity: { $sum: '$quantity' },
-											materialId: { $first: '$materialId' },
-										},
-									},
-								])
-							).length / itemsPerPage
-						),
-					});
-				} else {
-					throw Error('77');
-				}
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
 	private addMaterialChange = async (req: Request, res: Response) => {
 		try {
 			const inputMaterial: IMaterialChange = req.body;
@@ -356,7 +257,9 @@ export default class inventoryController implements IController {
 				const isEnoughMaterial = await this.materialChanges.aggregate([
 					{
 						$match: {
-							materialId: inputMaterial.materialId,
+							materialId: new Types.ObjectId(
+								inputMaterial.materialId!.toString()
+							),
 						},
 					},
 					{
@@ -366,7 +269,6 @@ export default class inventoryController implements IController {
 						},
 					},
 				]);
-
 				if (isEnoughMaterial.length === 0) {
 					throw Error('71');
 				}
@@ -383,49 +285,6 @@ export default class inventoryController implements IController {
 					res,
 					await this.materialChanges.findById(databaseAnswer.insertedIds[0])
 				);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getAllMaterialChange = async (req: Request, res: Response) => {
-		try {
-			const materials = await this.materialChanges.aggregate([
-				{
-					$group: {
-						_id: '$name',
-						inStock: { $sum: '$quantity' },
-					},
-				},
-				{
-					$lookup: {
-						from: 'material',
-						localField: '_id',
-						foreignField: 'materialId',
-						as: 'UOM',
-					},
-				},
-				{
-					$project: {
-						_id: 1,
-						inStock: 1,
-						unit: { $ifNull: [{ $arrayElemAt: ['$UOM.unit', 0] }, null] },
-					},
-				},
-				{
-					$match: {
-						inStock: { $gt: 0 },
-					},
-				},
-			]);
-			if (materials) {
-				res.status(200).send(materials);
 			} else {
 				throw Error('02');
 			}

@@ -18,8 +18,6 @@ export default class imagesController implements IController {
 		this.router.get('/name/:imageName', authToken, this.getImage);
 		this.router.get('/all', authToken, this.listAllFiles);
 
-		// this.router.delete('/:imageName', authToken, this.deleteImage);
-
 		this.router.post('/', authAdminToken, this.uploadImage);
 		this.router.get('/profile', authToken, this.listAllProfilePictures);
 		this.router.get('/profile/:name', authToken, this.getProfiePictureByName);

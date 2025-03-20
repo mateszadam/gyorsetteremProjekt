@@ -8,6 +8,7 @@ import Joi, { boolean } from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { Types } from 'mongoose';
 import { log } from 'console';
+import { OrderedBulkOperation } from 'mongodb';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -93,8 +94,11 @@ export default class materialController implements IController {
 			if (typeof fields === 'string') {
 				fields = [fields];
 			}
-
-			if (fields) {
+			let orderBy: any = { name: 1 };
+			if (fields && Array.isArray(fields)) {
+				if (!fields.includes('name')) {
+					orderBy = { [fields[0].toString()]: 1 };
+				}
 				(fields as string[]).forEach((field) => {
 					if (allowedFields.includes(field)) {
 						projection[field] = 1;
@@ -142,6 +146,7 @@ export default class materialController implements IController {
 					{ $project: projection },
 					{ $skip: skip },
 					{ $limit: itemsPerPage },
+					{ $sort: orderBy },
 				]);
 			if (!materialChanges) {
 				throw Error('77');
