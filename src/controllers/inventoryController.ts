@@ -257,7 +257,9 @@ export default class inventoryController implements IController {
 				const isEnoughMaterial = await this.materialChanges.aggregate([
 					{
 						$match: {
-							materialId: inputMaterial.materialId,
+							materialId: new Types.ObjectId(
+								inputMaterial.materialId!.toString()
+							),
 						},
 					},
 					{
@@ -267,7 +269,6 @@ export default class inventoryController implements IController {
 						},
 					},
 				]);
-
 				if (isEnoughMaterial.length === 0) {
 					throw Error('71');
 				}
@@ -294,6 +295,7 @@ export default class inventoryController implements IController {
 			);
 		}
 	};
+
 	private materialChangesConstraints = Joi.object({
 		quantity: Joi.number().required().messages({
 			'any.required': '37',
