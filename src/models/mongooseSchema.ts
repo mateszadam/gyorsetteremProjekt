@@ -89,7 +89,6 @@ const foodSchema = new Schema<SchemaDefinition>(
 			trim: true,
 			default: '',
 		},
-		// TODO: Remove id property from materials
 		materials: [
 			{
 				_id: {
