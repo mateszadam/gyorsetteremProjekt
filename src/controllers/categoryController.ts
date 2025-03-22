@@ -201,5 +201,8 @@ export default class categoryController implements IController {
 			'string.pattern.base': '78',
 			'any.required': '78',
 		}),
+		isMainCategory: Joi.boolean().messages({
+			'boolean.base': '96',
+		}),
 	});
 }
