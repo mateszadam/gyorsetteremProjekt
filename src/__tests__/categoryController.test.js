@@ -32,6 +32,7 @@ describe('categoryController Integration Tests', () => {
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
 					englishName: 'TestCategory',
+					isMainCategory: true,
 				})
 			);
 			expect(
@@ -47,6 +48,7 @@ describe('categoryController Integration Tests', () => {
 						name: 'TestCategory',
 						icon: 'test-icon.svg',
 						englishName: 'TestCategory',
+						isMainCategory: true,
 					}),
 				])
 			);
@@ -112,6 +114,7 @@ describe('categoryController Integration Tests', () => {
 					name: 'TestCategory2',
 					icon: 'test-icon3.svg',
 					englishName: 'TestCategory2',
+					isMainCategory: true,
 				})
 			);
 			expect(
@@ -195,6 +198,7 @@ describe('categoryController Integration Tests', () => {
 				name: expect.any(String),
 				icon: expect.any(String),
 				englishName: expect.any(String),
+				isMainCategory: true,
 			});
 
 			expect(response.status).toBe(200);
@@ -263,6 +267,7 @@ describe('categoryController Integration Tests', () => {
 					englishName: 'TestCategory2',
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
+					isMainCategory: true,
 				},
 			]);
 		});
@@ -285,6 +290,7 @@ describe('categoryController Integration Tests', () => {
 					englishName: 'TestCategory2',
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
+					isMainCategory: true,
 				},
 			]);
 		});

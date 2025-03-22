@@ -1,13 +1,12 @@
-import e, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-
 import mongoose from 'mongoose';
+
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
@@ -15,84 +14,11 @@ export default class categoryController implements IController {
 	public endPoint = '/category';
 
 	constructor() {
-		this.router.get('/main', authToken, this.getMainCategories);
-		this.router.get('/sub', authToken, this.getSubCategories);
 		this.router.post('', authAdminToken, this.add);
 		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
 		this.router.get('', authToken, this.filterCategory);
 	}
-
-	private getMainCategories = async (req: Request, res: Response) => {
-		try {
-			const mainCategories = await this.food.aggregate([
-				{ $project: { _id: 0, categoryId: 1 } },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'categoryId',
-						foreignField: '_id',
-						as: 'category',
-					},
-				},
-				{ $unwind: '$category' },
-				{
-					$group: {
-						_id: '$category._id',
-						name: { $first: '$category.name' },
-						englishName: { $first: '$category.englishName' },
-						icon: { $first: '$category.icon' },
-					},
-				},
-			]);
-
-			defaultAnswers.ok(res, mainCategories ?? []);
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-
-	private getSubCategories = async (req: Request, res: Response) => {
-		try {
-			const { main } = req.query;
-
-			let subCategories = await this.food.aggregate([
-				{ $match: { categoryId: new mongoose.Types.ObjectId(main as string) } },
-				{ $project: { _id: 0, subCategoryId: 1 } },
-				{ $unwind: '$subCategoryId' },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'subCategoryId',
-						foreignField: '_id',
-						as: 'category',
-					},
-				},
-				{ $unwind: '$category' },
-				{
-					$group: {
-						_id: '$category._id',
-						name: { $first: '$category.name' },
-						englishName: { $first: '$category.englishName' },
-						icon: { $first: '$category.icon' },
-					},
-				},
-			]);
-			if (subCategories.length === 0) {
-				throw Error('95');
-			}
-
-			defaultAnswers.ok(res, subCategories);
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
@@ -104,6 +30,7 @@ export default class categoryController implements IController {
 				englishName,
 				icon,
 				fields,
+				isMainCategory,
 			} = req.query;
 
 			if (isNaN(Number(page)) || isNaN(Number(limit))) {
@@ -121,6 +48,7 @@ export default class categoryController implements IController {
 			if (englishName)
 				query.englishName = new RegExp(englishName as string, 'i');
 			if (icon) query.icon = new RegExp(icon as string, 'i');
+			if (isMainCategory) query.isMainCategory = isMainCategory === 'true';
 
 			let projection: any = { _id: 1 };
 
@@ -140,6 +68,7 @@ export default class categoryController implements IController {
 					name: 1,
 					englishName: 1,
 					icon: 1,
+					isMainCategory: 1,
 				};
 			}
 
@@ -271,6 +200,9 @@ export default class categoryController implements IController {
 			'string.empty': '78',
 			'string.pattern.base': '78',
 			'any.required': '78',
+		}),
+		isMainCategory: Joi.boolean().messages({
+			'boolean.base': '96',
 		}),
 	});
 }

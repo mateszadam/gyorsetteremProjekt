@@ -64,6 +64,10 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Icon is required'],
 		},
+		isMainCategory: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	{
 		versionKey: false,
@@ -125,6 +129,10 @@ const foodSchema = new Schema<SchemaDefinition>(
 		image: {
 			type: String,
 			default: 'no-image.svg',
+		},
+		isDeleted: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	{

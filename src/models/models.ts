@@ -16,6 +16,7 @@ interface ICategory {
 	name: string;
 	icon: string;
 	englishName: string;
+	isMainCategory: boolean;
 }
 
 interface IMaterialChange {

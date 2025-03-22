@@ -80,6 +80,7 @@ describe('foodController Integration Tests', () => {
 				image: 'image_url',
 				isEnabled: true,
 				englishName: 'Test Food English',
+				isDeleted: false,
 			});
 			expect(response.body.materials[0].id).toBeDefined();
 			expect(
@@ -279,10 +280,12 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food')
 				.set('Authorization', `Bearer ${token}`)
-				.query({ subCategoryId: 'invalidSubCategoryId' });
+				.query({ subCategoryId: '67dbe044298a5368533e78ed' });
 
 			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('The provided ID is invalid!');
+			expect(response.body.message).toBe(
+				'Subcategory not found in the database!'
+			);
 		});
 	});
 
@@ -295,7 +298,7 @@ describe('foodController Integration Tests', () => {
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'image_url',
-				isEnabled: true,
+				isEnabled: false,
 				englishName: 'Test Food English',
 			};
 			const foodId = await request(baseUrl)
@@ -311,6 +314,7 @@ describe('foodController Integration Tests', () => {
 				image: 'updated_image_url',
 				isEnabled: true,
 				englishName: 'Updated Test Food English',
+				isDeleted: false,
 			};
 
 			const response = await request(baseUrl)
@@ -328,6 +332,7 @@ describe('foodController Integration Tests', () => {
 				categoryId: catId,
 				image: 'updated_image_url',
 				isEnabled: true,
+				isDeleted: false,
 				englishName: 'Updated Test Food English',
 			});
 			const response2 = await request(baseUrl)
@@ -446,6 +451,7 @@ describe('foodController Integration Tests', () => {
 				image: 'image_url',
 				isEnabled: true,
 				englishName: 'Test Food English',
+				isDeleted: false,
 			});
 		});
 

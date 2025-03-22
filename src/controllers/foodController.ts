@@ -68,6 +68,7 @@ export default class foodController implements IController {
 			];
 
 			const query: any = {};
+			query.isDeleted = false;
 			if (_id) query._id = new Types.ObjectId(_id as string);
 			if (name) query.name = new RegExp(name as string, 'i');
 			if (englishName)
@@ -93,8 +94,9 @@ export default class foodController implements IController {
 			}
 			if (subCategoryId) {
 				if (
-					(await this.category.find({ _id: subCategoryId })).length !==
-					subCategoryId.length
+					!(await this.category.findOne({
+						_id: new Types.ObjectId(subCategoryId as string),
+					}))
 				)
 					throw Error('84');
 				query.subCategoryId = new Types.ObjectId(subCategoryId as string);
@@ -195,9 +197,12 @@ export default class foodController implements IController {
 			const id = req.params.id;
 
 			if (id) {
-				const foodDeleteResponse = await this.food.findByIdAndDelete({
-					_id: id,
-				});
+				const foodDeleteResponse = await this.food.findByIdAndUpdate(
+					{
+						_id: id,
+					},
+					{ isDeleted: true }
+				);
 				if (foodDeleteResponse) {
 					defaultAnswers.ok(res, foodDeleteResponse);
 				} else {
@@ -218,7 +223,6 @@ export default class foodController implements IController {
 		try {
 			const changedData: IFood = req.body;
 			const id = req.params.id;
-			// await this.foodConstraints.validateAsync(newFood);
 
 			if (id) {
 				let oldFood: IFood | null = await this.food.findById(id);
