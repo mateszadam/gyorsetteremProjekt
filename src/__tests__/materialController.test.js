@@ -1,3 +1,5 @@
+const exp = require('constants');
+const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -14,166 +16,252 @@ describe('materialController Integration Tests', () => {
 		});
 		token = response.body.token;
 	});
-	describe('01 POST /material/add', () => {
+
+	describe('01 POST /material', () => {
 		it('should add a new material', async () => {
 			const response = await request(baseUrl)
-				.post('/material/add')
+				.post('/material')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'TestMaterial',
-					quantity: 10,
-					message: 'Test',
+					englishName: 'TestMaterial',
+					unit: 'kg',
 				});
 			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get('/material')
+						.set('Authorization', `Bearer ${token}`)
+						.query({ name: 'TestMaterial' })
+				).body.items[0]
+			).toEqual({
+				_id: expect.any(String),
+				name: 'testmaterial',
+				englishName: 'testmaterial',
+				inStock: 0,
+				isEnough: false,
+				unit: 'kg',
+				usageOneWeekAgo: 0,
+			});
 		});
-		it('should not add a new material without message', async () => {
+
+		it('should not add a new material without required fields', async () => {
 			const response = await request(baseUrl)
-				.post('/material/add')
+				.post('/material')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'TestMaterial',
-					quantity: 10,
 				});
 			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('Message is required!');
+			expect(response.body.message).toBe('Name is required');
 		});
 	});
 
-	describe('02 GET /material/stock', () => {
-		it('should get all materials in stock', async () => {
+	describe('02 GET /material', () => {
+		beforeAll(async () => {
+			let materialUnit = '';
+			for (let i = 0; i < 15; i++) {
+				if (i % 2 === 0) {
+					materialUnit = 'db';
+				} else {
+					materialUnit = 'kg';
+				}
+				await request(baseUrl)
+					.post('/material')
+					.set('Authorization', `Bearer ${token}`)
+					.send({
+						name: `TestMaterial${i}`,
+						englishName: `TestMaterial${i}`,
+						unit: materialUnit,
+					});
+			}
+		}, 20000);
+		it('should get all materials', async () => {
 			const response = await request(baseUrl)
-				.get('/material/stock')
+				.get('/material')
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(200);
-
-			expect(response.body.length).toBeGreaterThan(0);
-			response.body.forEach((material) => {
+			expect(response.body.items.length).toBe(10);
+			expect(response.body.pageCount).toBe(2);
+			response.body.items.forEach((material) => {
 				expect(material).toEqual({
-					_id: expect.any(String),
-					inStock: expect.any(Number),
-					unit: null,
-				});
-			});
-		});
-	});
-	describe('03 GET /material/all', () => {
-		it('should get all materials from foods', async () => {
-			const response = await request(baseUrl)
-				.get('/material/stock')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
-			expect(response.body.length).toBeGreaterThan(0);
-			response.body.forEach((material) => {
-				expect(material).toEqual({
-					_id: expect.any(String),
-					inStock: expect.any(Number),
-					unit: null,
-				});
-			});
-		});
-	});
-	describe('04 GET /material/changes', () => {
-		it('should get all material changes', async () => {
-			const response = await request(baseUrl)
-				.get('/material/changes')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
-			expect(response.body.length).toBeGreaterThan(0);
-			response.body.forEach((change) => {
-				expect(change).toEqual({
 					_id: expect.any(String),
 					name: expect.any(String),
-					quantity: expect.any(Number),
-					message: expect.any(String),
-					date: expect.any(String),
+					englishName: expect.any(String),
+					unit: expect.any(String),
+					inStock: expect.any(Number),
+					isEnough: expect.any(Boolean),
+					unit: expect.any(String),
+					usageOneWeekAgo: expect.any(Number),
 				});
 			});
+		});
+
+		it('should get materials by field and value', async () => {
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ unit: 'kg', page: 1 });
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(8);
+			expect(response.body.pageCount).toBe(1);
+			response.body.items.forEach((material) => {
+				expect(material.unit).toBe('kg');
+			});
+		});
+
+		it('should return [] if no materials match the query', async () => {
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ name: 'NonExistentMaterial', page: 1 });
+			expect(response.status).toBe(200);
+		});
+
+		it('should paginate materials', async () => {
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ page: 1, limit: 2 });
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(2);
+			expect(response.body.pageCount).toBe(8);
+		});
+
+		it('should paginate with filter, limit, and page ', async () => {
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ unit: 'kg', page: 2, limit: 5 });
+			expect(response.status).toBe(200);
+			expect(response.body.items.length).toBe(3);
+			expect(response.body.pageCount).toBe(2);
+		});
+
+		it('should return 200 if page number exceeds total pages', async () => {
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ page: 999 });
+			expect(response.status).toBe(200);
 		});
 	});
 
 	let materialId = '';
-	describe('05 PUT /material/update/:id', () => {
+	describe('03 DELETE /material/:id', () => {
 		beforeAll(async () => {
 			await request(baseUrl)
-				.post('/material/add')
+				.post('/material')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'TestMaterial',
-					quantity: 10,
-					message: 'Test',
+					englishName: 'TestMaterial',
+					unit: 'kg',
 				});
-			materialId = await request(baseUrl)
-				.get('/material/changes')
+			const response = await request(baseUrl)
+				.get('/material')
 				.set('Authorization', `Bearer ${token}`)
-				.then((response) => response.body[0]._id);
+				.query({ name: 'testmaterial' });
+			materialId = response.body.items[0]._id;
 		});
+
+		it('should delete a material by id', async () => {
+			const material = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.query({ name: 'testmaterial11' });
+			materialId = material.body.items[0]._id;
+			const response = await request(baseUrl)
+				.delete(`/material/${materialId}`)
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual({
+				_id: materialId,
+				name: 'testmaterial11',
+				englishName: 'testmaterial11',
+				unit: 'kg',
+			});
+		});
+
+		it('should not delete a material with invalid id', async () => {
+			const response = await request(baseUrl)
+				.delete('/material/invalidId')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
+	});
+
+	describe('04 PUT /material/:id', () => {
+		beforeAll(async () => {
+			await request(baseUrl)
+				.post('/material')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					name: 'TestMaterial',
+					englishName: 'TestMaterial',
+					unit: 'kg',
+				});
+
+			const response = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`);
+			materialId = response.body.items[0]._id;
+		});
+
 		it('should update a material', async () => {
 			const response = await request(baseUrl)
-				.patch(`/material/update/${materialId}`)
+				.put(`/material/${materialId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'UpdatedMaterial',
-					quantity: 20,
-					message: 'Updated',
+					englishName: 'UpdatedMaterial',
+					unit: 'g',
 				});
 			expect(response.status).toBe(200);
+			expect(response.body.name).toBe('updatedmaterial');
+			expect(response.body.unit).toBe('g');
+
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/material`)
+						.set('Authorization', `Bearer ${token}`)
+						.query({ _id: materialId })
+				).body.items
+			).toEqual([
+				{
+					_id: materialId,
+					name: 'updatedmaterial',
+					englishName: 'updatedmaterial',
+					unit: 'g',
+					inStock: expect.any(Number),
+					isEnough: expect.any(Boolean),
+					usageOneWeekAgo: expect.any(Number),
+				},
+			]);
 		});
 
 		it('should not update a material with invalid id', async () => {
 			const response = await request(baseUrl)
-				.patch('/material/update/invalidId')
+				.put('/material/67bf345ee82353e877b1f657')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					name: 'UpdatedMaterial',
-					quantity: 20,
-					message: 'Updated',
+					englishName: 'UpdatedMaterial',
+					unit: 'g',
 				});
 			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('The provided ID is invalid!');
+			expect(response.body.message).toBe('User ID not found in the database!');
 		});
 
-		it('should not update a material without required fields', async () => {
+		it('should return 400 if no material data is provided', async () => {
 			const response = await request(baseUrl)
-				.patch(`/material/update/${materialId}`)
+				.put(`/material/${materialId}`)
 				.set('Authorization', `Bearer ${token}`);
 			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'No data to be changed found in the request!'
-			);
-		});
-	});
-	describe('06 GET /material/filter', () => {
-		it('should filter materials by field and value', async () => {
-			const response = await request(baseUrl)
-				.get('/material/filter')
-				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'name', value: 'TestMaterial' });
-			expect(response.status).toBe(200);
-			expect(response.body.length).toBeGreaterThan(0);
-			response.body.forEach((material) => {
-				expect(material.name).toBe('testmaterial');
-			});
-		});
-
-		it('should return error if field or value is missing', async () => {
-			const response = await request(baseUrl)
-				.get('/material/filter')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'The search condition is not found in the URL!'
-			);
-		});
-
-		it('should return error if no materials match the filter', async () => {
-			const response = await request(baseUrl)
-				.get('/material/filter')
-				.set('Authorization', `Bearer ${token}`)
-				.query({ field: 'name', value: 'NonExistentMaterial' });
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe(
-				'No result in the database for the search condition!'
-			);
+			expect(response.body.message).toBe('At least one change is required!');
 		});
 	});
 });

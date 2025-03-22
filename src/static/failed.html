@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>2FA</title>
+		<style>
+			body {
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+				background-color: #f8f9fa;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+				padding: 20px;
+			}
+			.container {
+				background-color: white;
+				border-radius: 8px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				padding: 30px 40px;
+				text-align: center;
+				max-width: 500px;
+				width: 100%;
+			}
+			h1 {
+				color: #dc3545;
+				margin-bottom: 20px;
+				font-size: 24px;
+				line-height: 1.5;
+				white-space: pre-line;
+			}
+			.back-button {
+				background-color: #0d6efd;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				padding: 10px 20px;
+				font-size: 16px;
+				cursor: pointer;
+				margin-top: 20px;
+				transition: background-color 0.2s;
+			}
+			.back-button:hover {
+				background-color: #0b5ed7;
+			}
+			.icon {
+				font-size: 60px;
+				color: #dc3545;
+				margin-bottom: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="icon">❌</div>
+			<h1 id="languageText"></h1>
+		</div>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				const userLang = navigator.language || navigator.userLanguage;
+				const textElement = document.getElementById('languageText');
+				const backButton = document.getElementById('backButton');
+
+				// Define messages for different languages
+				const messages = {
+					en: {
+						text: 'The two factor authentication was not successful!\nPlease return to the login page!',
+					},
+					hu: {
+						text: 'A kétlépcsős azonosítás sikertelen!\nKérjük térjen vissza a bejelentkezési oldalra!',
+					},
+				};
+
+				const langCode = userLang.substring(0, 2).toLowerCase();
+				const content = messages[langCode] || messages['en'];
+
+				textElement.innerText = content.text;
+
+				backButton.addEventListener('click', function () {
+					window.history.back();
+				});
+			});
+		</script>
+	</body>
+</html>

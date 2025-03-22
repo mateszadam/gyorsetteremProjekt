@@ -1,9 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { IFood, IController } from '../models/models';
-import { categoryModel, foodModel } from '../models/mongooseSchema';
+import { IFood, IController, ICategory } from '../models/models';
+import {
+	categoryModel,
+	foodModel,
+	materialModel,
+} from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-import { UpdateWriteOpResult } from 'mongoose';
+import { Types } from 'mongoose';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import { log } from 'console';
@@ -13,40 +17,128 @@ export default class foodController implements IController {
 	public endPoint = '/food';
 	private food = foodModel;
 	private category = categoryModel;
+	private material = materialModel;
 	constructor() {
-		this.router.post('/add', authAdminToken, this.addFood);
-		this.router.get('/allEnabled', authToken, this.getAllEnabledFood);
-		this.router.get('/all', authToken, this.getFood);
-
-		this.router.get('/allToOrder', authToken, this.getFoodToOrder);
-		this.router.get('/name/:name', authToken, this.getFoodByName);
-		this.router.get('/category/:category', authToken, this.getFoodByCategory);
-		this.router.get('/filter', authToken, this.filterFood);
-
-		this.router.put('/update/:id', authAdminToken, this.updateFood);
-
-		this.router.patch('/disable/:name', authAdminToken, this.disableByName);
-		this.router.patch('/enable/:name', authAdminToken, this.enableByName);
-
-		this.router.delete('/name/:name', authAdminToken, this.deleteFood);
+		this.router.post('', authAdminToken, this.addFood);
+		this.router.get('', authToken, this.filterFood);
+		this.router.put('/:id', authAdminToken, this.updateFood);
+		this.router.delete('/:id', authAdminToken, this.deleteFoodById);
 	}
 
 	private filterFood = async (req: Request, res: Response) => {
 		try {
-			const { field, value } = req.query;
-			if (field && value) {
-				const selectedItems = await this.food
-					.find({ [field as string]: value })
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
-				if (selectedItems.length > 0) {
-					res.send(selectedItems);
-				} else {
-					throw Error('77');
-				}
-			} else {
-				throw Error('76');
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				name,
+				englishName,
+				minPrice,
+				maxPrice,
+				isEnabled,
+				categoryId,
+				subCategoryId,
+				image,
+				fields,
+			} = req.query;
+
+			if (
+				isNaN(Number(page)) ||
+				isNaN(Number(limit)) ||
+				Number(page) < 0 ||
+				Number(limit) < 0
+			) {
+				throw Error('93');
 			}
+
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = [
+				'_id',
+				'name',
+				'englishName',
+				'materials',
+				'minPrice',
+				'maxPrice',
+				'isEnabled',
+				'categoryId',
+				'subCategoryId',
+				'image',
+			];
+
+			const query: any = {};
+			query.isDeleted = false;
+			if (_id) query._id = new Types.ObjectId(_id as string);
+			if (name) query.name = new RegExp(name as string, 'i');
+			if (englishName)
+				query.englishName = new RegExp(englishName as string, 'i');
+
+			if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
+				query.price = { $lte: Number(minPrice) };
+				query.price = { $gte: Number(maxPrice) };
+			} else if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
+				query.price = { $gte: Number(minPrice) };
+				query.price = { $lte: Number(maxPrice) };
+			} else {
+				if (minPrice) query.price = { $gte: Number(minPrice) };
+				if (maxPrice) query.price = { $lte: Number(maxPrice) };
+			}
+
+			if (isEnabled) query.isEnabled = isEnabled;
+
+			if (categoryId) {
+				if (!(await this.category.findOne({ _id: categoryId })))
+					throw Error('44');
+				query.categoryId = new Types.ObjectId(categoryId as string);
+			}
+			if (subCategoryId) {
+				if (
+					!(await this.category.findOne({
+						_id: new Types.ObjectId(subCategoryId as string),
+					}))
+				)
+					throw Error('84');
+				query.subCategoryId = new Types.ObjectId(subCategoryId as string);
+			}
+			if (image) query.image = new RegExp(image as string);
+
+			let projection: any = { _id: 1 };
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
+			} else {
+				projection = {
+					_id: 1,
+					name: 1,
+					englishName: 1,
+					materials: 1,
+					price: 1,
+					isEnabled: 1,
+					categoryId: 1,
+					subCategoryId: 1,
+					image: 1,
+				};
+			}
+
+			const materialChanges = await this.food.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+			]);
+			res.send({
+				items: materialChanges,
+				pageCount: Math.ceil(
+					(await this.food.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
@@ -58,31 +150,37 @@ export default class foodController implements IController {
 		try {
 			const foodInput: IFood = req.body;
 			await this.foodConstraints.validateAsync(foodInput);
-			if (await this.category.findOne({ _id: foodInput.categoryId })) {
-				const inserted = await this.food.insertMany([foodInput]);
-				if (inserted) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('02');
-				}
-			} else {
+			if (
+				(await this.category.find({ _id: { $in: foodInput.subCategoryId } }))
+					.length !== foodInput.subCategoryId!.length
+			) {
+				throw Error('84');
+			}
+			if (!(await this.category.findOne({ _id: foodInput.categoryId }))) {
 				throw Error('44');
 			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFood = async (req: Request, res: Response) => {
-		try {
-			const foods = await this.food
-				.find()
-				.populate('categoryId', '-_id')
-				.populate('subCategoryId', '-_id');
-			if (foods) {
-				res.send(foods);
+
+			if (await this.food.findOne({ name: foodInput.name })) {
+				throw Error('86');
+			}
+			const materialIds = foodInput.materials.map((material) => material._id);
+
+			const materials = await this.material.find({
+				_id: { $in: materialIds },
+			});
+			if (materials.length !== materialIds.length) {
+				throw Error('85');
+			}
+			delete foodInput._id;
+			const inserted = await this.food.insertMany([foodInput], {
+				rawResult: true,
+			});
+
+			if (inserted) {
+				defaultAnswers.ok(
+					res,
+					await this.food.findOne({ _id: inserted.insertedIds[0] })
+				);
 			} else {
 				throw Error('02');
 			}
@@ -94,14 +192,19 @@ export default class foodController implements IController {
 		}
 	};
 
-	private deleteFood = async (req: Request, res: Response) => {
+	private deleteFoodById = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
+			const id = req.params.id;
 
-			if (name) {
-				const foodDeleteResponse = await this.food.deleteMany({ name: name });
-				if (foodDeleteResponse.deletedCount > 0) {
-					defaultAnswers.ok(res);
+			if (id) {
+				const foodDeleteResponse = await this.food.findByIdAndUpdate(
+					{
+						_id: id,
+					},
+					{ isDeleted: true }
+				);
+				if (foodDeleteResponse) {
+					defaultAnswers.ok(res, foodDeleteResponse);
 				} else {
 					throw Error('43');
 				}
@@ -116,49 +219,59 @@ export default class foodController implements IController {
 		}
 	};
 
-	private getAllEnabledFood = async (req: Request, res: Response) => {
-		try {
-			const foods = await this.food
-				.find({ isEnabled: true }, { 'material._id': 0 })
-				.populate('categoryId', '-_id')
-				.populate('subCategoryId', '-_id');
-			if (foods) {
-				res.send(foods);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 	private updateFood = async (req: Request, res: Response) => {
 		try {
-			const newFood: IFood = req.body;
+			const changedData: IFood = req.body;
 			const id = req.params.id;
-			await this.foodConstraints.validateAsync(newFood);
+
 			if (id) {
-				const foods: UpdateWriteOpResult = await this.food.updateOne(
-					{
-						_id: id,
-					},
-					{
-						name: newFood.name,
-						materials: newFood.materials,
-						price: newFood.price,
-						isEnabled: newFood.isEnabled,
-						categoryId: newFood.categoryId,
-					}
+				let oldFood: IFood | null = await this.food.findById(id);
+				if (!oldFood) {
+					throw Error('73');
+				}
+				const newFood: IFood = {
+					...(oldFood = { ...changedData, _id: oldFood._id }),
+				};
+
+				const response = await this.food.find({
+					$and: [{ name: newFood.name }, { _id: { $ne: id } }],
+				});
+				if (response.length > 0) {
+					throw Error('86');
+				}
+
+				const category: ICategory | null = await this.category.findOne({
+					_id: newFood.categoryId,
+				});
+				if (!category) {
+					throw Error('44');
+				}
+				const subCategory: ICategory[] | null = await this.category.find({
+					_id: newFood.subCategoryId,
+				});
+				if (
+					subCategory &&
+					newFood.subCategoryId!.length !== subCategory.length
+				) {
+					throw Error('84');
+				}
+				delete newFood._id;
+				const newFoodToStore: IFood = {
+					...(oldFood = {
+						...newFood,
+					}),
+				};
+				const foods: IFood | null = await this.food.findByIdAndUpdate(
+					id,
+					newFoodToStore
 				);
-				if (foods.modifiedCount > 0) {
-					res.send(foods);
+				if (foods) {
+					defaultAnswers.ok(res, await this.food.findOne({ _id: id }));
 				} else {
 					throw Error('45');
 				}
 			} else {
-				res.status(400).json('07');
+				throw Error('07');
 			}
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -168,136 +281,6 @@ export default class foodController implements IController {
 		}
 	};
 
-	private disableByName = async (req: Request, res: Response) => {
-		try {
-			const name = req.params.name;
-			if (name) {
-				const foods: UpdateWriteOpResult = await this.food.updateOne(
-					{
-						name: name,
-					},
-					{
-						$set: { isEnabled: false },
-					}
-				);
-				if (foods.modifiedCount > 0) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('73');
-				}
-			} else {
-				throw Error('42');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private enableByName = async (req: Request, res: Response) => {
-		try {
-			const name = req.params.name;
-			if (name) {
-				const foods: UpdateWriteOpResult = await this.food.updateOne(
-					{
-						name: name,
-					},
-					{
-						$set: { isEnabled: true },
-					}
-				);
-				if (foods.modifiedCount > 0) {
-					defaultAnswers.ok(res);
-				} else {
-					throw Error('73');
-				}
-			} else {
-				throw Error('42');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodToOrder = async (req: Request, res: Response) => {
-		try {
-			const foods = await this.food
-				.find(
-					{ isEnabled: true },
-					{ _id: 0, name: 1, price: 1, image: 1, categoryId: 1 }
-				)
-				.populate('categoryId', '-_id')
-				.populate('subCategoryId', '-_id');
-			if (foods) {
-				res.send(foods);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByName = async (req: Request, res: Response) => {
-		try {
-			const name = req.params.name;
-			if (name) {
-				const foods = await this.food
-					.findOne({ name: name }, { 'materials._id': 0 })
-					.populate('categoryId', '-_id')
-					.populate('subCategoryId', '-_id');
-				if (foods) {
-					res.send(foods);
-				} else {
-					throw Error('73');
-				}
-			} else {
-				throw Error('42');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
-	private getFoodByCategory = async (req: Request, res: Response) => {
-		try {
-			const category = req.params.category;
-			if (category) {
-				const selectedCategory = await this.category.findOne({
-					name: category,
-				});
-				if (selectedCategory) {
-					const foods = await this.food
-						.find({
-							categoryId: { $in: selectedCategory?._id },
-						})
-						.populate('categoryId', '-_id')
-						.populate('subCategoryId', '-_id');
-					if (foods) {
-						res.send(foods);
-					} else {
-						throw Error('02');
-					}
-				} else {
-					throw Error('44');
-				}
-			} else {
-				throw Error('50');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 	private foodConstraints = Joi.object({
 		name: Joi.string()
 			.pattern(/^[a-zA-ZáéiíoóöőuúüűÁÉIÍOÓÖŐUÚÜŰä0-9 ]+$/)
@@ -315,7 +298,7 @@ export default class foodController implements IController {
 		materials: Joi.array()
 			.items(
 				Joi.object({
-					name: Joi.string().required().messages({
+					_id: Joi.string().required().messages({
 						'string.empty': '41',
 						'any.required': '41',
 					}),

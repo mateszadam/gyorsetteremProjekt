@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for MongoDB
+name: Automated Test
 
 on:
   pull_request:
@@ -22,10 +22,10 @@ jobs:
 
       - name: Run Server and Wait for it to start and start testing
         run: |
-          npm run t
+          npm run autoTest
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BASE_URL: http://localhost:5005
-          IS_TEST: TRUE
+          MODE: test

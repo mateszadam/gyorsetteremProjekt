@@ -1,41 +1,90 @@
-import e, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
-import { categoryModel } from '../models/mongooseSchema';
+import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-import { log } from 'console';
-import { waitForDebugger } from 'inspector';
+import mongoose from 'mongoose';
+
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
+	private food = foodModel;
 	public endPoint = '/category';
 
 	constructor() {
-		this.router.post('/add', authAdminToken, this.add);
-		this.router.get('/all', authAdminToken, this.getAll);
-		this.router.delete('/:name', authAdminToken, this.deleteOne);
+		this.router.post('', authAdminToken, this.add);
+		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
-		this.router.get('/filter', authToken, this.filterCategory);
+		this.router.get('', authToken, this.filterCategory);
 	}
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
-			const { field, value } = req.query;
-			if (field && value) {
-				const selectedItems = await this.category.find({
-					[field as string]: value,
-				});
-				if (selectedItems.length > 0) {
-					res.send(selectedItems);
-				} else {
-					throw Error('77');
-				}
-			} else {
-				throw Error('76');
+			let {
+				page = 1,
+				limit = 10,
+				_id,
+				name,
+				englishName,
+				icon,
+				fields,
+				isMainCategory,
+			} = req.query;
+
+			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+				throw Error('93');
 			}
+
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
+			const allowedFields = ['_id', 'name', 'englishName', 'icon'];
+
+			const query: any = {};
+			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
+			if (name) query.name = new RegExp(name as string, 'i');
+			if (englishName)
+				query.englishName = new RegExp(englishName as string, 'i');
+			if (icon) query.icon = new RegExp(icon as string, 'i');
+			if (isMainCategory) query.isMainCategory = isMainCategory === 'true';
+
+			let projection: any = { _id: 1 };
+
+			if (typeof fields === 'string') {
+				fields = [fields];
+			}
+
+			if (fields) {
+				(fields as string[]).forEach((field) => {
+					if (allowedFields.includes(field)) {
+						projection[field] = 1;
+					}
+				});
+			} else {
+				projection = {
+					_id: 1,
+					name: 1,
+					englishName: 1,
+					icon: 1,
+					isMainCategory: 1,
+				};
+			}
+
+			const categories = await this.category.aggregate([
+				{ $match: query },
+				{ $project: projection },
+				{ $skip: skip },
+				{ $limit: itemsPerPage },
+			]);
+
+			res.send({
+				items: categories,
+				pageCount: Math.ceil(
+					(await this.category.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
@@ -49,9 +98,15 @@ export default class categoryController implements IController {
 			const newCategory: ICategory = req.body;
 			await this.categoryConstraints.validateAsync(newCategory);
 			if ((await this.category.find({ name: newCategory.name })).length === 0) {
-				const response = await this.category.insertMany([newCategory]);
+				const response = await this.category.insertMany([newCategory], {
+					rawResult: true,
+				});
+
 				if (response) {
-					defaultAnswers.ok(res);
+					defaultAnswers.ok(
+						res,
+						await this.category.findOne({ _id: response.insertedIds[0] })
+					);
 				} else {
 					throw Error('02');
 				}
@@ -65,29 +120,13 @@ export default class categoryController implements IController {
 			);
 		}
 	};
-	private getAll = async (req: Request, res: Response) => {
-		try {
-			const response: ICategory[] = await this.category.find({});
-			if (response) {
-				res.send(response);
-			} else {
-				throw Error('02');
-			}
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 	private deleteOne = async (req: Request, res: Response) => {
 		try {
-			const name = req.params.name;
-
-			if (name) {
-				const response = await this.category.deleteOne({ name: name });
-				if (response.deletedCount > 0) {
-					defaultAnswers.ok(res);
+			const id = req.params.id;
+			if (id) {
+				const response = await this.category.findByIdAndDelete(id);
+				if (response) {
+					defaultAnswers.ok(res, response);
 				} else {
 					throw Error('43');
 				}
@@ -123,7 +162,7 @@ export default class categoryController implements IController {
 						}
 					);
 					if (response.matchedCount > 0) {
-						defaultAnswers.ok(res);
+						defaultAnswers.ok(res, await this.category.findOne({ _id: id }));
 					} else {
 						throw Error('44');
 					}
@@ -154,14 +193,16 @@ export default class categoryController implements IController {
 				'string.max': '09',
 				'string.pattern.base': '19',
 			}),
-		icon: Joi.string().required().messages({
-			'string.empty': '20',
-			'any.required': '20',
-		}),
+		icon: Joi.string()
+			.required()
+			.messages({ 'string.empty': '20', 'any.required': '20' }),
 		englishName: Joi.string().required().messages({
 			'string.empty': '78',
 			'string.pattern.base': '78',
 			'any.required': '78',
+		}),
+		isMainCategory: Joi.boolean().messages({
+			'boolean.base': '96',
 		}),
 	});
 }

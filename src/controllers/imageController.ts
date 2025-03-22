@@ -15,14 +15,12 @@ export default class imagesController implements IController {
 	constructor() {
 		this.router.use(fileUpload());
 
-		this.router.get('/name/:imageName', authToken, this.getImage);
-		this.router.get('/all', authToken, this.listAllFiles);
-
-		// this.router.delete('/:imageName', authToken, this.deleteImage);
+		this.router.get('/name/:imageName', this.getImage);
+		this.router.get('/all', this.listAllFiles);
 
 		this.router.post('/', authAdminToken, this.uploadImage);
 		this.router.get('/profile', authToken, this.listAllProfilePictures);
-		this.router.get('/profile/:name', authToken, this.getProfiePictureByName);
+		this.router.get('/profile/:name', this.getProfiePictureByName);
 	}
 	// User képeknek??????
 	// https://www.svgrepo.com/collection/emoji-face-emoji-vectors/

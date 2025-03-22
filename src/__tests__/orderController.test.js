@@ -1,8 +1,4 @@
 const { error } = require('console');
-const e = require('cors');
-const { waitForDebugger } = require('inspector');
-const { after } = require('node:test');
-const { finished } = require('stream');
 const request = require('supertest');
 require('dotenv').config();
 
@@ -14,45 +10,47 @@ let orderId = '';
 
 describe('orderController Integration Tests', () => {
 	beforeAll(async () => {
+		const response = await request(baseUrl)
+			.post('/user/login')
+			.send({ name: 'adminUser', password: 'adminUser!1' });
 		await request(baseUrl).post('/drop');
-
-		const response = await request(baseUrl).post('/user/login').send({
-			name: 'adminUser',
-			password: 'adminUser!1',
-		});
 		token = response.body.token;
 		await request(baseUrl)
-			.post('/material/add')
+			.post('/material')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'liszt',
-				quantity: 60,
-				message: 'Test',
-			});
+			.send({ name: 'liszt', englishName: 'flour', unit: 'kg' });
+
 		await request(baseUrl)
-			.post('/category/add')
+			.post('/inventory')
 			.set('Authorization', `Bearer ${token}`)
-			.send({
-				name: 'string',
-				icon: 'no-image.svg',
-				englishName: 'string',
-			});
-		const category = await request(baseUrl)
-			.get('/category/all')
+			.send({ name: 'liszt', quantity: 100, message: 'Initial stock' });
+
+		const materials = await request(baseUrl)
+			.get('/material')
 			.set('Authorization', `Bearer ${token}`)
 			.send();
-		catId = category.body[0]._id;
+		const materialId = materials.body.items[0]._id;
+
 		await request(baseUrl)
-			.post('/food/add')
+			.post('/category')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ name: 'string', icon: 'no-image.svg', englishName: 'string' });
+		const category = await request(baseUrl)
+			.get('/category')
+			.set('Authorization', `Bearer ${token}`)
+			.send();
+		catId = category.body.items[0]._id;
+		await request(baseUrl)
+			.post('/food')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
 				name: 'TestFood3',
 				price: 10,
-				materials: [{ name: 'liszt', quantity: 1 }],
+				materials: [{ _id: materialId, quantity: 1 }],
 				categoryId: catId,
 				subCategoryId: [catId],
 				image: 'no-image',
-				englishName: 'TestFood3',
+				englishName: 'Test Food English',
 			});
 
 		const user = await request(baseUrl)
@@ -60,59 +58,131 @@ describe('orderController Integration Tests', () => {
 			.set('Authorization', `Bearer ${token}`);
 
 		const foods = await request(baseUrl)
-			.get('/food/all')
+			.get('/food')
 			.set('Authorization', `Bearer ${token}`);
-		expect(foods.status).toBe(200);
 
-		foodId = foods.body[0].name;
-		costumerId = user.body[0]._id;
+		foodId = foods.body.items[0]._id;
+		costumerId = user.body.items[0]._id;
 
-		const order = await request(baseUrl)
-			.post('/order/new')
+		await request(baseUrl)
+			.post('/order')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
 				costumerId: costumerId,
-				orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
+				orderedProducts: [{ _id: foodId, quantity: 1 }],
 			});
-		orderId = order.body.orderId;
-	}, 20000);
 
-	describe('01 POST /order/new', () => {
-		it('should create a new order', async () => {
-			const response = await request(baseUrl)
-				.post('/order/new')
+		const orderResponse = await request(baseUrl)
+			.get(`/order`)
+			.set('Authorization', `Bearer ${token}`);
+		orderId = orderResponse.body.items[0]._id;
+		for (let i = 0; i < 9; i++) {
+			await request(baseUrl)
+				.post('/order')
 				.set('Authorization', `Bearer ${token}`)
 				.send({
 					costumerId: costumerId,
-					orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
+					orderedProducts: [{ _id: foodId, quantity: 1 }],
 				});
+		}
+	}, 600000);
 
+	describe('01 POST /order', () => {
+		it('should create a new order', async () => {
+			const response = await request(baseUrl)
+				.post('/order')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					costumerId: costumerId,
+					orderedProducts: [{ _id: foodId, quantity: 5 }],
+				});
 			expect(response.status).toBe(201);
+			expect(response.body).toEqual(
+				expect.objectContaining({
+					_id: expect.any(String),
+					costumerId: expect.any(String),
+					orderedProducts: expect.any(Array),
+					orderedTime: expect.any(String),
+					orderNumber: expect.any(Number),
+					totalPrice: expect.any(Number),
+					finishedCokingTime: null,
+					finishedTime: null,
+				})
+			);
+
+			const materialChanges = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`);
+			expect(materialChanges.body.items[0].inStock).toBe(85);
+		});
+
+		it('should return 400 if costumerId is invalid', async () => {
+			const response = await request(baseUrl)
+				.post('/order')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					costumerId: 'invalidId',
+					orderedProducts: [{ _id: foodId, quantity: 1 }],
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('The provided ID is invalid!');
+		});
+
+		it('should return 400 if orderedProducts are invalid', async () => {
+			const response = await request(baseUrl)
+				.post('/order')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					costumerId: costumerId,
+					orderedProducts: [{ _id: '67bf345ee82353e877b1f657', quantity: 1 }],
+				});
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Product ID not found.');
+		});
+
+		it('should return 400 if there is not enough material', async () => {
+			const order = await request(baseUrl)
+				.post('/order')
+				.set('Authorization', `Bearer ${token}`)
+				.send({
+					costumerId: costumerId,
+					orderedProducts: [{ _id: foodId, quantity: 1000 }],
+				});
+			expect(order.status).toBe(400);
+			expect(order.body.message).toBe(
+				'The provided quantity would result in a negative ingredient quantity!'
+			);
+
+			const materialChanges = await request(baseUrl)
+				.get('/material')
+				.set('Authorization', `Bearer ${token}`);
+			expect(materialChanges.body.items[0].inStock).toBe(85);
+
 			expect(
 				(
 					await request(baseUrl)
-						.get('/order/salesman')
+						.get('/order')
 						.set('Authorization', `Bearer ${token}`)
-				).body
-			).toEqual(
-				expect.arrayContaining([
-					{
-						_id: response.body.orderId,
-						costumerId: costumerId,
-						orderedProducts: [{ name: 'testfood3', quantity: 1, id: null }],
-						orderedTime: expect.any(String),
-						orderNumber: expect.any(Number),
-						totalPrice: expect.any(Number),
-						finishedCokingTime: null,
-						finishedTime: null,
-					},
-				])
-			);
+						.query({ field: '_id', value: order.body._id })
+				).body.items.length
+			).toBe(10);
 		});
 	});
 
 	describe('02 GET /order/salesman', () => {
+		it('should not get any ongoing orders (because there ar no)', async () => {
+			const response = await request(baseUrl)
+				.get('/order/salesman')
+				.set('Authorization', `Bearer ${token}`);
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual([]);
+		});
+
 		it('should get all ongoing orders', async () => {
+			await request(baseUrl)
+				.patch(`/order/finish/${orderId}`)
+				.set('Authorization', `Bearer ${token}`);
+
 			const response = await request(baseUrl)
 				.get('/order/salesman')
 				.set('Authorization', `Bearer ${token}`);
@@ -120,103 +190,22 @@ describe('orderController Integration Tests', () => {
 
 			expect(response.body).toEqual(
 				expect.arrayContaining([
-					{
+					expect.objectContaining({
 						_id: expect.any(String),
 						costumerId: expect.any(String),
 						orderedProducts: expect.any(Array),
 						orderedTime: expect.any(String),
 						orderNumber: expect.any(Number),
 						totalPrice: expect.any(Number),
-						finishedCokingTime: null,
-						finishedTime: null,
-					},
-				])
-			);
-		});
-	});
-	describe('03 PATCH /finished/:id', () => {
-		it('should finish an order by id', async () => {
-			const orders = await request(baseUrl)
-				.patch(`/order/finish/${orderId}`)
-				.set('Authorization', `Bearer ${token}`)
-				.send();
-			expect(orders.status).toBe(200);
-			expect(
-				(
-					await request(baseUrl)
-						.get(`/order/all/${costumerId}`)
-						.set('Authorization', `Bearer ${token}`)
-				).body
-			).toEqual(
-				expect.arrayContaining([
-					{
-						_id: expect.any(String),
-						costumerId: costumerId,
-						orderedProducts: [{ name: 'testfood3', quantity: 1, id: null }],
-						orderedTime: expect.any(String),
-						orderNumber: expect.any(Number),
 						finishedCokingTime: expect.any(String),
-						totalPrice: expect.any(Number),
 						finishedTime: null,
-					},
+					}),
 				])
 			);
 		});
 	});
-
-	describe('04 PATCH /handover/:id', () => {
-		it('should handover an order by id', async () => {
-			const orders = await request(baseUrl)
-				.patch(`/order/handover/${orderId}`)
-				.set('Authorization', `Bearer ${token}`)
-				.send();
-			expect(orders.status).toBe(200);
-			expect(
-				(
-					await request(baseUrl)
-						.get(`/order/all/${costumerId}`)
-						.set('Authorization', `Bearer ${token}`)
-				).body
-			).toEqual(
-				expect.arrayContaining([
-					{
-						_id: expect.any(String),
-						costumerId: costumerId,
-						orderedProducts: [{ name: 'testfood3', quantity: 1, id: null }],
-						orderedTime: expect.any(String),
-						orderNumber: expect.any(Number),
-						finishedCokingTime: expect.any(String),
-						finishedTime: expect.any(String),
-						totalPrice: expect.any(Number),
-					},
-				])
-			);
-		});
-	});
-	// TODO: Enable this test after implementing the feature
-	// describe('05 GET /order/all/:from/:to', () => {
-	// 	it('should get all orders within the specified date range', async () => {
-	// 		const fromDate = new Date();
-	// 		const response = await request(baseUrl)
-	// 			.get(`/order/all/${fromDate}/{to}`)
-	// 			.set('Authorization', `Bearer ${token}`);
-	// 		expect(response).toBe(200);
-	// 		response.body.forEach((order) => {
-	// 			expect(new Date(order.finishedTime)).toBeGreaterThanOrEqual(
-	// 				new Date(fromDate)
-	// 			);
-	// 		});
-	// 	});
-	// });
-	describe('06 GET /order/kitchen', () => {
+	describe('03 GET /order/kitchen', () => {
 		it('should get all orders for the kitchen', async () => {
-			await request(baseUrl)
-				.post('/order/new')
-				.set('Authorization', `Bearer ${token}`)
-				.send({
-					costumerId: costumerId,
-					orderedProducts: [{ name: 'TestFood', quantity: 1 }],
-				});
 			const response = await request(baseUrl)
 				.get('/order/kitchen')
 				.set('Authorization', `Bearer ${token}`);
@@ -228,81 +217,58 @@ describe('orderController Integration Tests', () => {
 		});
 	});
 
-	describe('07 GET /order/all/:id', () => {
-		it('should get an order by user id', async () => {
-			const response = await request(baseUrl)
-				.get(`/order/all/${costumerId}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(200);
-			expect(response.body.length).toBeGreaterThan(0);
-		});
-
-		it('should return 404 if order is not found', async () => {
-			const response = await request(baseUrl)
-				.get('/order/all/invalidOrderId')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('The provided ID is invalid!');
-		});
-	});
-
-	describe('08 GET /order/page/:number', () => {
-		it('should get orders by page number with 1 page', async () => {
-			const pageNumber = 0;
-			const pageResponse = await request(baseUrl)
-				.get(`/order/page/${pageNumber}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(1);
-			expect(pageResponse.body.orders.length).toBeLessThanOrEqual(10);
-		});
-
-		it('should get orders by page number with 2 page', async () => {
-			for (let i = 0; i < 10; i++) {
-				await request(baseUrl)
-					.post('/order/new')
-					.set('Authorization', `Bearer ${token}`)
-					.send({
-						costumerId: costumerId,
-						orderedProducts: [{ name: 'TestFood3', quantity: 1 }],
-					});
-			}
-			const pageNumber = 0;
-			const pageResponse = await request(baseUrl)
-				.get(`/order/page/${pageNumber}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(2);
-			expect(pageResponse.body.orders.length).toEqual(10);
-		});
-
-		it('should get orders by page number 1 ', async () => {
-			const pageNumber = 1;
-			const pageResponse = await request(baseUrl)
-				.get(`/order/page/${pageNumber}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(pageResponse.status).toBe(200);
-			expect(pageResponse.body.pageCount).toEqual(2);
-			expect(pageResponse.body.orders.length).toEqual(2);
-		});
-
-		it('should return 400 if page number is invalid', async () => {
-			const response = await request(baseUrl)
-				.get('/order/page/invalidPageNumber')
-				.set('Authorization', `Bearer ${token}`);
-			expect(response.status).toBe(400);
-			expect(response.body.message).toBe('Page number is invalid!');
-		});
-	});
-	describe('9 PATCH /order/finish/:id', () => {
+	describe('04 PATCH /order/finish/:id', () => {
 		it('should finish an order by id', async () => {
 			const response = await request(baseUrl)
 				.patch(`/order/finish/${orderId}`)
-				.set('Authorization', `Bearer ${token}`);
+				.set('Authorization', `Bearer ${token}`)
+				.send();
 			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/order/${orderId}`)
+						.set('Authorization', `Bearer ${token}`)
+				).body.finishedCokingTime
+			).not.toBeNull();
+		});
+
+		it('should return 400 if order id is invalid', async () => {
+			const response = await request(baseUrl)
+				.patch('/order/finish/67bf345ee82353e877b1f657')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Order ID not found in the database!');
 		});
 	});
-	describe('10 PATCH /order/revertKitchenFinish/:id', () => {
+
+	describe('05 PATCH /order/handover/:id', () => {
+		it('should handover an order by id', async () => {
+			const response = await request(baseUrl)
+				.patch(`/order/handover/${orderId}`)
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			expect(response.status).toBe(200);
+			expect(
+				(
+					await request(baseUrl)
+						.get(`/order/${orderId}`)
+						.set('Authorization', `Bearer ${token}`)
+				).body.finishedTime
+			).not.toBeNull();
+		});
+		it('should return 400 if order id is invalid', async () => {
+			const response = await request(baseUrl)
+				.patch('/order/handover/67bf345ee82353e877b1f657')
+				.set('Authorization', `Bearer ${token}`)
+				.send();
+			expect(response.status).toBe(400);
+			expect(response.body.message).toBe('Order ID not found in the database!');
+		});
+	});
+
+	describe('06 PATCH /order/revert/finish/:id', () => {
 		it('should revert the kitchen finish time of an order by id', async () => {
 			await request(baseUrl)
 				.patch(`/order/finish/${orderId}`)
@@ -317,17 +283,10 @@ describe('orderController Integration Tests', () => {
 			expect(response.status).toBe(200);
 
 			const orderResponse = await request(baseUrl)
-				.get(`/order/all/${costumerId}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(orderResponse.status).toBe(200);
-			expect(orderResponse.body).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({
-						_id: orderId,
-						finishedCokingTime: null,
-					}),
-				])
-			);
+				.get(`/order`)
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: '_id', value: orderId });
+			expect(orderResponse.body.items[0].finishedCokingTime).toBeNull();
 		});
 
 		it('should return 400 if order id is invalid', async () => {
@@ -339,10 +298,11 @@ describe('orderController Integration Tests', () => {
 			expect(response.body.message).toBe('The provided ID is invalid!');
 		});
 	});
-	describe('11 PATCH /order/revertReceivedOrder/:id', () => {
+
+	describe('07 PATCH /order/revert/handover/:id', () => {
 		it('should revert the received order by id', async () => {
 			await request(baseUrl)
-				.patch(`/order/finish/${orderId}`)
+				.patch(`/order/handover/${orderId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send();
 
@@ -354,17 +314,10 @@ describe('orderController Integration Tests', () => {
 			expect(response.status).toBe(200);
 
 			const orderResponse = await request(baseUrl)
-				.get(`/order/all/${costumerId}`)
-				.set('Authorization', `Bearer ${token}`);
-			expect(orderResponse.status).toBe(200);
-			expect(orderResponse.body).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({
-						_id: orderId,
-						finishedTime: null,
-					}),
-				])
-			);
+				.get(`/order`)
+				.set('Authorization', `Bearer ${token}`)
+				.query({ field: '_id', value: orderId });
+			expect(orderResponse.body.items[0].finishedTime).toBeNull();
 		});
 
 		it('should return 400 if order id is invalid', async () => {
@@ -376,7 +329,8 @@ describe('orderController Integration Tests', () => {
 			expect(response.body.message).toBe('The provided ID is invalid!');
 		});
 	});
-	describe('12 GET /order/display', () => {
+
+	describe('08 GET /order/display', () => {
 		it('should get orders for display', async () => {
 			const response = await request(baseUrl)
 				.get('/order/display')

@@ -3,10 +3,10 @@ import mongoose from 'mongoose';
 import { IController } from './models/models';
 import userController from './controllers/userController';
 import orderController from './controllers/orderController';
-import materialController from './controllers/materialController';
+import inventoryController from './controllers/inventoryController';
 import foodController from './controllers/foodController';
 import tokenValidationController from './controllers/tokenValidationController';
-import unitController from './controllers/unitController';
+import materialController from './controllers/materialController';
 import categoryController from './controllers/categoryController';
 import imagesController from './controllers/imageController';
 import GoogleDriveManager from './helpers/googleDriveHelper';
@@ -16,10 +16,11 @@ import ImplementMiddleware from './helpers/middlewareHelper';
 import {
 	categoryModel,
 	foodModel,
+	materialChangeModel,
+	materialModel,
 	orderModel,
-	unitOfMeasureModel,
-	userModel,
 } from './models/mongooseSchema';
+import statisticController from './controllers/statisticController';
 
 require('dotenv').config();
 
@@ -37,15 +38,16 @@ class App {
 		});
 
 		const mongoUri = process.env.MONGO_URI || '';
-		const isTest: string = process.env.IS_TEST?.toString() || '';
-		if (isTest == 'TRUE' || isTest == 'true') {
+		const mode: string = process.env.MODE?.toString() || '';
+		if (mode === 'test') {
 			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
 			this.app.use('/drop', async (req: Request, res: Response) => {
 				await categoryModel.collection.drop();
 				await foodModel.collection.drop();
 				await orderModel.collection.drop();
-				await unitOfMeasureModel.collection.drop();
+				await materialModel.collection.drop();
+				await materialChangeModel.collection.drop();
 				console.log('\x1b[42m%s\x1b[0m', 'Database dropped');
 				res.send('Database dropped');
 			});
@@ -97,12 +99,11 @@ class App {
 new App([
 	new userController(),
 	new orderController(),
-	new materialController(),
+	new inventoryController(),
 	new foodController(),
 	new tokenValidationController(),
-	new unitController(),
+	new materialController(),
 	new categoryController(),
 	new imagesController(),
+	new statisticController(),
 ]);
-// TODO: Implement: statistic controller
-// TODO: Implement: 2fa
