@@ -18,7 +18,47 @@ export default class categoryController implements IController {
 		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
 		this.router.get('', authToken, this.filterCategory);
+		this.router.get('/sub', authToken, this.getSubCategories);
 	}
+
+	private getSubCategories = async (req: Request, res: Response) => {
+		try {
+			const { main } = req.query;
+
+			let subCategories = await this.food.aggregate([
+				{ $match: { categoryId: new mongoose.Types.ObjectId(main as string) } },
+				{ $project: { _id: 0, subCategoryId: 1 } },
+				{ $unwind: '$subCategoryId' },
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'subCategoryId',
+						foreignField: '_id',
+						as: 'category',
+					},
+				},
+				{ $unwind: '$category' },
+				{
+					$group: {
+						_id: '$category._id',
+						name: { $first: '$category.name' },
+						englishName: { $first: '$category.englishName' },
+						icon: { $first: '$category.icon' },
+					},
+				},
+			]);
+			if (subCategories.length === 0) {
+				throw Error('95');
+			}
+
+			defaultAnswers.ok(res, subCategories);
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedErrorMessage.getError(req, error.message)
+			);
+		}
+	};
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {

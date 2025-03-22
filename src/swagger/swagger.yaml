@@ -148,6 +148,45 @@ paths:
                 properties:
                   message:
                     type: string
+  /category/sub:
+    get:
+      summary: Get sub categories
+      tags: [Category]
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - in: query
+          name: main
+          schema:
+            type: string
+          description: ID of the main category to filter subcategories
+          required: true
+      responses:
+        '200':
+          description: List of sub categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    name:
+                      type: string
+                    englishName:
+                      type: string
+                    icon:
+                      type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   /category/{id}:
     put:
       summary: Modify a category
