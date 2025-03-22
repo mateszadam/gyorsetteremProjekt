@@ -22,7 +22,7 @@ import {
 } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
-import webSocetController from './websocketController';
+import webSocketController from './websocketController';
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import mongoose, { ObjectId, Types } from 'mongoose';
@@ -119,8 +119,6 @@ export default class orderController implements IController {
 				newId = response.insertedIds[0];
 
 				if (response) {
-					// Check if there is enough material
-
 					for (let i = 0; i < newOrder.orderedProducts.length; i++) {
 						const food: IFood | null = await this.food.findById(
 							newOrder.orderedProducts[i]._id
@@ -189,7 +187,7 @@ export default class orderController implements IController {
 			const newOrderResponse: IOrderedProductFull = await this.getOrderDetails(
 				new Types.ObjectId(`${newId}`)
 			);
-			webSocetController.sendStateChangeToKitchen(newOrderResponse);
+			webSocketController.sendStateChangeToKitchen(newOrderResponse);
 			defaultAnswers.created(res, newOrderResponse);
 		} catch (error: any) {
 			await session.abortTransaction();
@@ -351,7 +349,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChangeToSalesman(
+					webSocketController.sendStateChangeToSalesman(
 						await this.getOrderDetails(new Types.ObjectId(id))
 					);
 					defaultAnswers.ok(res);
@@ -409,7 +407,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.modifiedCount > 0) {
-					webSocetController.sendStateChangeToDisplay(
+					webSocketController.sendStateChangeToDisplay(
 						await this.getOrderDetails(new Types.ObjectId(id))
 					);
 
@@ -700,13 +698,12 @@ export default class orderController implements IController {
 	});
 
 	private getNewOrderNumber = async () => {
-		const order = await this.order
-			.find({ finishedTime: null })
-			.sort({ orderNumber: -1 })
-			.limit(1)
-			.select('orderNumber');
-		if (order.length > 0) {
-			return Number(order[0].orderNumber) + 1;
+		const result = await this.order.aggregate([
+			{ $match: { finishedTime: null } },
+			{ $group: { _id: null, maxOrderNumber: { $max: '$orderNumber' } } },
+		]);
+		if (result.length > 0 && result[0].maxOrderNumber) {
+			return result[0].maxOrderNumber + 1;
 		} else {
 			return 1000;
 		}

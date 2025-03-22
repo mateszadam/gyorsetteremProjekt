@@ -5,7 +5,7 @@ import { generateToken, generateUUID4Token } from '../services/tokenService';
 
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 5006 });
-export default class webSocetController {
+export default class webSocketController {
 	static clientsToNotifyOnStateChange = new Map();
 	static sendAdminLogin = new Map();
 	static kitchen: any[] = [];

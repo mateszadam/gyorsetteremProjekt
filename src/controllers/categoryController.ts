@@ -1,4 +1,8 @@
 import { Router, Request, Response } from 'express';
+
+function escapeRegExp(string: string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 import { ICategory, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
@@ -7,7 +11,7 @@ import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
 import mongoose from 'mongoose';
 
-export default class categoryController implements IController {
+export default class CategoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
 	private food = foodModel;
@@ -73,7 +77,7 @@ export default class categoryController implements IController {
 				isMainCategory,
 			} = req.query;
 
-			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+			if (Number.isNaN(Number(page)) || Number.isNaN(Number(limit))) {
 				throw Error('93');
 			}
 
@@ -84,7 +88,7 @@ export default class categoryController implements IController {
 
 			const query: any = {};
 			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
-			if (name) query.name = new RegExp(name as string, 'i');
+			if (name) query.name = new RegExp(escapeRegExp(name as string), 'i');
 			if (englishName)
 				query.englishName = new RegExp(englishName as string, 'i');
 			if (icon) query.icon = new RegExp(icon as string, 'i');
@@ -163,7 +167,7 @@ export default class categoryController implements IController {
 	private deleteOne = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			if (id) {
+			if (id && mongoose.Types.ObjectId.isValid(id)) {
 				const response = await this.category.findByIdAndDelete(id);
 				if (response) {
 					defaultAnswers.ok(res, response);

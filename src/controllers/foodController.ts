@@ -75,18 +75,14 @@ export default class foodController implements IController {
 				query.englishName = new RegExp(englishName as string, 'i');
 
 			if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
-				query.price = { $lte: Number(minPrice) };
-				query.price = { $gte: Number(maxPrice) };
-			} else if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
-				query.price = { $gte: Number(minPrice) };
-				query.price = { $lte: Number(maxPrice) };
+				query.price = { $gte: Number(maxPrice), $lte: Number(minPrice) };
+			} else if (minPrice && maxPrice && Number(minPrice) < Number(maxPrice)) {
+				query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
 			} else {
 				if (minPrice) query.price = { $gte: Number(minPrice) };
 				if (maxPrice) query.price = { $lte: Number(maxPrice) };
 			}
-
-			if (isEnabled) query.isEnabled = isEnabled;
-
+			if (isEnabled) query.isEnabled = isEnabled === 'true';
 			if (categoryId) {
 				if (!(await this.category.findOne({ _id: categoryId })))
 					throw Error('44');
