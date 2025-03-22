@@ -93,8 +93,9 @@ export default class foodController implements IController {
 			}
 			if (subCategoryId) {
 				if (
-					(await this.category.find({ _id: subCategoryId })).length !==
-					subCategoryId.length
+					!(await this.category.findOne({
+						_id: new Types.ObjectId(subCategoryId as string),
+					}))
 				)
 					throw Error('84');
 				query.subCategoryId = new Types.ObjectId(subCategoryId as string);

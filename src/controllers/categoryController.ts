@@ -1,13 +1,12 @@
-import e, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { ICategory, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-
 import Joi from 'joi';
 import languageBasedErrorMessage from '../helpers/languageHelper';
-
 import mongoose from 'mongoose';
+
 export default class categoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
