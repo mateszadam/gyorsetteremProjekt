@@ -4,11 +4,9 @@ import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
-import Joi, { boolean } from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import Joi from 'joi';
+import languageBasedMessage from '../helpers/languageHelper';
 import { Types } from 'mongoose';
-
-import { OrderedBulkOperation } from 'mongodb';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -50,7 +48,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -212,7 +210,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -235,7 +233,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -280,7 +278,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
