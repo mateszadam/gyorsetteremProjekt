@@ -10,7 +10,7 @@ import {
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import { log } from 'console';
 
 export default class statisticController implements IController {
@@ -75,7 +75,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -110,7 +110,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -155,7 +155,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -183,7 +183,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -262,7 +262,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -320,7 +320,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -332,7 +332,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -386,7 +386,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -426,7 +426,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -506,7 +506,7 @@ export default class statisticController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};

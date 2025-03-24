@@ -5,7 +5,7 @@ import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import { Types } from 'mongoose';
 
 export default class materialController implements IController {
@@ -48,7 +48,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -210,7 +210,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -233,7 +233,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -278,7 +278,7 @@ export default class materialController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};

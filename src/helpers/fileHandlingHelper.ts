@@ -3,7 +3,7 @@ import { Router, Request, Response } from 'express';
 import defaultAnswers from './statusCodeHelper';
 import { UploadedFile } from 'express-fileupload';
 import GoogleDriveManager from './googleDriveHelper';
-import languageBasedErrorMessage from './languageHelper';
+import languageBasedMessage from './languageHelper';
 
 export default class fileHandler {
 	public static listDictionary(path: string, req: Request, res: Response) {
@@ -12,7 +12,7 @@ export default class fileHandler {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	}
@@ -39,7 +39,7 @@ export default class fileHandler {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	}
@@ -56,7 +56,7 @@ export default class fileHandler {
 				if (err) {
 					defaultAnswers.badRequest(
 						res,
-						languageBasedErrorMessage.getError(req, err)
+						languageBasedMessage.getError(req, err)
 					);
 				}
 				const message = await GoogleDriveManager.uploadFile(imagePath);

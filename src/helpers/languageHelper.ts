@@ -1,7 +1,14 @@
 import fs from 'fs';
 import { Request } from 'express';
+import {
+	ICategory,
+	IFood,
+	IMaterial,
+	IMaterialChange,
+	IOrderFull,
+} from '../models/models';
 
-class languageBasedErrorMessage {
+class languageBasedMessage {
 	private static readonly errorMessages = JSON.parse(
 		fs.readFileSync('./src/languages/lang.json', 'utf8')
 	);
@@ -39,5 +46,48 @@ class languageBasedErrorMessage {
 			return 'Internal Server Error';
 		}
 	}
+	static getLangageBasedName(
+		req: Request,
+		body: ICategory[] | IFood[] | IMaterial[]
+	) {
+		const lang = req.headers['accept-language'];
+
+		if (lang === 'hu') {
+			body.forEach((element) => {
+				delete element.englishName;
+			});
+			return body;
+		} else {
+			body.forEach((element) => {
+				if (element.englishName) element.name = element.englishName;
+
+				delete element.englishName;
+			});
+			return body;
+		}
+	}
+	static getLangageBasedNameFormOrder(req: Request, body: IOrderFull[]) {
+		const lang = req.headers['accept-language'];
+
+		if (lang === 'hu') {
+			body.forEach((element) => {
+				element.orderedProducts.forEach((food) => {
+					if (food.details) delete food.details.englishName;
+				});
+			});
+			return body;
+		} else {
+			body.forEach((element) => {
+				element.orderedProducts.forEach((food) => {
+					if (food.details) {
+						if (food.details.englishName)
+							food.details.name = food.details.englishName;
+						delete food.details.englishName;
+					}
+				});
+			});
+			return body;
+		}
+	}
 }
-export default languageBasedErrorMessage;
+export default languageBasedMessage;

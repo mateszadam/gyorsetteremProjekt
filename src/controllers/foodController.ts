@@ -9,9 +9,11 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { Types } from 'mongoose';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import { log } from 'console';
-
+function escapeRegExp(string: string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 export default class foodController implements IController {
 	public router = Router();
 	public endPoint = '/food';
@@ -32,7 +34,6 @@ export default class foodController implements IController {
 				limit = 10,
 				_id,
 				name,
-				englishName,
 				minPrice,
 				maxPrice,
 				isEnabled,
@@ -70,10 +71,12 @@ export default class foodController implements IController {
 			const query: any = {};
 			query.isDeleted = false;
 			if (_id) query._id = new Types.ObjectId(_id as string);
-			if (name) query.name = new RegExp(name as string, 'i');
-			if (englishName)
-				query.englishName = new RegExp(englishName as string, 'i');
-
+			if (name) {
+				query.$or = [
+					{ name: new RegExp(escapeRegExp(name as string), 'i') },
+					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+				];
+			}
 			if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
 				query.price = { $gte: Number(maxPrice), $lte: Number(minPrice) };
 			} else if (minPrice && maxPrice && Number(minPrice) < Number(maxPrice)) {
@@ -103,12 +106,29 @@ export default class foodController implements IController {
 			if (typeof fields === 'string') {
 				fields = [fields];
 			}
-			if (fields) {
-				(fields as string[]).forEach((field) => {
-					if (allowedFields.includes(field)) {
-						projection[field] = 1;
-					}
-				});
+			if (fields && Array.isArray(fields)) {
+				if (fields.includes('englishName')) {
+					projection = {
+						_id: 1,
+						name: 1,
+						englishName: 1,
+						materials: 1,
+						price: 1,
+						isEnabled: 1,
+						categoryId: 1,
+						subCategoryId: 1,
+						image: 1,
+					};
+				} else {
+					if (fields.includes('name')) fields.push('englishName');
+					if (fields.includes('englishName')) fields.push('Name');
+
+					(fields as string[]).forEach((field) => {
+						if (allowedFields.includes(field)) {
+							projection[field] = 1;
+						}
+					});
+				}
 			} else {
 				projection = {
 					_id: 1,
@@ -123,12 +143,25 @@ export default class foodController implements IController {
 				};
 			}
 
-			const materialChanges = await this.food.aggregate([
+			let materialChanges = await this.food.aggregate<IFood>([
 				{ $match: query },
 				{ $project: projection },
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
+			if (
+				!(
+					Array.isArray(fields) &&
+					fields.includes('englishName') &&
+					!fields.includes('name')
+				)
+			) {
+				materialChanges = languageBasedMessage.getLangageBasedName(
+					req,
+					materialChanges
+				) as IFood[];
+			}
+
 			res.send({
 				items: materialChanges,
 				pageCount: Math.ceil(
@@ -138,7 +171,7 @@ export default class foodController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -183,7 +216,7 @@ export default class foodController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -210,7 +243,7 @@ export default class foodController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -272,7 +305,7 @@ export default class foodController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};

@@ -8,7 +8,7 @@ import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import mongoose from 'mongoose';
 
 export default class CategoryController implements IController {
@@ -29,7 +29,7 @@ export default class CategoryController implements IController {
 		try {
 			const { main } = req.query;
 
-			let subCategories = await this.food.aggregate([
+			let subCategories = await this.food.aggregate<ICategory>([
 				{ $match: { categoryId: new mongoose.Types.ObjectId(main as string) } },
 				{ $project: { _id: 0, subCategoryId: 1 } },
 				{ $unwind: '$subCategoryId' },
@@ -55,11 +55,14 @@ export default class CategoryController implements IController {
 				throw Error('95');
 			}
 
-			defaultAnswers.ok(res, subCategories);
+			defaultAnswers.ok(
+				res,
+				languageBasedMessage.getLangageBasedName(req, subCategories)
+			);
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -71,7 +74,6 @@ export default class CategoryController implements IController {
 				limit = 10,
 				_id,
 				name,
-				englishName,
 				icon,
 				fields,
 				isMainCategory,
@@ -88,9 +90,12 @@ export default class CategoryController implements IController {
 
 			const query: any = {};
 			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
-			if (name) query.name = new RegExp(escapeRegExp(name as string), 'i');
-			if (englishName)
-				query.englishName = new RegExp(englishName as string, 'i');
+			if (name) {
+				query.$or = [
+					{ name: new RegExp(escapeRegExp(name as string), 'i') },
+					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+				];
+			}
 			if (icon) query.icon = new RegExp(icon as string, 'i');
 			if (isMainCategory) query.isMainCategory = isMainCategory === 'true';
 
@@ -116,7 +121,7 @@ export default class CategoryController implements IController {
 				};
 			}
 
-			const categories = await this.category.aggregate([
+			const categories: ICategory[] = await this.category.aggregate<ICategory>([
 				{ $match: query },
 				{ $project: projection },
 				{ $skip: skip },
@@ -124,7 +129,7 @@ export default class CategoryController implements IController {
 			]);
 
 			res.send({
-				items: categories,
+				items: languageBasedMessage.getLangageBasedName(req, categories),
 				pageCount: Math.ceil(
 					(await this.category.countDocuments(query)) / itemsPerPage
 				),
@@ -132,7 +137,7 @@ export default class CategoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -160,7 +165,7 @@ export default class CategoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -180,7 +185,7 @@ export default class CategoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -219,7 +224,7 @@ export default class CategoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};

@@ -4,6 +4,7 @@ import {
 	IFood,
 	IOrder,
 	IOrderedProductFull,
+	IOrderFull,
 	IUser,
 } from '../models/models';
 import {
@@ -24,7 +25,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocketController from './websocketController';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import mongoose, { ObjectId, Types } from 'mongoose';
 
 export default class orderController implements IController {
@@ -78,7 +79,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -193,14 +194,14 @@ export default class orderController implements IController {
 			await session.abortTransaction();
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
 
 	private getAllOngoingOrder = async (req: Request, res: Response) => {
 		try {
-			const orders = await this.order.aggregate([
+			const orders = await this.order.aggregate<IOrderFull>([
 				{
 					$match: {
 						$and: [
@@ -255,15 +256,14 @@ export default class orderController implements IController {
 					$sort: { orderedTime: -1 },
 				},
 			]);
-			if (orders) {
-				res.json(orders);
-			} else {
+			if (orders.length === 0) {
 				throw Error('02');
 			}
+			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -321,15 +321,14 @@ export default class orderController implements IController {
 					$sort: { orderedTime: -1 },
 				},
 			]);
-			if (orders) {
-				res.json(orders);
-			} else {
+			if (orders.length === 0) {
 				throw Error('02');
 			}
+			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -362,7 +361,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -389,7 +388,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -421,7 +420,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -449,7 +448,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -609,7 +608,7 @@ export default class orderController implements IController {
 				};
 			}
 
-			const orders = await this.order.aggregate([
+			const orders = await this.order.aggregate<IOrderFull>([
 				{ $match: query },
 				{ $project: projection },
 				{ $skip: skip },
@@ -656,9 +655,8 @@ export default class orderController implements IController {
 					},
 				},
 			]);
-
 			res.send({
-				items: orders,
+				items: languageBasedMessage.getLangageBasedNameFormOrder(req, orders),
 				pageCount: Math.ceil(
 					(await this.order.countDocuments(query)) / itemsPerPage
 				),
@@ -666,7 +664,7 @@ export default class orderController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};

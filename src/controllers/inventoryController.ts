@@ -8,7 +8,7 @@ import {
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 
 import { Types } from 'mongoose';
 
@@ -130,12 +130,13 @@ export default class inventoryController implements IController {
 				};
 			}
 
-			const materialChanges = await this.materialChanges.aggregate([
-				{ $match: query },
-				{ $project: projection },
-				{ $skip: skip },
-				{ $limit: itemsPerPage },
-			]);
+			const materialChanges =
+				await this.materialChanges.aggregate<IMaterialChange>([
+					{ $match: query },
+					{ $project: projection },
+					{ $skip: skip },
+					{ $limit: itemsPerPage },
+				]);
 			if (materialChanges.length > 0) {
 				res.send({
 					items: materialChanges,
@@ -149,7 +150,7 @@ export default class inventoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -171,7 +172,7 @@ export default class inventoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -229,7 +230,7 @@ export default class inventoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -290,7 +291,7 @@ export default class inventoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
