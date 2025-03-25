@@ -256,9 +256,6 @@ export default class orderController implements IController {
 					$sort: { orderedTime: -1 },
 				},
 			]);
-			if (orders.length === 0) {
-				throw Error('02');
-			}
 			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -321,9 +318,7 @@ export default class orderController implements IController {
 					$sort: { orderedTime: -1 },
 				},
 			]);
-			if (orders.length === 0) {
-				throw Error('02');
-			}
+
 			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
 		} catch (error: any) {
 			defaultAnswers.badRequest(
@@ -459,7 +454,6 @@ export default class orderController implements IController {
 				page = 1,
 				limit = 10,
 				_id,
-				orderNumber,
 				costumerId,
 				minTotalPrice,
 				maxTotalPrice,
@@ -502,7 +496,6 @@ export default class orderController implements IController {
 			const query: any = {};
 
 			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
-			if (orderNumber) query.orderNumber = Number(orderNumber);
 			if (costumerId)
 				query.costumerId = new mongoose.Types.ObjectId(costumerId as string);
 

@@ -261,8 +261,8 @@ describe('inventoryController Integration Tests', () => {
 						.get(`/inventory`)
 						.set('Authorization', `Bearer ${token}`)
 						.query({ _id: inventoryId })
-				).body.message
-			).toBe('No result in the database for the search condition!');
+				).body.pageCount
+			).toBe(0);
 		});
 		it('should not delete the material change with invalid id', async () => {
 			const response = await request(baseUrl)

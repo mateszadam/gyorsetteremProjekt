@@ -31,7 +31,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
-					englishName: 'TestCategory',
 					isMainCategory: true,
 				})
 			);
@@ -47,7 +46,6 @@ describe('categoryController Integration Tests', () => {
 						_id: expect.any(String),
 						name: 'TestCategory',
 						icon: 'test-icon.svg',
-						englishName: 'TestCategory',
 						isMainCategory: true,
 					}),
 				])
@@ -113,7 +111,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: 'TestCategory2',
 					icon: 'test-icon3.svg',
-					englishName: 'TestCategory2',
 					isMainCategory: true,
 				})
 			);
@@ -129,7 +126,6 @@ describe('categoryController Integration Tests', () => {
 						_id: expect.any(String),
 						name: 'TestCategory2',
 						icon: 'test-icon3.svg',
-						englishName: 'TestCategory2',
 					}),
 				])
 			);
@@ -196,8 +192,8 @@ describe('categoryController Integration Tests', () => {
 			expect(response.body).toEqual({
 				_id: expect.any(String),
 				name: expect.any(String),
-				icon: expect.any(String),
 				englishName: expect.any(String),
+				icon: expect.any(String),
 				isMainCategory: true,
 			});
 
@@ -264,7 +260,6 @@ describe('categoryController Integration Tests', () => {
 			expect(response.body.items).toEqual([
 				{
 					_id: expect.any(String),
-					englishName: 'TestCategory2',
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
 					isMainCategory: true,
@@ -287,7 +282,6 @@ describe('categoryController Integration Tests', () => {
 			expect(response.body.items).toEqual([
 				{
 					_id: expect.any(String),
-					englishName: 'TestCategory2',
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
 					isMainCategory: true,

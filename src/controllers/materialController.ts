@@ -58,7 +58,7 @@ export default class materialController implements IController {
 				page = 1,
 				limit = 10,
 				_id,
-				englishName,
+
 				unit,
 				name,
 				fields,
@@ -80,13 +80,22 @@ export default class materialController implements IController {
 			const query: any = {};
 
 			if (_id) query._id = new Types.ObjectId(_id as string);
-			if (englishName)
-				query.englishName = new RegExp(englishName as string, 'i');
 			if (unit) query.unit = new RegExp(unit as string, 'i');
-			if (name) query.name = new RegExp(name as string, 'i');
-			if (minInStock) query.inStock = { $gte: Number(minInStock) };
-			if (maxInStock) query.inStock = { $lte: Number(maxInStock) };
+			if (name) {
+				query.$or = [
+					{ name: new RegExp(name as string, 'i') },
+					{ englishName: new RegExp(name as string, 'i') },
+				];
+			}
 
+			if (minInStock && maxInStock) {
+				const min = Math.min(Number(minInStock), Number(maxInStock));
+				const max = Math.max(Number(minInStock), Number(maxInStock));
+				query.inStock = { $gte: min, $lte: max };
+			} else {
+				if (minInStock) query.inStock = { $gte: Number(minInStock) };
+				if (maxInStock) query.inStock = { $lte: Number(maxInStock) };
+			}
 			let projection: any = { _id: 1 };
 
 			if (typeof fields === 'string') {

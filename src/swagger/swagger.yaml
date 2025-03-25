@@ -704,11 +704,7 @@ paths:
         schema:
           type: string
         description: Filter by order ID
-      - name: orderNumber
-        in: query
-        schema:
-          type: integer
-        description: Filter by order number
+
       - name: costumerId
         in: query
         schema:
@@ -962,11 +958,6 @@ paths:
           type: string
         description: Filter by material ID
       - in: query
-        name: englishName
-        schema:
-          type: string
-        description: Filter by English name (supports regex)
-      - in: query
         name: unit
         schema:
           type: string
@@ -985,7 +976,7 @@ paths:
         name: name
         schema:
           type: string
-        description: Filter by name (supports regex)
+        description: Filter by name or english name (supports regex)
       - in: query
         name: usageOneWeekAgo
         schema:

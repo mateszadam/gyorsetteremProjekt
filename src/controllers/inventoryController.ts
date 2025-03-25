@@ -56,12 +56,17 @@ export default class inventoryController implements IController {
 			];
 
 			const query: any = {};
+
 			if (name) {
 				const id = (
 					await this.materials.findOne({
-						name: new RegExp(name as string, 'i'),
+						$or: [
+							{ name: new RegExp(name as string, 'i') },
+							{ englishName: new RegExp(name as string, 'i') },
+						],
 					})
 				)?._id;
+
 				if (id) query.materialId = id;
 				else throw Error('85');
 			}
@@ -137,16 +142,12 @@ export default class inventoryController implements IController {
 					{ $skip: skip },
 					{ $limit: itemsPerPage },
 				]);
-			if (materialChanges.length > 0) {
-				res.send({
-					items: materialChanges,
-					pageCount: Math.ceil(
-						(await this.materialChanges.countDocuments(query)) / itemsPerPage
-					),
-				});
-			} else {
-				throw Error('77');
-			}
+			res.send({
+				items: materialChanges,
+				pageCount: Math.ceil(
+					(await this.materialChanges.countDocuments(query)) / itemsPerPage
+				),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
