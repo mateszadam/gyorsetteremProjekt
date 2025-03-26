@@ -56,7 +56,7 @@ export default class CategoryController implements IController {
 			}
 			if (icon) query.icon = new RegExp(icon as string, 'i');
 
-			if (isMainCategory) query.isMainCategory = null;
+			if (isMainCategory && isMainCategory == 'true') query.mainCategory = null;
 			if (mainCategory)
 				query.mainCategory = new mongoose.Types.ObjectId(
 					mainCategory as string
@@ -109,6 +109,13 @@ export default class CategoryController implements IController {
 		try {
 			const newCategory: ICategory = req.body;
 			await this.categoryConstraints.validateAsync(newCategory);
+			if (newCategory.mainCategory == '') delete newCategory.mainCategory;
+			if (newCategory.mainCategory) {
+				const mainCategory = await this.category.findOne({
+					_id: newCategory.mainCategory,
+				});
+				if (!mainCategory) throw Error('97');
+			}
 			if ((await this.category.find({ name: newCategory.name })).length === 0) {
 				const response = await this.category.insertMany([newCategory], {
 					rawResult: true,

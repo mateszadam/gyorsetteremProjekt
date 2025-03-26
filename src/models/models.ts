@@ -16,7 +16,7 @@ interface ICategory {
 	name: string;
 	icon: string;
 	englishName?: string;
-	isMainCategory: boolean;
+	mainCategory?: string;
 }
 
 interface IMaterialChange {
@@ -81,6 +81,10 @@ interface IController {
 	endPoint: String;
 }
 
+interface IMaterialWithStock extends IMaterial {
+	inStock: number;
+	isEnough: boolean;
+}
 interface IOrderedProducts {
 	_id: ObjectId;
 	quantity: number;
@@ -111,4 +115,5 @@ export {
 	ICategory,
 	IOrderedProductFull,
 	IOrderFull,
+	IMaterialWithStock,
 };

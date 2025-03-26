@@ -31,7 +31,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: 'TestCategory',
 					icon: 'test-icon.svg',
-					isMainCategory: true,
 				})
 			);
 			expect(
@@ -46,7 +45,6 @@ describe('categoryController Integration Tests', () => {
 						_id: expect.any(String),
 						name: 'TestCategory',
 						icon: 'test-icon.svg',
-						isMainCategory: true,
 					}),
 				])
 			);
@@ -111,7 +109,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					name: 'TestCategory2',
 					icon: 'test-icon3.svg',
-					isMainCategory: true,
 				})
 			);
 			expect(
@@ -194,7 +191,6 @@ describe('categoryController Integration Tests', () => {
 				name: expect.any(String),
 				englishName: expect.any(String),
 				icon: expect.any(String),
-				isMainCategory: true,
 			});
 
 			expect(response.status).toBe(200);
@@ -262,7 +258,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
-					isMainCategory: true,
 				},
 			]);
 		});
@@ -284,7 +279,6 @@ describe('categoryController Integration Tests', () => {
 					_id: expect.any(String),
 					icon: 'test-icon3.svg',
 					name: 'TestCategory2',
-					isMainCategory: true,
 				},
 			]);
 		});

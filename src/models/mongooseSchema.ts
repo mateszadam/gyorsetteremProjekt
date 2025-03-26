@@ -66,7 +66,6 @@ const categorySchema = new Schema<SchemaDefinition>(
 		},
 		mainCategory: {
 			type: Schema.Types.ObjectId,
-			default: true,
 		},
 	},
 	{
