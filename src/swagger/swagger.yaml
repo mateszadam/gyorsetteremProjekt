@@ -107,6 +107,11 @@ paths:
               type: string
           description: Fields to include in the response
         - in: query
+          name: mainCategory
+          schema:
+            type: string
+          description: The main category of the category.
+        - in: query
           name: isMainCategory
           schema:
             type: boolean

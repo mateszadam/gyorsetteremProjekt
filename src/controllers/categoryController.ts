@@ -22,50 +22,7 @@ export default class CategoryController implements IController {
 		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
 		this.router.get('', authToken, this.filterCategory);
-		this.router.get('/sub', authToken, this.getSubCategories);
 	}
-
-	private getSubCategories = async (req: Request, res: Response) => {
-		try {
-			const { main } = req.query;
-
-			let subCategories = await this.food.aggregate<ICategory>([
-				{ $match: { categoryId: new mongoose.Types.ObjectId(main as string) } },
-				{ $project: { _id: 0, subCategoryId: 1 } },
-				{ $unwind: '$subCategoryId' },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'subCategoryId',
-						foreignField: '_id',
-						as: 'category',
-					},
-				},
-				{ $unwind: '$category' },
-				{
-					$group: {
-						_id: '$category._id',
-						name: { $first: '$category.name' },
-						englishName: { $first: '$category.englishName' },
-						icon: { $first: '$category.icon' },
-					},
-				},
-			]);
-			if (subCategories.length === 0) {
-				throw Error('95');
-			}
-
-			defaultAnswers.ok(
-				res,
-				languageBasedMessage.getLangageBasedName(req, subCategories)
-			);
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedMessage.getError(req, error.message)
-			);
-		}
-	};
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
@@ -76,6 +33,7 @@ export default class CategoryController implements IController {
 				name,
 				icon,
 				fields,
+				mainCategory,
 				isMainCategory,
 			} = req.query;
 
@@ -97,7 +55,12 @@ export default class CategoryController implements IController {
 				];
 			}
 			if (icon) query.icon = new RegExp(icon as string, 'i');
-			if (isMainCategory) query.isMainCategory = isMainCategory === 'true';
+
+			if (isMainCategory) query.isMainCategory = null;
+			if (mainCategory)
+				query.mainCategory = new mongoose.Types.ObjectId(
+					mainCategory as string
+				);
 
 			let projection: any = { _id: 1 };
 
@@ -117,7 +80,7 @@ export default class CategoryController implements IController {
 					name: 1,
 					englishName: 1,
 					icon: 1,
-					isMainCategory: 1,
+					mainCategory: 1,
 				};
 			}
 
@@ -250,8 +213,8 @@ export default class CategoryController implements IController {
 			'string.pattern.base': '78',
 			'any.required': '78',
 		}),
-		isMainCategory: Joi.boolean().messages({
-			'boolean.base': '96',
+		mainCategory: Joi.string().messages({
+			'string.base': '96',
 		}),
 	});
 }
