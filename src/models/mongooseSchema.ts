@@ -64,9 +64,8 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'Icon is required'],
 		},
-		isMainCategory: {
-			type: Boolean,
-			default: true,
+		mainCategory: {
+			type: Schema.Types.ObjectId,
 		},
 	},
 	{

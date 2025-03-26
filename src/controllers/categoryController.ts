@@ -1,13 +1,17 @@
 import { Router, Request, Response } from 'express';
+
+function escapeRegExp(string: string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 import { ICategory, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import languageBasedErrorMessage from '../helpers/languageHelper';
+import languageBasedMessage from '../helpers/languageHelper';
 import mongoose from 'mongoose';
 
-export default class categoryController implements IController {
+export default class CategoryController implements IController {
 	public router = Router();
 	private category = categoryModel;
 	private food = foodModel;
@@ -18,47 +22,7 @@ export default class categoryController implements IController {
 		this.router.delete('/:id', authAdminToken, this.deleteOne);
 		this.router.put('/:id', authAdminToken, this.modifyOne);
 		this.router.get('', authToken, this.filterCategory);
-		this.router.get('/sub', authToken, this.getSubCategories);
 	}
-
-	private getSubCategories = async (req: Request, res: Response) => {
-		try {
-			const { main } = req.query;
-
-			let subCategories = await this.food.aggregate([
-				{ $match: { categoryId: new mongoose.Types.ObjectId(main as string) } },
-				{ $project: { _id: 0, subCategoryId: 1 } },
-				{ $unwind: '$subCategoryId' },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'subCategoryId',
-						foreignField: '_id',
-						as: 'category',
-					},
-				},
-				{ $unwind: '$category' },
-				{
-					$group: {
-						_id: '$category._id',
-						name: { $first: '$category.name' },
-						englishName: { $first: '$category.englishName' },
-						icon: { $first: '$category.icon' },
-					},
-				},
-			]);
-			if (subCategories.length === 0) {
-				throw Error('95');
-			}
-
-			defaultAnswers.ok(res, subCategories);
-		} catch (error: any) {
-			defaultAnswers.badRequest(
-				res,
-				languageBasedErrorMessage.getError(req, error.message)
-			);
-		}
-	};
 
 	private filterCategory = async (req: Request, res: Response) => {
 		try {
@@ -67,13 +31,13 @@ export default class categoryController implements IController {
 				limit = 10,
 				_id,
 				name,
-				englishName,
 				icon,
 				fields,
+				mainCategory,
 				isMainCategory,
 			} = req.query;
 
-			if (isNaN(Number(page)) || isNaN(Number(limit))) {
+			if (Number.isNaN(Number(page)) || Number.isNaN(Number(limit))) {
 				throw Error('93');
 			}
 
@@ -84,11 +48,19 @@ export default class categoryController implements IController {
 
 			const query: any = {};
 			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
-			if (name) query.name = new RegExp(name as string, 'i');
-			if (englishName)
-				query.englishName = new RegExp(englishName as string, 'i');
+			if (name) {
+				query.$or = [
+					{ name: new RegExp(escapeRegExp(name as string), 'i') },
+					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+				];
+			}
 			if (icon) query.icon = new RegExp(icon as string, 'i');
-			if (isMainCategory) query.isMainCategory = isMainCategory === 'true';
+
+			if (isMainCategory && isMainCategory == 'true') query.mainCategory = null;
+			if (mainCategory)
+				query.mainCategory = new mongoose.Types.ObjectId(
+					mainCategory as string
+				);
 
 			let projection: any = { _id: 1 };
 
@@ -108,11 +80,11 @@ export default class categoryController implements IController {
 					name: 1,
 					englishName: 1,
 					icon: 1,
-					isMainCategory: 1,
+					mainCategory: 1,
 				};
 			}
 
-			const categories = await this.category.aggregate([
+			const categories: ICategory[] = await this.category.aggregate<ICategory>([
 				{ $match: query },
 				{ $project: projection },
 				{ $skip: skip },
@@ -120,7 +92,7 @@ export default class categoryController implements IController {
 			]);
 
 			res.send({
-				items: categories,
+				items: languageBasedMessage.getLangageBasedName(req, categories),
 				pageCount: Math.ceil(
 					(await this.category.countDocuments(query)) / itemsPerPage
 				),
@@ -128,7 +100,7 @@ export default class categoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -137,6 +109,13 @@ export default class categoryController implements IController {
 		try {
 			const newCategory: ICategory = req.body;
 			await this.categoryConstraints.validateAsync(newCategory);
+			if (newCategory.mainCategory == '') delete newCategory.mainCategory;
+			if (newCategory.mainCategory) {
+				const mainCategory = await this.category.findOne({
+					_id: newCategory.mainCategory,
+				});
+				if (!mainCategory) throw Error('97');
+			}
 			if ((await this.category.find({ name: newCategory.name })).length === 0) {
 				const response = await this.category.insertMany([newCategory], {
 					rawResult: true,
@@ -156,14 +135,14 @@ export default class categoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
 	private deleteOne = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			if (id) {
+			if (id && mongoose.Types.ObjectId.isValid(id)) {
 				const response = await this.category.findByIdAndDelete(id);
 				if (response) {
 					defaultAnswers.ok(res, response);
@@ -176,7 +155,7 @@ export default class categoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -215,7 +194,7 @@ export default class categoryController implements IController {
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
-				languageBasedErrorMessage.getError(req, error.message)
+				languageBasedMessage.getError(req, error.message)
 			);
 		}
 	};
@@ -241,8 +220,8 @@ export default class categoryController implements IController {
 			'string.pattern.base': '78',
 			'any.required': '78',
 		}),
-		isMainCategory: Joi.boolean().messages({
-			'boolean.base': '96',
+		mainCategory: Joi.string().messages({
+			'string.base': '96',
 		}),
 	});
 }

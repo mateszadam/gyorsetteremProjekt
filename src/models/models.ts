@@ -15,8 +15,8 @@ interface ICategory {
 	_id: ObjectId;
 	name: string;
 	icon: string;
-	englishName: string;
-	isMainCategory: boolean;
+	englishName?: string;
+	mainCategory?: string;
 }
 
 interface IMaterialChange {
@@ -31,7 +31,7 @@ interface IMaterialChange {
 interface IMaterial {
 	_id?: ObjectId;
 	name: string;
-	englishName: string;
+	englishName?: string;
 	unit: string;
 	usageOneWeekAgo?: number;
 }
@@ -41,10 +41,11 @@ interface IFood {
 	materials: IFoodMaterial[];
 	price: number;
 	name: string;
-	englishName: string;
+	englishName?: string;
 	isEnabled: boolean;
 	subCategoryId: string[] | undefined;
 	categoryId: ObjectId;
+	isDeleted?: boolean;
 }
 
 interface IFoodMaterial {
@@ -61,11 +62,29 @@ interface IOrder {
 	orderNumber?: Number;
 	totalPrice: number;
 }
+interface IOrderFull {
+	_id: ObjectId;
+	costumerId: ObjectId;
+	orderedTime: string;
+	totalPrice: number;
+	finishedCokingTime: string | null;
+	finishedTime: string | null;
+	orderedProducts: {
+		quantity: number;
+		details: IFood;
+	}[];
+	orderNumber: number;
+}
+
 interface IController {
 	router: Router;
 	endPoint: String;
 }
 
+interface IMaterialWithStock extends IMaterial {
+	inStock: number;
+	isEnough: boolean;
+}
 interface IOrderedProducts {
 	_id: ObjectId;
 	quantity: number;
@@ -95,4 +114,6 @@ export {
 	IMaterial,
 	ICategory,
 	IOrderedProductFull,
+	IOrderFull,
+	IMaterialWithStock,
 };

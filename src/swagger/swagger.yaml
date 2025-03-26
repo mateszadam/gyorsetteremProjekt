@@ -93,12 +93,7 @@ paths:
           name: name
           schema:
             type: string
-          description: Category name
-        - in: query
-          name: englishName
-          schema:
-            type: string
-          description: Category English name
+          description: Category name or englishName
         - in: query
           name: icon
           schema:
@@ -111,6 +106,11 @@ paths:
             items:
               type: string
           description: Fields to include in the response
+        - in: query
+          name: mainCategory
+          schema:
+            type: string
+          description: The main category of the category.
         - in: query
           name: isMainCategory
           schema:
@@ -139,45 +139,6 @@ paths:
                           type: string
                   pageCount:
                     type: integer
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-  /category/sub:
-    get:
-      summary: Get sub categories
-      tags: [Category]
-      parameters:
-        - $ref: '#/components/parameters/AcceptLanguage'
-        - in: query
-          name: main
-          schema:
-            type: string
-          description: ID of the main category to filter subcategories
-          required: true
-      responses:
-        '200':
-          description: List of sub categories
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                    name:
-                      type: string
-                    englishName:
-                      type: string
-                    icon:
-                      type: string
         '400':
           description: Bad request
           content:
@@ -276,12 +237,7 @@ paths:
           name: name
           schema:
             type: string
-          description: Name of the food item
-        - in: query
-          name: englishName
-          schema:
-            type: string
-          description: English name of the food item
+          description: Name or englishName of the food item
         - in: query
           name: minPrice
           schema:
@@ -318,7 +274,7 @@ paths:
             type: array
             items:
               type: string
-          description: Fields to include in the response
+          description: Fields to include in the response. If you send englishName, you will get all properties including name and englishName.
       responses:
         '200':
           description: A list of filtered food items
@@ -714,11 +670,7 @@ paths:
         schema:
           type: string
         description: Filter by order ID
-      - name: orderNumber
-        in: query
-        schema:
-          type: integer
-        description: Filter by order number
+
       - name: costumerId
         in: query
         schema:
@@ -972,11 +924,6 @@ paths:
           type: string
         description: Filter by material ID
       - in: query
-        name: englishName
-        schema:
-          type: string
-        description: Filter by English name (supports regex)
-      - in: query
         name: unit
         schema:
           type: string
@@ -995,7 +942,7 @@ paths:
         name: name
         schema:
           type: string
-        description: Filter by name (supports regex)
+        description: Filter by name or english name (supports regex)
       - in: query
         name: usageOneWeekAgo
         schema:
@@ -1715,13 +1662,12 @@ components:
           type: string
         englishName:
           type: string
-        isMainCategory:
-          type: boolean
+        mainCategory:
+          type: string
       required:
         - name
         - icon
         - englishName
-        - isMainCategory
     Order:
       type: object
       required:

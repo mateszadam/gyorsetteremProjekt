@@ -96,7 +96,8 @@
 			"93": "Az oldalszámnak és limitnek számnak kell lennie!",
 			"94": "A felhasználó csak a saját rendelését láthatja!",
 			"95": "A keresett kategóriának kincs al kategóriája!",
-			"96": "A kategória tipus csak true/false lehet!"
+			"96": "A főkategória csak szöveg lehet!",
+			"97": "A főkategória nem létezik!"
 		}
 	],
 	"en-GB": [
@@ -196,7 +197,8 @@
 			"93": "Page number and limit must be numbers!",
 			"94": "The user can only see their own orders!",
 			"95": "The searched category has no subcategories!",
-			"96": "Category type can only be true/false!"
+			"96": "Category type can only be true/false!",
+			"97": "Main category does not exist!"
 		}
 	]
 }

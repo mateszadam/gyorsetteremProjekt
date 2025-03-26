@@ -1,5 +1,5 @@
 import morgan from 'morgan';
-import languageBasedErrorMessage from './languageHelper';
+import languageBasedMessage from './languageHelper';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
@@ -42,7 +42,7 @@ export default class ImplementMiddleware {
 		next: any
 	) => {
 		if ((err.type = 'entity.parse.failed')) {
-			const message = languageBasedErrorMessage.getError(req, '01');
+			const message = languageBasedMessage.getError(req, '01');
 			res.status(500).send({ message: message });
 		}
 	};

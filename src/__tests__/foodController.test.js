@@ -73,13 +73,13 @@ describe('foodController Integration Tests', () => {
 			expect(response.body).toEqual({
 				_id: expect.any(String),
 				name: 'Test Food',
+				englishName: 'Test Food English',
 				price: 10,
 				materials: [{ id: expect.any(String), _id: materialId, quantity: 2 }],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'image_url',
 				isEnabled: true,
-				englishName: 'Test Food English',
 				isDeleted: false,
 			});
 			expect(response.body.materials[0].id).toBeDefined();
@@ -90,7 +90,9 @@ describe('foodController Integration Tests', () => {
 						.set('Authorization', `Bearer ${token}`)
 				).body.items
 			).toEqual(
-				expect.arrayContaining([expect.objectContaining({ name: 'Test Food' })])
+				expect.arrayContaining([
+					expect.objectContaining({ name: 'Test Food English' }),
+				])
 			);
 		});
 
@@ -117,13 +119,13 @@ describe('foodController Integration Tests', () => {
 		it('should return 400 for invalid categoryId', async () => {
 			const newFood = {
 				name: 'Test Food',
+				englishName: 'Test Food English',
 				price: 10,
 				materials: [{ _id: materialId, quantity: 2 }],
 				subCategoryId: ['subCategoryId1'],
 				categoryId: 'categoryId1',
 				image: 'image_url',
 				isEnabled: true,
-				englishName: 'Test Food English',
 			};
 
 			const response = await request(baseUrl)
@@ -230,12 +232,13 @@ describe('foodController Integration Tests', () => {
 			const response = await request(baseUrl)
 				.get('/food')
 				.set('Authorization', `Bearer ${token}`)
+
 				.query({ name: 'Test Food3' });
 
 			expect(response.status).toBe(200);
 			expect(response.body.items).toEqual(
 				expect.arrayContaining([
-					expect.objectContaining({ name: 'Test Food3' }),
+					expect.objectContaining({ name: 'Test Food English' }),
 				])
 			);
 		});
@@ -341,14 +344,13 @@ describe('foodController Integration Tests', () => {
 				.query({ name: 'Updated Test Food' });
 			expect(response2.body.items[0]).toEqual({
 				_id: foodId.body._id,
-				name: 'Updated Test Food',
+				name: 'Updated Test Food English',
 				price: 15,
 				materials: [{ _id: materialId, quantity: 3 }],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'updated_image_url',
 				isEnabled: true,
-				englishName: 'Updated Test Food English',
 			});
 		});
 		it('should return 400 for invalid food id', async () => {
