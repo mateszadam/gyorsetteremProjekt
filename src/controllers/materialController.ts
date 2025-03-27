@@ -3,9 +3,9 @@ import { IController, IMaterial, IMaterialChange } from '../models/models';
 import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-
 import Joi from 'joi';
-import languageBasedMessage from '../helpers/languageHelper';
+import { escapeRegExp, languageBasedMessage } from '../helpers/tools';
+
 import { Types } from 'mongoose';
 
 export default class materialController implements IController {
@@ -58,7 +58,6 @@ export default class materialController implements IController {
 				page = 1,
 				limit = 10,
 				_id,
-
 				unit,
 				name,
 				fields,
@@ -80,11 +79,11 @@ export default class materialController implements IController {
 			const query: any = {};
 
 			if (_id) query._id = new Types.ObjectId(_id as string);
-			if (unit) query.unit = new RegExp(unit as string, 'i');
+			if (unit) query.unit = new RegExp(escapeRegExp(unit as string), 'i');
 			if (name) {
 				query.$or = [
 					{ name: new RegExp(name as string, 'i') },
-					{ englishName: new RegExp(name as string, 'i') },
+					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
 				];
 			}
 

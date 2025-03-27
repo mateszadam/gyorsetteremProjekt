@@ -7,7 +7,8 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import GoogleDriveManager from '../helpers/googleDriveHelper';
 import fileHandler from '../helpers/fileHandlingHelper';
-import languageBasedMessage from '../helpers/languageHelper';
+import { languageBasedMessage } from '../helpers/tools';
+
 export default class imagesController implements IController {
 	public router = Router();
 	public endPoint = '/images';

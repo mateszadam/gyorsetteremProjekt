@@ -1,5 +1,6 @@
 import morgan from 'morgan';
-import languageBasedMessage from './languageHelper';
+import { languageBasedMessage } from '../helpers/tools';
+
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
@@ -30,9 +31,7 @@ export default class ImplementMiddleware {
 			},
 		});
 		app.use(limiter);
-
 		app.use(this.jsonErrorHandler);
-		// TODO: Implement helmet
 	}
 
 	private static jsonErrorHandler = (

@@ -10,7 +10,8 @@ import {
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
-import languageBasedMessage from '../helpers/languageHelper';
+import { languageBasedMessage } from '../helpers/tools';
+
 import { log } from 'console';
 
 export default class statisticController implements IController {

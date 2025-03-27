@@ -3,7 +3,7 @@ import { Router, Request, Response } from 'express';
 import defaultAnswers from './statusCodeHelper';
 import { UploadedFile } from 'express-fileupload';
 import GoogleDriveManager from './googleDriveHelper';
-import languageBasedMessage from './languageHelper';
+import { languageBasedMessage } from './tools';
 
 export default class fileHandler {
 	public static listDictionary(path: string, req: Request, res: Response) {

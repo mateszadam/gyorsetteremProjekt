@@ -3,7 +3,7 @@ import { IController, IUser } from '../models/models';
 import { userModel } from '../models/mongooseSchema';
 import { isAuthValid } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
-import languageBasedMessage from '../helpers/languageHelper';
+import { languageBasedMessage } from '../helpers/tools';
 
 export default class tokenValidationController implements IController {
 	public router = Router();

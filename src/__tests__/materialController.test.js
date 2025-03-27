@@ -1,5 +1,3 @@
-const exp = require('constants');
-const e = require('cors');
 const request = require('supertest');
 require('dotenv').config();
 

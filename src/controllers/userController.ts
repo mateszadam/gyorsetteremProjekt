@@ -12,7 +12,8 @@ import {
 import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
-import languageBasedMessage from '../helpers/languageHelper';
+import { dateToISOLocal, languageBasedMessage } from '../helpers/tools';
+
 import { ObjectId } from 'mongoose';
 import { log } from 'console';
 import emailManager from '../helpers/emailManager';
@@ -124,6 +125,10 @@ export default class userController implements IController {
 			let userInput: IUser = req.body;
 			await this.userConstraints.validateAsync(userInput);
 
+			if (await this.user.findOne({ name: userInput.name })) {
+				throw Error('98');
+			}
+
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {
 				...userInput,
@@ -168,7 +173,7 @@ export default class userController implements IController {
 				const token: string = await generateToken(databaseUser);
 
 				console.log(
-					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+					`User ${databaseUser.name} logged in (${dateToISOLocal(new Date())})`
 				);
 				res.send({
 					token: token,
@@ -236,6 +241,10 @@ export default class userController implements IController {
 
 			if (!['admin', 'kitchen', 'salesman'].includes(userInput.role)) {
 				throw Error('72');
+			}
+
+			if (await this.user.findOne({ name: userInput.name })) {
+				throw Error('98');
 			}
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);

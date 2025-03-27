@@ -9,11 +9,8 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { Types } from 'mongoose';
 import Joi from 'joi';
-import languageBasedMessage from '../helpers/languageHelper';
-import { log } from 'console';
-function escapeRegExp(string: string) {
-	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+import { escapeRegExp, languageBasedMessage } from '../helpers/tools';
+
 export default class foodController implements IController {
 	public router = Router();
 	public endPoint = '/food';
@@ -100,7 +97,7 @@ export default class foodController implements IController {
 					throw Error('84');
 				query.subCategoryId = new Types.ObjectId(subCategoryId as string);
 			}
-			if (image) query.image = new RegExp(image as string);
+			if (image) query.image = new RegExp(escapeRegExp(image as string));
 
 			let projection: any = { _id: 1 };
 			if (typeof fields === 'string') {

@@ -8,7 +8,11 @@ import {
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import languageBasedMessage from '../helpers/languageHelper';
+import {
+	dateToISOLocal,
+	escapeRegExp,
+	languageBasedMessage,
+} from '../helpers/tools';
 
 import { Types } from 'mongoose';
 
@@ -61,8 +65,8 @@ export default class inventoryController implements IController {
 				const id = (
 					await this.materials.findOne({
 						$or: [
-							{ name: new RegExp(name as string, 'i') },
-							{ englishName: new RegExp(name as string, 'i') },
+							{ name: new RegExp(escapeRegExp(name as string), 'i') },
+							{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
 						],
 					})
 				)?._id;
@@ -73,7 +77,8 @@ export default class inventoryController implements IController {
 			if (_id) query._id = new Types.ObjectId(_id as string);
 			if (materialId)
 				query.materialId = new Types.ObjectId(materialId as string);
-			if (message) query.message = new RegExp(message as string, 'i');
+			if (message)
+				query.message = new RegExp(escapeRegExp(message as string), 'i');
 
 			if (minDate && maxDate) {
 				let minDateObj = new Date(minDate as string);
@@ -89,13 +94,13 @@ export default class inventoryController implements IController {
 				};
 			} else if (minDate) {
 				query.date = {
-					$gte: new Date(minDate as string),
-					$lte: new Date(),
+					$gte: dateToISOLocal(new Date(minDate as string)),
+					$lte: dateToISOLocal(new Date()),
 				};
 			} else if (maxDate) {
 				query.date = {
-					$gte: new Date('2000-01-01T00:00:00.000Z'),
-					$lte: new Date(maxDate as string),
+					$gte: dateToISOLocal(new Date('2000-01-01T00:00:00.000Z')),
+					$lte: dateToISOLocal(new Date(maxDate as string)),
 				};
 			}
 

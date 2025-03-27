@@ -1,15 +1,12 @@
 import { Router, Request, Response } from 'express';
 
-function escapeRegExp(string: string) {
-	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 import { ICategory, IController } from '../models/models';
 import { categoryModel, foodModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import languageBasedMessage from '../helpers/languageHelper';
 import mongoose from 'mongoose';
+import { escapeRegExp, languageBasedMessage } from '../helpers/tools';
 
 export default class CategoryController implements IController {
 	public router = Router();
