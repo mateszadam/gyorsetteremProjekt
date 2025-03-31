@@ -95,7 +95,7 @@ export default class orderController implements IController {
 		session.startTransaction();
 		try {
 			await this.orderConstraints.validateAsync(newOrder);
-			newOrder.orderedTime = new Date(Date.now() + 1 * 60 * 60 * 1000);
+			newOrder.orderedTime = new Date();
 
 			const user = await this.user.findById(newOrder.costumerId);
 			if (user) {

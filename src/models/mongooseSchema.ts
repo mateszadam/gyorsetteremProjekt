@@ -29,11 +29,11 @@ const userSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
+					return v <= new Date();
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
-			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
+			default: new Date(),
 		},
 	},
 	{
@@ -58,7 +58,6 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'English name is required'],
 			trim: true,
-			default: '',
 		},
 		icon: {
 			type: String,
@@ -193,11 +192,11 @@ const materialChangeSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
-			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
+			default: new Date(),
 		},
 	},
 	{
@@ -218,10 +217,10 @@ const orderSchema = new Schema<SchemaDefinition>(
 		},
 		orderedTime: {
 			type: Date,
-			default: Date.now() + 1 * 60 * 60 * 1000,
+			default: Date.now(),
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
+					return v <= new Date();
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
@@ -235,7 +234,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
@@ -245,7 +244,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date(0) || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
