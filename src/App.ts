@@ -51,9 +51,12 @@ class App {
 				res.send('Database dropped');
 			});
 		} else {
+			console.log(mongoUri);
+			console.log('\x1b[42m%s\x1b[0m', 'Production mode');
 			this.connectToTheDatabase(mongoUri);
 			GoogleDriveManager.init();
 			webSocetController.init();
+
 			const swaggerjsdoc = require('swagger-jsdoc');
 			const swagger = require('swagger-ui-express');
 			this.app.use(
@@ -78,7 +81,6 @@ class App {
 				'\x1b[41m%s\x1b[0m',
 				'Unable to connect to the server. Please start MongoDB.'
 			);
-
 			console.log('Retrying in 10 seconds...');
 
 			setTimeout(() => {
