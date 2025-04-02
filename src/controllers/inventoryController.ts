@@ -1,5 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial, IMaterialChange } from '../models/models';
+import {
+	IController,
+	IMaterial,
+	IMaterialChange,
+	IMaterialChangeInput,
+} from '../models/models';
 import {
 	foodModel,
 	materialChangeModel,
@@ -8,11 +13,7 @@ import {
 import { authAdminToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
-import {
-	dateToISOLocal,
-	escapeRegExp,
-	languageBasedMessage,
-} from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 import { Types } from 'mongoose';
 
@@ -65,8 +66,8 @@ export default class inventoryController implements IController {
 				const id = (
 					await this.materials.findOne({
 						$or: [
-							{ name: new RegExp(escapeRegExp(name as string), 'i') },
-							{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+							{ name: new RegExp(name as string, 'i') },
+							{ englishName: new RegExp(name as string, 'i') },
 						],
 					})
 				)?._id;
@@ -77,30 +78,25 @@ export default class inventoryController implements IController {
 			if (_id) query._id = new Types.ObjectId(_id as string);
 			if (materialId)
 				query.materialId = new Types.ObjectId(materialId as string);
-			if (message)
-				query.message = new RegExp(escapeRegExp(message as string), 'i');
+			if (message) query.message = new RegExp(message as string, 'i');
 
 			if (minDate && maxDate) {
 				let minDateObj = new Date(minDate as string);
 				let maxDateObj = new Date(maxDate as string);
-
 				if (minDateObj > maxDateObj) {
 					[minDateObj, maxDateObj] = [maxDateObj, minDateObj];
 				}
-
 				query.date = {
 					$gte: minDateObj,
 					$lte: maxDateObj,
 				};
 			} else if (minDate) {
 				query.date = {
-					$gte: dateToISOLocal(new Date(minDate as string)),
-					$lte: dateToISOLocal(new Date()),
+					$gte: new Date(minDate as string),
 				};
 			} else if (maxDate) {
 				query.date = {
-					$gte: dateToISOLocal(new Date('2000-01-01T00:00:00.000Z')),
-					$lte: dateToISOLocal(new Date(maxDate as string)),
+					$lte: new Date(maxDate as string),
 				};
 			}
 
@@ -243,7 +239,7 @@ export default class inventoryController implements IController {
 
 	private addMaterialChange = async (req: Request, res: Response) => {
 		try {
-			const inputMaterial: IMaterialChange = req.body;
+			const inputMaterial: IMaterialChangeInput = req.body;
 
 			await this.materialChangesConstraints.validateAsync(inputMaterial);
 

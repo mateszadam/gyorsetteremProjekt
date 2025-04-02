@@ -9,7 +9,7 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import { Types } from 'mongoose';
 import Joi from 'joi';
-import { escapeRegExp, languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 export default class foodController implements IController {
 	public router = Router();
@@ -70,8 +70,8 @@ export default class foodController implements IController {
 			if (_id) query._id = new Types.ObjectId(_id as string);
 			if (name) {
 				query.$or = [
-					{ name: new RegExp(escapeRegExp(name as string), 'i') },
-					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+					{ name: new RegExp(name as string, 'i') },
+					{ englishName: new RegExp(name as string, 'i') },
 				];
 			}
 			if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
@@ -97,7 +97,7 @@ export default class foodController implements IController {
 					throw Error('84');
 				query.subCategoryId = new Types.ObjectId(subCategoryId as string);
 			}
-			if (image) query.image = new RegExp(escapeRegExp(image as string));
+			if (image) query.image = new RegExp(image as string);
 
 			let projection: any = { _id: 1 };
 			if (typeof fields === 'string') {

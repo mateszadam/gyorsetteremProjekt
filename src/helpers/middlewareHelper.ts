@@ -1,5 +1,5 @@
 import morgan from 'morgan';
-import { languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from './languageHelper';
 
 import express from 'express';
 import rateLimit from 'express-rate-limit';

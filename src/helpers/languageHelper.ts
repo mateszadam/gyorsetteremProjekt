@@ -8,7 +8,7 @@ import {
 	IOrderFull,
 } from '../models/models';
 
-class languageBasedMessage {
+export default class languageBasedMessage {
 	private static readonly errorMessages = JSON.parse(
 		fs.readFileSync('./src/languages/lang.json', 'utf8')
 	);
@@ -90,11 +90,3 @@ class languageBasedMessage {
 		}
 	}
 }
-function escapeRegExp(string: string) {
-	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-function dateToISOLocal(date: Date) {
-	return date.toLocaleString('sv').replace(' ', 'T');
-}
-
-export { languageBasedMessage, escapeRegExp, dateToISOLocal };

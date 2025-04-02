@@ -1,4 +1,3 @@
-import { dateToISOLocal } from '../helpers/tools';
 import { IOrder, IOrderedProductFull, IUser } from '../models/models';
 
 import { orderModel, userModel } from '../models/mongooseSchema';
@@ -77,7 +76,7 @@ export default class webSocketController {
 				if (databaseUser) {
 					const token: string = await generateToken(databaseUser);
 					console.log(
-						`User ${databaseUser.name} logged in (${dateToISOLocal(new Date())})`
+						`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
 					);
 					ws.send(
 						JSON.stringify({

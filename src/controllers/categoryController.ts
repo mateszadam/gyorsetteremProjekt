@@ -6,7 +6,7 @@ import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import mongoose from 'mongoose';
-import { escapeRegExp, languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 export default class CategoryController implements IController {
 	public router = Router();
@@ -47,8 +47,8 @@ export default class CategoryController implements IController {
 			if (_id) query._id = new mongoose.Types.ObjectId(_id as string);
 			if (name) {
 				query.$or = [
-					{ name: new RegExp(escapeRegExp(name as string), 'i') },
-					{ englishName: new RegExp(escapeRegExp(name as string), 'i') },
+					{ name: new RegExp(name as string, 'i') },
+					{ englishName: new RegExp(name as string, 'i') },
 				];
 			}
 			if (icon) query.icon = new RegExp(icon as string, 'i');

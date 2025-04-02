@@ -10,11 +10,10 @@ class TokenService {
 
 function generateToken(user: IUser) {
 	let expiresIn = '1h';
-
-	if (user.role === 'admin') {
-		expiresIn = '1h';
-	}
 	switch (user.role) {
+		case 'admin':
+			expiresIn = '1h';
+			break;
 		case 'kitchen':
 			expiresIn = '12h';
 			break;
@@ -53,6 +52,12 @@ function logOutToken(req: any) {
 	}
 }
 
+function getDataFromToken(token: string): IUser | undefined {
+	try {
+		return jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
+	} catch (error) {}
+}
+
 async function isAuthValid(
 	token: string,
 	roles: string[] = ['customer', 'kitchen', 'salesman']
@@ -76,11 +81,6 @@ async function isAuthValid(
 	}
 }
 
-function getDataFromToken(token: string): IUser | undefined {
-	try {
-		return jwt.verify(token, 'SeCrEtToKeNeTtErEm!');
-	} catch (error) {}
-}
 const authToken = async (req: any, res: any, next: any) => {
 	const token = req.headers.authorization?.replace('Bearer ', '');
 

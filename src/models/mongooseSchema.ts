@@ -1,5 +1,16 @@
 import { Schema, SchemaDefinition, model } from 'mongoose';
-const userSchema = new Schema<SchemaDefinition>(
+import {
+	ICategory,
+	IMaterial,
+	IUser,
+	IFood,
+	IMaterialChange,
+	IOrder,
+	IFoodMaterial,
+	IOrderedProducts,
+} from './models';
+
+const userSchema = new Schema<SchemaDefinition<IUser>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -45,7 +56,7 @@ const userSchema = new Schema<SchemaDefinition>(
 );
 export const userModel = model('userId', userSchema, 'users');
 
-const categorySchema = new Schema<SchemaDefinition>(
+const categorySchema = new Schema<SchemaDefinition<ICategory>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -76,7 +87,7 @@ const categorySchema = new Schema<SchemaDefinition>(
 );
 export const categoryModel = model('categoryId', categorySchema, 'categories');
 
-const foodSchema = new Schema<SchemaDefinition>(
+const foodSchema = new Schema<SchemaDefinition<IFood>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -89,7 +100,6 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'English name is required'],
 			trim: true,
-			default: '',
 		},
 		materials: [
 			{
@@ -141,7 +151,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 	}
 );
 
-const materialSchema = new Schema<SchemaDefinition>(
+const materialSchema = new Schema<SchemaDefinition<IMaterial>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -171,7 +181,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 );
 export const materialModel = model('materialId', materialSchema, 'materials');
 
-const materialChangeSchema = new Schema<SchemaDefinition>(
+const materialChangeSchema = new Schema<SchemaDefinition<IMaterialChange>>(
 	{
 		_id: Schema.Types.ObjectId,
 		materialId: {
@@ -207,7 +217,7 @@ const materialChangeSchema = new Schema<SchemaDefinition>(
 	}
 );
 
-const orderSchema = new Schema<SchemaDefinition>(
+const orderSchema = new Schema<SchemaDefinition<IOrder>>(
 	{
 		_id: Schema.Types.ObjectId,
 		costumerId: {

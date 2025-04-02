@@ -25,7 +25,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import { log } from 'console';
 import webSocketController from './websocketController';
 import Joi from 'joi';
-import { dateToISOLocal, languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 import mongoose, { ObjectId, Types } from 'mongoose';
 
@@ -340,7 +340,7 @@ export default class orderController implements IController {
 					},
 					{
 						$set: {
-							finishedCokingTime: dateToISOLocal(new Date()),
+							finishedCokingTime: new Date(),
 						},
 					}
 				);
@@ -393,7 +393,7 @@ export default class orderController implements IController {
 	private receivedOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			const finistTimeISO = dateToISOLocal(new Date());
+			const finistTimeISO = new Date();
 			log(finistTimeISO);
 			if (id) {
 				const order = await this.order.updateOne(
@@ -515,8 +515,8 @@ export default class orderController implements IController {
 			}
 
 			if (minOrderedTime && maxOrderedTime) {
-				let minDate = dateToISOLocal(new Date(minOrderedTime as string));
-				let maxDate = dateToISOLocal(new Date(maxOrderedTime as string));
+				let minDate = new Date(minOrderedTime as string);
+				let maxDate = new Date(maxOrderedTime as string);
 
 				if (minDate > maxDate) {
 					[minDate, maxDate] = [maxDate, minDate];
@@ -528,11 +528,11 @@ export default class orderController implements IController {
 				};
 			} else if (minOrderedTime) {
 				query.orderedTime = {
-					$gte: dateToISOLocal(new Date(minOrderedTime as string)),
+					$gte: new Date(minOrderedTime as string),
 				};
 			} else if (maxOrderedTime) {
 				query.orderedTime = {
-					$lte: dateToISOLocal(new Date(maxOrderedTime as string)),
+					$lte: new Date(maxOrderedTime as string),
 				};
 			}
 
@@ -550,17 +550,17 @@ export default class orderController implements IController {
 				};
 			} else if (minFinishedTime) {
 				query.finishedTime = {
-					$gte: dateToISOLocal(new Date(minFinishedTime as string)),
+					$gte: new Date(minFinishedTime as string),
 				};
 			} else if (maxFinishedTime) {
 				query.finishedTime = {
-					$lte: dateToISOLocal(new Date(maxFinishedTime as string)),
+					$lte: new Date(maxFinishedTime as string),
 				};
 			}
 
 			if (minFinishedCokingTime && maxFinishedCokingTime) {
-				let minDate = dateToISOLocal(new Date(minFinishedCokingTime as string));
-				let maxDate = dateToISOLocal(new Date(maxFinishedCokingTime as string));
+				let minDate = new Date(minFinishedCokingTime as string);
+				let maxDate = new Date(maxFinishedCokingTime as string);
 
 				if (minDate > maxDate) {
 					[minDate, maxDate] = [maxDate, minDate];
@@ -572,11 +572,11 @@ export default class orderController implements IController {
 				};
 			} else if (minFinishedCokingTime) {
 				query.finishedCokingTime = {
-					$gte: dateToISOLocal(new Date(minFinishedCokingTime as string)),
+					$gte: new Date(minFinishedCokingTime as string),
 				};
 			} else if (maxFinishedCokingTime) {
 				query.finishedCokingTime = {
-					$lte: dateToISOLocal(new Date(maxFinishedCokingTime as string)),
+					$lte: new Date(maxFinishedCokingTime as string),
 				};
 			}
 

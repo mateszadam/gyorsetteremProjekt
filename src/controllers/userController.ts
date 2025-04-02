@@ -12,7 +12,7 @@ import {
 import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
-import { dateToISOLocal, languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 import { ObjectId } from 'mongoose';
 import { log } from 'console';
@@ -173,7 +173,7 @@ export default class userController implements IController {
 				const token: string = await generateToken(databaseUser);
 
 				console.log(
-					`User ${databaseUser.name} logged in (${dateToISOLocal(new Date())})`
+					`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
 				);
 				res.send({
 					token: token,
@@ -374,18 +374,19 @@ export default class userController implements IController {
 				const user: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});
-
+				log(profile);
 				if (user === null) {
 					userModel.insertMany([
 						{
 							email: profile.email,
 							name: profile.name,
-							password: this.bcrypt.hashSync(profile.id, 12),
+							password: this.bcrypt.hashSync(generateUUID4Token(), 12),
 							role: 'customer',
 							profilePicture: profile.picture,
 						},
 					]);
 				}
+
 				const newUser: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});

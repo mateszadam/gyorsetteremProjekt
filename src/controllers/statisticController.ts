@@ -10,7 +10,7 @@ import {
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
-import { languageBasedMessage } from '../helpers/tools';
+import languageBasedMessage from '../helpers/languageHelper';
 
 import { log } from 'console';
 
