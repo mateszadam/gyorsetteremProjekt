@@ -72,10 +72,13 @@ class App {
 		this.app.listen(5005, () => {
 			console.log('App listening on http://localhost:5005');
 		});
+		console.log('Futás közben...');
 	}
 
 	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
+		console.log('Connecting to MongoDB...');
+		console.log(mongoUri);
 		mongoose.connect(mongoUri).catch(() => {
 			console.log(
 				'\x1b[41m%s\x1b[0m',
