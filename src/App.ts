@@ -73,35 +73,25 @@ class App {
 
 	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
-		mongoose.connect(mongoUri).catch(() =>
-			console
-				.log(
-					'\x1b[41m%s\x1b[0m',
-					'Unable to connect to the server. Please start MongoDB.'
-				)
-				.then(() => {
-					// Connection successful, nothing to do here
-				})
-				.catch((err) => {
+		mongoose.connect(mongoUri).catch(() => {
+			console.log(
+				'\x1b[41m%s\x1b[0m',
+				'Unable to connect to the server. Please start MongoDB.'
+			);
+
+			console.log('Retrying in 10 seconds...');
+
+			setTimeout(() => {
+				console.log('Attempting to reconnect to MongoDB...');
+				mongoose.connect(mongoUri).catch((retryErr) => {
 					console.log(
 						'\x1b[41m%s\x1b[0m',
-						'Unable to connect to the server. Please start MongoDB.: ' +
-							err.message
+						'Reconnection failed:',
+						retryErr.message
 					);
-					console.log('Retrying in 10 seconds...');
-
-					setTimeout(() => {
-						console.log('Attempting to reconnect to MongoDB...');
-						mongoose.connect(mongoUri).catch((retryErr) => {
-							console.log(
-								'\x1b[41m%s\x1b[0m',
-								'Reconnection failed:',
-								retryErr.message
-							);
-						});
-					}, 10000);
-				})
-		);
+				});
+			}, 10000);
+		});
 
 		mongoose.connection.on('error', (error) => {
 			console.log(
