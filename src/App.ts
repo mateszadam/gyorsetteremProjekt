@@ -84,11 +84,7 @@ class App {
 			setTimeout(() => {
 				console.log('Attempting to reconnect to MongoDB...');
 				mongoose.connect(mongoUri).catch((retryErr) => {
-					console.log(
-						'\x1b[41m%s\x1b[0m',
-						'Reconnection failed:',
-						retryErr.message
-					);
+					console.log('\x1b[41m%s\x1b[0m', 'Reconnection failed:' + mongoUri);
 				});
 			}, 10000);
 		});
