@@ -78,7 +78,6 @@ class App {
 				'\x1b[41m%s\x1b[0m',
 				'Unable to connect to the server. Please start MongoDB.'
 			);
-
 			console.log('Retrying in 10 seconds...');
 
 			setTimeout(() => {
