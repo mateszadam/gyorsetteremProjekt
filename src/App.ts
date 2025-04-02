@@ -26,10 +26,9 @@ require('dotenv').config();
 
 class App {
 	public app: express.Application;
-	private startTime: number;
 
 	constructor(controllers: IController[]) {
-		this.startTime = Date.now();
+		const startTime = Date.now();
 
 		this.app = express();
 		ImplementMiddleware.init(this.app);
@@ -38,7 +37,7 @@ class App {
 		});
 
 		const mongoUri = process.env.MONGO_URI || '';
-		const mode: string = process.env.MODE?.toString() || '';
+		const mode: string = process.env.MODE || '';
 		if (mode === 'test') {
 			console.log('\x1b[41m%s\x1b[0m', 'Test mode');
 			this.connectToTheDatabase(mongoUri + 'Test');
@@ -63,7 +62,7 @@ class App {
 				swagger.setup(swaggerjsdoc(YAML.load('./src/swagger/swagger.yaml')))
 			);
 		}
-		console.log('App started in', Date.now() - this.startTime, 'ms');
+		console.log('App started in', Date.now() - startTime, 'ms');
 	}
 
 	public listen(): void {

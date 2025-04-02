@@ -26,6 +26,7 @@ import { log } from 'console';
 import webSocketController from './websocketController';
 import Joi from 'joi';
 import languageBasedMessage from '../helpers/languageHelper';
+
 import mongoose, { ObjectId, Types } from 'mongoose';
 
 export default class orderController implements IController {
@@ -42,6 +43,7 @@ export default class orderController implements IController {
 
 		this.router.get('', authToken, this.getAllByPage);
 		this.router.get('/salesman', authSalesmanToken, this.getAllOngoingOrder);
+
 		this.router.get('/kitchen', authKitchenToken, this.getAllForKitchen);
 		this.router.get('/display', this.getOrdersForDisplay);
 
@@ -93,7 +95,7 @@ export default class orderController implements IController {
 		session.startTransaction();
 		try {
 			await this.orderConstraints.validateAsync(newOrder);
-			newOrder.orderedTime = new Date(Date.now() + 1 * 60 * 60 * 1000);
+			newOrder.orderedTime = new Date();
 
 			const user = await this.user.findById(newOrder.costumerId);
 			if (user) {
@@ -338,7 +340,7 @@ export default class orderController implements IController {
 					},
 					{
 						$set: {
-							finishedCokingTime: new Date(Date.now() + 1 * 60 * 60 * 1000),
+							finishedCokingTime: new Date(),
 						},
 					}
 				);
@@ -391,13 +393,15 @@ export default class orderController implements IController {
 	private receivedOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
+			const finistTimeISO = new Date();
+			log(finistTimeISO);
 			if (id) {
 				const order = await this.order.updateOne(
 					{
 						_id: id,
 					},
 					{
-						$set: { finishedTime: new Date(Date.now() + 1 * 60 * 60 * 1000) },
+						$set: { finishedTime: finistTimeISO },
 					}
 				);
 				if (order.modifiedCount > 0) {

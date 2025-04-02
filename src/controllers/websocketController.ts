@@ -76,7 +76,7 @@ export default class webSocketController {
 				if (databaseUser) {
 					const token: string = await generateToken(databaseUser);
 					console.log(
-						`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+						`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
 					);
 					ws.send(
 						JSON.stringify({

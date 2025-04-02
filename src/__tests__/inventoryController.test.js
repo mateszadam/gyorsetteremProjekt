@@ -1,4 +1,3 @@
-const { error } = require('console');
 const request = require('supertest');
 require('dotenv').config();
 

@@ -8,7 +8,7 @@ import {
 	IOrderFull,
 } from '../models/models';
 
-class languageBasedMessage {
+export default class languageBasedMessage {
 	private static readonly errorMessages = JSON.parse(
 		fs.readFileSync('./src/languages/lang.json', 'utf8')
 	);
@@ -90,4 +90,3 @@ class languageBasedMessage {
 		}
 	}
 }
-export default languageBasedMessage;

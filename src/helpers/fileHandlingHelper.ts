@@ -4,6 +4,7 @@ import defaultAnswers from './statusCodeHelper';
 import { UploadedFile } from 'express-fileupload';
 import GoogleDriveManager from './googleDriveHelper';
 import languageBasedMessage from './languageHelper';
+import { log } from 'console';
 
 export default class fileHandler {
 	public static listDictionary(path: string, req: Request, res: Response) {
@@ -25,7 +26,7 @@ export default class fileHandler {
 			};
 			if (imagePath) {
 				if (fs.existsSync(imagePath)) {
-					const ext = imagePath.split('.')[1] as 'jpg' | 'png' | 'svg';
+					const ext = imagePath.split('.')[2] as 'jpg' | 'png' | 'svg';
 					res.writeHead(200, {
 						'Content-Type': mime[ext] || 'text/plain',
 					});

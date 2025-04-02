@@ -216,7 +216,7 @@ describe('foodController Integration Tests', () => {
 			expect(response.body.message).toBe('Food name already taken!');
 		});
 	});
-	describe('03 GET /food', () => {
+	describe('02 GET /food', () => {
 		it('should return a list of food items with pagination', async () => {
 			const response = await request(baseUrl)
 				.get('/food')
@@ -292,7 +292,7 @@ describe('foodController Integration Tests', () => {
 		});
 	});
 
-	describe('06 PUT /food/:id', () => {
+	describe('03 PUT /food/:id', () => {
 		it('should update a food item by id', async () => {
 			const newFood = {
 				name: 'Test Food23',
@@ -436,7 +436,7 @@ describe('foodController Integration Tests', () => {
 		});
 	});
 
-	describe('07 DELETE /food/:id', () => {
+	describe('04 DELETE /food/:id', () => {
 		it('should delete a food item by id', async () => {
 			const response = await request(baseUrl)
 				.delete(`/food/${foodId}`)

@@ -9,6 +9,7 @@ interface IUser {
 	profilePicture: String;
 	email: string | undefined;
 	tokenId: string | undefined;
+	registeredAt: Date;
 }
 
 interface ICategory {
@@ -21,11 +22,14 @@ interface ICategory {
 
 interface IMaterialChange {
 	_id?: ObjectId;
-	materialId?: ObjectId;
-	name?: string;
+	materialId: ObjectId;
 	quantity: number;
 	message: string;
-	inStock?: number;
+	inStock: number;
+	date: Date;
+}
+interface IMaterialChangeInput extends IMaterialChange {
+	name?: string;
 }
 
 interface IMaterial {
@@ -46,6 +50,7 @@ interface IFood {
 	subCategoryId: string[] | undefined;
 	categoryId: ObjectId;
 	isDeleted?: boolean;
+	image?: string;
 }
 
 interface IFoodMaterial {
@@ -116,4 +121,7 @@ export {
 	IOrderedProductFull,
 	IOrderFull,
 	IMaterialWithStock,
+	IFoodMaterial,
+	IOrderedProducts,
+	IMaterialChangeInput,
 };

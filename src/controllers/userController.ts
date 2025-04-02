@@ -13,6 +13,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import fs from 'fs';
 import Joi from 'joi';
 import languageBasedMessage from '../helpers/languageHelper';
+
 import { ObjectId } from 'mongoose';
 import { log } from 'console';
 import emailManager from '../helpers/emailManager';
@@ -124,6 +125,10 @@ export default class userController implements IController {
 			let userInput: IUser = req.body;
 			await this.userConstraints.validateAsync(userInput);
 
+			if (await this.user.findOne({ name: userInput.name })) {
+				throw Error('98');
+			}
+
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {
 				...userInput,
@@ -168,7 +173,7 @@ export default class userController implements IController {
 				const token: string = await generateToken(databaseUser);
 
 				console.log(
-					`User ${databaseUser.name} logged in (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()})`
+					`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
 				);
 				res.send({
 					token: token,
@@ -236,6 +241,10 @@ export default class userController implements IController {
 
 			if (!['admin', 'kitchen', 'salesman'].includes(userInput.role)) {
 				throw Error('72');
+			}
+
+			if (await this.user.findOne({ name: userInput.name })) {
+				throw Error('98');
 			}
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
@@ -365,18 +374,19 @@ export default class userController implements IController {
 				const user: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});
-
+				log(profile);
 				if (user === null) {
 					userModel.insertMany([
 						{
 							email: profile.email,
 							name: profile.name,
-							password: this.bcrypt.hashSync(profile.id, 12),
+							password: this.bcrypt.hashSync(generateUUID4Token(), 12),
 							role: 'customer',
 							profilePicture: profile.picture,
 						},
 					]);
 				}
+
 				const newUser: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});

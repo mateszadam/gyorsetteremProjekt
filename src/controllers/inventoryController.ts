@@ -1,5 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial, IMaterialChange } from '../models/models';
+import {
+	IController,
+	IMaterial,
+	IMaterialChange,
+	IMaterialChangeInput,
+} from '../models/models';
 import {
 	foodModel,
 	materialChangeModel,
@@ -78,11 +83,9 @@ export default class inventoryController implements IController {
 			if (minDate && maxDate) {
 				let minDateObj = new Date(minDate as string);
 				let maxDateObj = new Date(maxDate as string);
-
 				if (minDateObj > maxDateObj) {
 					[minDateObj, maxDateObj] = [maxDateObj, minDateObj];
 				}
-
 				query.date = {
 					$gte: minDateObj,
 					$lte: maxDateObj,
@@ -90,11 +93,9 @@ export default class inventoryController implements IController {
 			} else if (minDate) {
 				query.date = {
 					$gte: new Date(minDate as string),
-					$lte: new Date(),
 				};
 			} else if (maxDate) {
 				query.date = {
-					$gte: new Date('2000-01-01T00:00:00.000Z'),
 					$lte: new Date(maxDate as string),
 				};
 			}
@@ -238,7 +239,7 @@ export default class inventoryController implements IController {
 
 	private addMaterialChange = async (req: Request, res: Response) => {
 		try {
-			const inputMaterial: IMaterialChange = req.body;
+			const inputMaterial: IMaterialChangeInput = req.body;
 
 			await this.materialChangesConstraints.validateAsync(inputMaterial);
 

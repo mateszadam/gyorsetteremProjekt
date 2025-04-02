@@ -1,5 +1,16 @@
 import { Schema, SchemaDefinition, model } from 'mongoose';
-const userSchema = new Schema<SchemaDefinition>(
+import {
+	ICategory,
+	IMaterial,
+	IUser,
+	IFood,
+	IMaterialChange,
+	IOrder,
+	IFoodMaterial,
+	IOrderedProducts,
+} from './models';
+
+const userSchema = new Schema<SchemaDefinition<IUser>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -29,11 +40,11 @@ const userSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
+					return v <= new Date();
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
-			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
+			default: new Date(),
 		},
 	},
 	{
@@ -45,7 +56,7 @@ const userSchema = new Schema<SchemaDefinition>(
 );
 export const userModel = model('userId', userSchema, 'users');
 
-const categorySchema = new Schema<SchemaDefinition>(
+const categorySchema = new Schema<SchemaDefinition<ICategory>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -58,7 +69,6 @@ const categorySchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'English name is required'],
 			trim: true,
-			default: '',
 		},
 		icon: {
 			type: String,
@@ -77,7 +87,7 @@ const categorySchema = new Schema<SchemaDefinition>(
 );
 export const categoryModel = model('categoryId', categorySchema, 'categories');
 
-const foodSchema = new Schema<SchemaDefinition>(
+const foodSchema = new Schema<SchemaDefinition<IFood>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -90,7 +100,6 @@ const foodSchema = new Schema<SchemaDefinition>(
 			type: String,
 			required: [true, 'English name is required'],
 			trim: true,
-			default: '',
 		},
 		materials: [
 			{
@@ -142,7 +151,7 @@ const foodSchema = new Schema<SchemaDefinition>(
 	}
 );
 
-const materialSchema = new Schema<SchemaDefinition>(
+const materialSchema = new Schema<SchemaDefinition<IMaterial>>(
 	{
 		_id: Schema.Types.ObjectId,
 		name: {
@@ -172,7 +181,7 @@ const materialSchema = new Schema<SchemaDefinition>(
 );
 export const materialModel = model('materialId', materialSchema, 'materials');
 
-const materialChangeSchema = new Schema<SchemaDefinition>(
+const materialChangeSchema = new Schema<SchemaDefinition<IMaterialChange>>(
 	{
 		_id: Schema.Types.ObjectId,
 		materialId: {
@@ -193,11 +202,11 @@ const materialChangeSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
-			default: new Date(Date.now() + 1 * 60 * 60 * 1000),
+			default: new Date(),
 		},
 	},
 	{
@@ -208,7 +217,7 @@ const materialChangeSchema = new Schema<SchemaDefinition>(
 	}
 );
 
-const orderSchema = new Schema<SchemaDefinition>(
+const orderSchema = new Schema<SchemaDefinition<IOrder>>(
 	{
 		_id: Schema.Types.ObjectId,
 		costumerId: {
@@ -218,10 +227,10 @@ const orderSchema = new Schema<SchemaDefinition>(
 		},
 		orderedTime: {
 			type: Date,
-			default: Date.now() + 1 * 60 * 60 * 1000,
+			default: Date.now(),
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000);
+					return v <= new Date();
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
@@ -235,7 +244,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
@@ -245,7 +254,7 @@ const orderSchema = new Schema<SchemaDefinition>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(Date.now() + 1 * 60 * 60 * 1000) || v === null;
+					return v <= new Date(0) || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},
