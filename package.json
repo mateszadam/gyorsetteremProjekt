@@ -8,7 +8,7 @@
 		"compile:watch": "tsc --watch",
 		"autoTest": "concurrently --kill-others --success=first \"npm run testServer\" \"npm run delayTest\"",
 		"test": "jest -i || ECHO.",
-		"delayTest": "node -e \"setTimeout(() => process.exit(0), 40000)\" && jest -i || ECHO.",
+		"delayTest": "node -e \"setTimeout(() => process.exit(0), 60000)\" && jest -i || ECHO.",
 		"testServer": "npm run compile &&  cross-env MODE=test node ./dist/App.js",
 		"dev": "nodemon -i images/*",
 		"seed": "node ./src/__tests__/seed.js"
