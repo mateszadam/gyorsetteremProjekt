@@ -98,7 +98,9 @@
 			"95": "A keresett kategóriának kincs al kategóriája!",
 			"96": "A főkategória csak szöveg lehet!",
 			"97": "A főkategória nem létezik!",
-			"98": "A felhasználónév már foglalat!"
+			"98": "A felhasználónév már foglalat!",
+						"99": "A megadott email cím már foglalt!",
+			"100": "A megadott név már foglalt!"
 		}
 	],
 	"en-GB": [
@@ -200,7 +202,9 @@
 			"95": "The searched category has no subcategories!",
 			"96": "Category type can only be true/false!",
 			"97": "Main category does not exist!",
-			"98": "Username already taken!"
+			"98": "Username already taken!",
+			"99": "The provided email address is already taken!",
+			"100": "The provided name is already taken!"
 		}
 	]
 }

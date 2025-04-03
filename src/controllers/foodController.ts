@@ -325,8 +325,8 @@ export default class foodController implements IController {
 			.items(
 				Joi.object({
 					_id: Joi.string().required().messages({
-						'string.empty': '41',
-						'any.required': '41',
+						'string.empty': '23',
+						'any.required': '23',
 					}),
 					quantity: Joi.number().greater(0).required().messages({
 						'number.base': '24',

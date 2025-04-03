@@ -124,9 +124,11 @@ export default class userController implements IController {
 		try {
 			let userInput: IUser = req.body;
 			await this.userConstraints.validateAsync(userInput);
-
-			if (await this.user.findOne({ name: userInput.name })) {
-				throw Error('98');
+			if ((await this.user.find({ name: userInput.name })).length > 0) {
+				throw Error('100');
+			}
+			if ((await this.user.find({ email: userInput.email })).length > 0) {
+				throw Error('99');
 			}
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
@@ -158,6 +160,8 @@ export default class userController implements IController {
 			const databaseUser: IUser | null = await this.user.findOne({
 				name: userInput.name,
 			});
+
+
 			if (!userInput || !databaseUser) {
 				defaultAnswers.notFound(res);
 			} else if (!userInput.name || !userInput.password) {
@@ -242,10 +246,13 @@ export default class userController implements IController {
 			if (!['admin', 'kitchen', 'salesman'].includes(userInput.role)) {
 				throw Error('72');
 			}
-
-			if (await this.user.findOne({ name: userInput.name })) {
-				throw Error('98');
+			if ((await this.user.find({ name: userInput.name })).length > 0) {
+				throw Error('100');
 			}
+			if ((await this.user.find({ email: userInput.email })).length > 0) {
+				throw Error('99');
+			}
+
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {

@@ -63,7 +63,7 @@ export default class materialController implements IController {
 				fields,
 				minInStock,
 				maxInStock,
-				usageOneWeekAgo = 0,
+				usageOneWeekAgo,
 				isEnough,
 			} = req.query;
 
@@ -178,7 +178,7 @@ export default class materialController implements IController {
 						usageLastWeek.reduce((acc, item) => acc + item.quantity, 0)
 					);
 				}
-				if (usage >= Number(usageOneWeekAgo)) {
+				if (!usageOneWeekAgo || usage >= Number(usageOneWeekAgo)) {
 					if (
 						isEnough == undefined ||
 						(isEnough as string) ===
