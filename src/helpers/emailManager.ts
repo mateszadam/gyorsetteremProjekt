@@ -34,16 +34,28 @@ export default class emailManager {
 			this.tokens.push({ token: token, user: user });
 
 			var mailOptions = {
-				from: 'Étterem',
+				from: 'Étterem <matesz.adam2@gmail.com>',
 				to: user.email,
-				subject: 'Sending Email using Node.js',
-				html:
-					'<h1>Jelszó módosítás!</h1><p>Kattints a linkre a jelszó módosításához:' +
-					'<a href="http://localhost:5005/changePassword/' +
-					token +
-					'">http://localhost:5005/changePassword/' +
-					token +
-					'</a></p>',
+				subject: 'Jelszó módosítás - Étterem',
+				html: `
+				<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+					<div style="text-align: center; padding: 20px; background-color: #FF922C; color: white;">
+						<h1 style="margin: 0; font-weight: 600; color:#eee;">Étterem</h1>
+						<h2 style="margin: 10px 0 0; font-weight: 400;">Jelszó módosítás</h2>
+					</div>
+					<div style="padding: 30px; background-color: white;">
+						<p style="font-size: 16px; color: #333;">Kedves <b>${user.name || 'Felhasználó'}</b>,</p>
+						<p style="font-size: 16px; color: #333; line-height: 1.5;">Jelszó módosítást kért fiókjához. Az új jelszó beállításához kattintson az alábbi gombra:</p>
+						<div style="text-align: center; margin: 35px 0;">
+							<a href="http://localhost:5005/changePassword/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Jelszó módosítása</a>
+						</div>
+						<p style="font-size: 14px; color: #666; margin-top: 20px;">Ha a link nem működik, másolja be ezt az URL-t a böngészőbe: <span style="color: #FF922C;">http://localhost:5005/changePassword/${token}</span></p>
+						<p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">Ha nem Ön kérte a jelszó módosítást, kérjük hagyja figyelmen kívül ezt az e-mailt, vagy lépjen kapcsolatba az adminisztrátorral.</p>
+					</div>
+					<div style="text-align: center; padding: 15px; background-color: #f8f8f8; font-size: 12px; color: #888;">
+						<p>© ${new Date().getFullYear()} Étterem - Minden jog fenntartva</p>
+					</div>
+				</div>`,
 			};
 			await this.transporter.sendMail(
 				mailOptions,
