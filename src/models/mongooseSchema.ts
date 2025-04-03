@@ -93,7 +93,6 @@ const foodSchema = new Schema<SchemaDefinition<IFood>>(
 		name: {
 			type: String,
 			required: [true, 'Name is required'],
-			unique: [true, 'Food name is already taken'],
 			trim: true,
 		},
 		englishName: {

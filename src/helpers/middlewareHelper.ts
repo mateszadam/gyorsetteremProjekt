@@ -4,7 +4,7 @@ import languageBasedMessage from './languageHelper';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
-import { log } from 'console';
+
 const nocache = require('nocache');
 
 export default class ImplementMiddleware {
@@ -21,12 +21,7 @@ export default class ImplementMiddleware {
 
 			message: 'To many requests, please try again later',
 			skip: (req, res) => {
-				if (req.ip == '::1') {
-					return true;
-				}
-				if (req.path.includes('dashboard')) {
-					return true;
-				}
+				if (req.ip == '::1' || req.path.includes('dashboard')) return true;
 				return false;
 			},
 		});

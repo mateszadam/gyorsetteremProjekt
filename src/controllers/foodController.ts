@@ -186,7 +186,7 @@ export default class foodController implements IController {
 				throw Error('44');
 			}
 
-			if (await this.food.findOne({ name: foodInput.name })) {
+			if (await this.food.findOne({ name: foodInput.name, isDeleted: false })) {
 				throw Error('86');
 			}
 			const materialIds = foodInput.materials.map((material) => material._id);
@@ -325,8 +325,8 @@ export default class foodController implements IController {
 			.items(
 				Joi.object({
 					_id: Joi.string().required().messages({
-						'string.empty': '41',
-						'any.required': '41',
+						'string.empty': '23',
+						'any.required': '23',
 					}),
 					quantity: Joi.number().greater(0).required().messages({
 						'number.base': '24',
