@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { IController, IMaterial, IMaterialChange } from '../models/models';
 import { materialChangeModel, materialModel } from '../models/mongooseSchema';
-import { authAdminToken } from '../services/tokenService';
+import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import languageBasedMessage from '../helpers/languageHelper';
@@ -16,7 +16,7 @@ export default class materialController implements IController {
 
 	constructor() {
 		this.router.post('', authAdminToken, this.add);
-		this.router.get('', authAdminToken, this.getAll);
+		this.router.get('', authToken, this.getAll);
 		this.router.delete('/:id', authAdminToken, this.deleteOneById);
 		this.router.put('/:id', authAdminToken, this.updateByMaterialId);
 	}
