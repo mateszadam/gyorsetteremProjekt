@@ -7,6 +7,7 @@ import defaultAnswers from '../helpers/statusCodeHelper';
 import Joi from 'joi';
 import mongoose from 'mongoose';
 import languageBasedMessage from '../helpers/languageHelper';
+import { log } from 'console';
 
 export default class CategoryController implements IController {
 	public router = Router();
@@ -61,17 +62,26 @@ export default class CategoryController implements IController {
 
 			let projection: any = { _id: 1 };
 
-			if (typeof fields === 'string') {
-				fields = [fields];
+			let fieldsArray: string[] = [];
+			if (fields) {
+				if (typeof fields === 'string') {
+					fieldsArray = [fields];
+					fields = [fields];
+				} else if (Array.isArray(fields)) {
+					fieldsArray = fields as string[];
+				}
 			}
 
-			if (fields) {
-				(fields as string[]).forEach((field) => {
+			if (fieldsArray.length > 0 && !fieldsArray.includes('englishName')) {
+				if (fieldsArray.includes('name')) fieldsArray.push('englishName');
+				fieldsArray.forEach((field) => {
 					if (allowedFields.includes(field)) {
 						projection[field] = 1;
 					}
 				});
 			} else {
+				console.log('Projection run');
+
 				projection = {
 					_id: 1,
 					name: 1,
@@ -81,15 +91,26 @@ export default class CategoryController implements IController {
 				};
 			}
 
-			const categories: ICategory[] = await this.category.aggregate<ICategory>([
+			let categories: ICategory[] = await this.category.aggregate<ICategory>([
 				{ $match: query },
 				{ $project: projection },
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
-
+			if (
+				!(
+					Array.isArray(fields) &&
+					fields.includes('englishName') &&
+					!fields.includes('name')
+				)
+			) {
+				categories = languageBasedMessage.getLangageBasedName(
+					req,
+					categories
+				) as ICategory[];
+			}
 			res.send({
-				items: languageBasedMessage.getLangageBasedName(req, categories),
+				items: categories,
 				pageCount: Math.ceil(
 					(await this.category.countDocuments(query)) / itemsPerPage
 				),

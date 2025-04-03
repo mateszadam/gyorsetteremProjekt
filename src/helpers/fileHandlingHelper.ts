@@ -62,7 +62,11 @@ export default class fileHandler {
 				}
 				const message = await GoogleDriveManager.uploadFile(imagePath);
 				if (message) {
-					res.status(200).send('59');
+					res
+						.status(200)
+						.send({
+							url: 'https://mateszadam.koyeb.app/images/name/' + image.name,
+						});
 				} else {
 					throw Error('57');
 				}

@@ -186,7 +186,7 @@ export default class foodController implements IController {
 				throw Error('44');
 			}
 
-			if (await this.food.findOne({ name: foodInput.name })) {
+			if (await this.food.findOne({ name: foodInput.name, isDeleted: false })) {
 				throw Error('86');
 			}
 			const materialIds = foodInput.materials.map((material) => material._id);
