@@ -161,7 +161,6 @@ export default class userController implements IController {
 				name: userInput.name,
 			});
 
-
 			if (!userInput || !databaseUser) {
 				defaultAnswers.notFound(res);
 			} else if (!userInput.name || !userInput.password) {
@@ -252,7 +251,6 @@ export default class userController implements IController {
 			if ((await this.user.find({ email: userInput.email })).length > 0) {
 				throw Error('99');
 			}
-
 
 			const hashedPassword = await this.bcrypt.hash(userInput.password, 12);
 			const userData: IUser = {
@@ -381,7 +379,6 @@ export default class userController implements IController {
 				const user: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});
-				log(profile);
 				if (user === null) {
 					userModel.insertMany([
 						{

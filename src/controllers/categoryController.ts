@@ -80,8 +80,6 @@ export default class CategoryController implements IController {
 					}
 				});
 			} else {
-				console.log('Projection run');
-
 				projection = {
 					_id: 1,
 					name: 1,

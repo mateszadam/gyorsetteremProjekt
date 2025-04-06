@@ -32,12 +32,17 @@ interface IMaterialChangeInput extends IMaterialChange {
 	name?: string;
 }
 
+interface IMaterialFull extends IMaterial {
+	inStock: number;
+	isEnough: boolean;
+	usageOneWeekAgo?: number;
+}
+
 interface IMaterial {
 	_id?: ObjectId;
 	name: string;
 	englishName?: string;
 	unit: string;
-	usageOneWeekAgo?: number;
 }
 
 interface IFood {
@@ -124,4 +129,5 @@ export {
 	IFoodMaterial,
 	IOrderedProducts,
 	IMaterialChangeInput,
+	IMaterialFull,
 };

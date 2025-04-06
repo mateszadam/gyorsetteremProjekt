@@ -394,7 +394,6 @@ export default class orderController implements IController {
 		try {
 			const id = req.params.id;
 			const finistTimeISO = new Date();
-			log(finistTimeISO);
 			if (id) {
 				const order = await this.order.updateOne(
 					{

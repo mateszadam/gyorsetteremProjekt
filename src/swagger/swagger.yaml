@@ -1609,19 +1609,21 @@ components:
             properties:
               _id:
                 type: string
+                default: 67d2f089feab1afefcde2b94
               quantity:
                 type: number
+                default: 1
         isEnabled:
           type: boolean
           default: true
         categoryId:
           type: string
-          default: 679f462818947c0fa463a88f
+          default: 67de7d166417d4153400a5f3
         subCategoryId:
           type: array
           items:
             type: string
-            default: 679f462818947c0fa463a88f
+            default: 67de7e516417d4153400a60e
         englishName:
           type: string
         image:
@@ -1676,7 +1678,7 @@ components:
       properties:
         costumerId:
           type: string
-          default: 6793b122d55c7354ff36be8f
+          default: 67b8c8e66c3a754a88001564
         orderedProducts:
           type: array
           items:
@@ -1684,7 +1686,7 @@ components:
             properties:
               _id:
                 type: string
-                default: 67a74ef1b660887ac98cc8f7
+                default: 67de7f166417d4153400a62e
               quantity:
                 type: integer
                 default: 1

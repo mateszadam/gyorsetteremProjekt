@@ -36,7 +36,6 @@ describe('materialController Integration Tests', () => {
 			).toEqual({
 				_id: expect.any(String),
 				name: 'testmaterial',
-				englishName: 'testmaterial',
 				inStock: 0,
 				isEnough: false,
 				unit: 'kg',
@@ -86,7 +85,6 @@ describe('materialController Integration Tests', () => {
 				expect(material).toEqual({
 					_id: expect.any(String),
 					name: expect.any(String),
-					englishName: expect.any(String),
 					unit: expect.any(String),
 					inStock: expect.any(Number),
 					isEnough: expect.any(Boolean),
@@ -232,7 +230,6 @@ describe('materialController Integration Tests', () => {
 				{
 					_id: materialId,
 					name: 'updatedmaterial',
-					englishName: 'updatedmaterial',
 					unit: 'g',
 					inStock: expect.any(Number),
 					isEnough: expect.any(Boolean),
