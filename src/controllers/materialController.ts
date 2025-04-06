@@ -1,5 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { IController, IMaterial, IMaterialChange } from '../models/models';
+import {
+	IController,
+	IMaterial,
+	IMaterialChange,
+	IMaterialFull,
+} from '../models/models';
 import { materialChangeModel, materialModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
@@ -7,6 +12,7 @@ import Joi from 'joi';
 import languageBasedMessage from '../helpers/languageHelper';
 
 import { Types } from 'mongoose';
+import { log } from 'console';
 
 export default class materialController implements IController {
 	public router = Router();
@@ -100,12 +106,20 @@ export default class materialController implements IController {
 			if (typeof fields === 'string') {
 				fields = [fields];
 			}
-			if (fields && Array.isArray(fields)) {
-				(fields as string[]).forEach((field) => {
-					if (allowedFields.includes(field)) {
-						projection[field] = 1;
-					}
-				});
+			let isEnglishName: Boolean = !(
+				Array.isArray(fields) &&
+				fields.includes('englishName') &&
+				!fields.includes('name')
+			);
+			if (fields && Array.isArray(fields) && !fields.includes('englishName')) {
+				if (fields.includes('name')) fields.push('englishName');
+				{
+					(fields as string[]).forEach((field) => {
+						if (allowedFields.includes(field)) {
+							projection[field] = 1;
+						}
+					});
+				}
 			} else {
 				projection = {
 					_id: 1,
@@ -113,10 +127,12 @@ export default class materialController implements IController {
 					englishName: 1,
 					unit: 1,
 					inStock: 1,
+					isEnough: 1,
+					usageOneWeekAgo: 1,
 				};
 			}
 
-			const materialChanges: IMaterialChange[] | null =
+			const materialChanges: IMaterialFull[] | null =
 				await this.material.aggregate([
 					{
 						$lookup: {
@@ -153,7 +169,7 @@ export default class materialController implements IController {
 			if (!materialChanges) {
 				throw Error('77');
 			}
-			const itemsWithUsage = [];
+			let itemsWithUsage = [];
 			const requiredDate = new Date();
 			requiredDate.setDate(requiredDate.getDate() - 7);
 			for (let i = 0; i < materialChanges.length; i++) {
@@ -208,7 +224,12 @@ export default class materialController implements IController {
 					}
 				}
 			}
-
+			if (isEnglishName) {
+				itemsWithUsage = languageBasedMessage.getLangageBasedName(
+					req,
+					itemsWithUsage
+				) as IMaterialFull[];
+			}
 			res.send({
 				items: itemsWithUsage,
 				pageCount: Math.ceil(

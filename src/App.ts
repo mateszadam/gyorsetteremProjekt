@@ -72,26 +72,15 @@ class App {
 		this.app.listen(5005, () => {
 			console.log('App listening on http://localhost:5005');
 		});
-		console.log('Futás közben...');
 	}
 
 	private connectToTheDatabase(mongoUri: string) {
 		mongoose.set('strictQuery', true);
-		console.log('Connecting to MongoDB...');
-		console.log(mongoUri);
 		mongoose.connect(mongoUri).catch(() => {
 			console.log(
 				'\x1b[41m%s\x1b[0m',
 				'Unable to connect to the server. Please start MongoDB.'
 			);
-			console.log('Retrying in 10 seconds...');
-
-			setTimeout(() => {
-				console.log('Attempting to reconnect to MongoDB...');
-				mongoose.connect(mongoUri).catch((retryErr) => {
-					console.log('\x1b[41m%s\x1b[0m', 'Reconnection failed:' + mongoUri);
-				});
-			}, 10000);
 		});
 
 		mongoose.connection.on('error', (error) => {
@@ -101,7 +90,6 @@ class App {
 			);
 		});
 		mongoose.connection.on('connected', () => {
-			console.log('Connected to MongoDB server.');
 			this.listen();
 		});
 	}

@@ -118,7 +118,6 @@ export default class foodController implements IController {
 					};
 				} else {
 					if (fields.includes('name')) fields.push('englishName');
-					if (fields.includes('englishName')) fields.push('Name');
 
 					(fields as string[]).forEach((field) => {
 						if (allowedFields.includes(field)) {

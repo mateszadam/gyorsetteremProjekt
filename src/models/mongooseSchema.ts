@@ -6,8 +6,6 @@ import {
 	IFood,
 	IMaterialChange,
 	IOrder,
-	IFoodMaterial,
-	IOrderedProducts,
 } from './models';
 
 const userSchema = new Schema<SchemaDefinition<IUser>>(
