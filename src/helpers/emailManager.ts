@@ -19,16 +19,8 @@ export default class emailManager {
 	});
 	private static readonly tokens: any[] = [];
 	private static readonly adminsWaitingToAuth: any[] = [];
-	static async sendPasswordChange(req: Request) {
+	static async sendPasswordChange(req: Request, user: IUser, url: string) {
 		try {
-			const email = req.body.email;
-			if (!email) {
-				return 'Email is required';
-			}
-			const user = await userModel.findOne({ email: email });
-			if (!user) {
-				return 'User not found';
-			}
 			const token = generateUUID4Token();
 
 			this.tokens.push({ token: token, user: user });
@@ -47,9 +39,9 @@ export default class emailManager {
 						<p style="font-size: 16px; color: #333;">Kedves <b>${user.name || 'Felhasználó'}</b>,</p>
 						<p style="font-size: 16px; color: #333; line-height: 1.5;">Jelszó módosítást kért fiókjához. Az új jelszó beállításához kattintson az alábbi gombra:</p>
 						<div style="text-align: center; margin: 35px 0;">
-							<a href="http://localhost:5005/changePassword/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Jelszó módosítása</a>
+							<a href="${url}/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Jelszó módosítása</a>
 						</div>
-						<p style="font-size: 14px; color: #666; margin-top: 20px;">Ha a link nem működik, másolja be ezt az URL-t a böngészőbe: <span style="color: #FF922C;">http://localhost:5005/changePassword/${token}</span></p>
+						<p style="font-size: 14px; color: #666; margin-top: 20px;">Ha a link nem működik, másolja be ezt az URL-t a böngészőbe: <span style="color: #FF922C;">${url}/${token}</span></p>
 						<p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">Ha nem Ön kérte a jelszó módosítást, kérjük hagyja figyelmen kívül ezt az e-mailt, vagy lépjen kapcsolatba az adminisztrátorral.</p>
 					</div>
 					<div style="text-align: center; padding: 15px; background-color: #f8f8f8; font-size: 12px; color: #888;">
@@ -57,16 +49,7 @@ export default class emailManager {
 					</div>
 				</div>`,
 			};
-			await this.transporter.sendMail(
-				mailOptions,
-				function (error: any, info: any) {
-					if (error) {
-						console.log(error);
-					} else {
-						console.log('Email sent: ' + info.response);
-					}
-				}
-			);
+			return (await this.transporter.sendMail(mailOptions)).response;
 		} catch (err) {
 			console.log(err);
 			return 'Internal Server Error';
