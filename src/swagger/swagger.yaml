@@ -1238,9 +1238,13 @@ paths:
             type: object
             required:
               - email
+              - url
             properties:
               email:
                 type: string
+              url:
+                type: string
+                default: http://localhost:3000/forgot-password
     responses:
       '200':
         description: Email sent successfully

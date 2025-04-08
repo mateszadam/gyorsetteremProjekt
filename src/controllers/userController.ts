@@ -325,8 +325,26 @@ export default class userController implements IController {
 
 	private forgetPassword = async (req: Request, res: Response) => {
 		try {
-			const message = await emailManager.sendPasswordChange(req);
-			defaultAnswers.ok(res, { message: message });
+			const email = req.body.email;
+			if (!email) {
+				throw Error('30');
+			}
+
+			const user: IUser | null = await userModel.findOne({ email: email });
+			if (!user) {
+				throw Error('101');
+			}
+
+			const url = req.body.url;
+			if (!url) {
+				throw Error('102');
+			}
+
+			const result = await emailManager.sendPasswordChange(req, user, url);
+			if (!result.includes('250 2.0.0 OK')) throw Error('103');
+			defaultAnswers.ok(res, {
+				message: languageBasedMessage.getError(req, '104'),
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
