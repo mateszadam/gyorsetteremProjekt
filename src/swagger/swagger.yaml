@@ -1048,6 +1048,22 @@ paths:
     summary: Get all users
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Page number for pagination
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of items per page
+      - in: query
+        name: role
+        schema:
+          type: string
+        description: Role of the user (admin, customer, kitchen, salesman)
+
     responses:
       201:
         description: User registered successfully

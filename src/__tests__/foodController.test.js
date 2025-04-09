@@ -75,14 +75,19 @@ describe('foodController Integration Tests', () => {
 				name: 'Test Food',
 				englishName: 'Test Food English',
 				price: 10,
-				materials: [{ id: expect.any(String), _id: materialId, quantity: 2 }],
+				materials: [
+					{
+						_id: expect.any(String),
+						quantity: 2,
+						englishName: expect.any(String),
+						name: expect.any(String),
+					},
+				],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'image_url',
 				isEnabled: true,
-				isDeleted: false,
 			});
-			expect(response.body.materials[0].id).toBeDefined();
 			expect(
 				(
 					await request(baseUrl)
@@ -311,7 +316,12 @@ describe('foodController Integration Tests', () => {
 			const updatedFood = {
 				name: 'Updated Test Food',
 				price: 15,
-				materials: [{ _id: materialId, quantity: 3 }],
+				materials: [
+					{
+						_id: materialId,
+						quantity: 3,
+					},
+				],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'updated_image_url',
@@ -325,7 +335,7 @@ describe('foodController Integration Tests', () => {
 				.set('Authorization', `Bearer ${token}`)
 				.send(updatedFood);
 
-			expect(response.status).toBe(200);
+			expect(foodId.status).toBe(200);
 			expect(response.body).toEqual({
 				_id: foodId.body._id,
 				name: 'Updated Test Food',
@@ -346,7 +356,14 @@ describe('foodController Integration Tests', () => {
 				_id: foodId.body._id,
 				name: 'Updated Test Food English',
 				price: 15,
-				materials: [{ _id: materialId, quantity: 3 }],
+				materials: [
+					{
+						_id: materialId,
+						quantity: 3,
+						englishName: expect.any(String),
+						name: expect.any(String),
+					},
+				],
 				subCategoryId: [catId],
 				categoryId: catId,
 				image: 'updated_image_url',

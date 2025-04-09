@@ -474,7 +474,11 @@ export default class orderController implements IController {
 			);
 
 			const user: IUser | null = await this.user.findById(data?._id);
-			if (user?.role !== 'admin' && costumerId != user?._id) {
+			if (
+				user?.role == 'admin' &&
+				costumerId &&
+				costumerId.toString() != user?._id.toString()
+			) {
 				throw Error('94');
 			}
 
@@ -607,6 +611,9 @@ export default class orderController implements IController {
 			const orders = await this.order.aggregate<IOrderFull>([
 				{ $match: query },
 				{ $project: projection },
+				{
+					$sort: { orderedTime: -1 },
+				},
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 				{

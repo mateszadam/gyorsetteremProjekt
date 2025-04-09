@@ -142,6 +142,44 @@ export default class foodController implements IController {
 			let materialChanges = await this.food.aggregate<IFood>([
 				{ $match: query },
 				{ $project: projection },
+				{ $unwind: { path: '$materials', preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: 'materials',
+						localField: 'materials._id',
+						foreignField: '_id',
+						as: 'materialData',
+					},
+				},
+				{
+					$unwind: { path: '$materialData', preserveNullAndEmptyArrays: true },
+				},
+				{
+					$group: {
+						_id: '$_id',
+						name: { $first: '$name' },
+						englishName: { $first: '$englishName' },
+						price: { $first: '$price' },
+						isEnabled: { $first: '$isEnabled' },
+						categoryId: { $first: '$categoryId' },
+						subCategoryId: { $first: '$subCategoryId' },
+						image: { $first: '$image' },
+						materials: {
+							$push: {
+								$cond: [
+									{ $eq: ['$materials', null] },
+									null,
+									{
+										_id: '$materialData._id',
+										name: '$materialData.name',
+										englishName: '$materialData.englishName',
+										quantity: '$materials.quantity',
+									},
+								],
+							},
+						},
+					},
+				},
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
@@ -200,12 +238,56 @@ export default class foodController implements IController {
 			const inserted = await this.food.insertMany([foodInput], {
 				rawResult: true,
 			});
-
 			if (inserted) {
-				defaultAnswers.ok(
-					res,
-					await this.food.findOne({ _id: inserted.insertedIds[0] })
-				);
+				const result = await this.food.aggregate<IFood>([
+					{
+						$match: { _id: inserted.insertedIds[0] },
+					},
+					{
+						$unwind: { path: '$materials', preserveNullAndEmptyArrays: true },
+					},
+					{
+						$lookup: {
+							from: 'materials',
+							localField: 'materials._id',
+							foreignField: '_id',
+							as: 'materialData',
+						},
+					},
+					{
+						$unwind: {
+							path: '$materialData',
+							preserveNullAndEmptyArrays: true,
+						},
+					},
+					{
+						$group: {
+							_id: '$_id',
+							name: { $first: '$name' },
+							englishName: { $first: '$englishName' },
+							price: { $first: '$price' },
+							isEnabled: { $first: '$isEnabled' },
+							categoryId: { $first: '$categoryId' },
+							subCategoryId: { $first: '$subCategoryId' },
+							image: { $first: '$image' },
+							materials: {
+								$push: {
+									$cond: [
+										{ $eq: ['$materials', null] },
+										null,
+										{
+											_id: '$materialData._id',
+											name: '$materialData.name',
+											englishName: '$materialData.englishName',
+											quantity: '$materials.quantity',
+										},
+									],
+								},
+							},
+						},
+					},
+				]);
+				defaultAnswers.ok(res, result[0]);
 			} else {
 				throw Error('02');
 			}
@@ -331,6 +413,8 @@ export default class foodController implements IController {
 						'number.base': '24',
 						'number.greater': '25',
 					}),
+					name: Joi.optional(),
+					englishName: Joi.optional(),
 				})
 			)
 			.min(1)
