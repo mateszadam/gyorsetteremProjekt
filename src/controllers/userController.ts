@@ -99,18 +99,20 @@ export default class userController implements IController {
 		try {
 			const { page = 1, limit = 10, role } = req.query;
 			const query: any = {};
+			const pageNumber = Number(page);
+			const itemsPerPage = Number(limit);
+			const skip = (pageNumber - 1) * itemsPerPage;
 			if (role) {
 				query.role = role;
 			}
 			const data = await this.user
 				.find(query, { password: 0 })
-				.skip((Number(page) - 1) * Number(limit))
-				.limit(Number(limit));
+				.skip(skip)
+				.limit(itemsPerPage);
 			const total = await this.user.countDocuments(query);
 			res.send({
 				items: data,
-
-				pageCount: Math.ceil(total / Number(limit)),
+				pageCount: Math.ceil(total / itemsPerPage),
 			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
