@@ -1348,6 +1348,7 @@ paths:
         description: Successful response
       '400':
         description: Bad request
+
 /dashboard/soldProducts:
   get:
     summary: Get sold products
@@ -1605,7 +1606,19 @@ paths:
                 message:
                   type: string
                   description: Error message
-
+/dashboard/overview:
+  get:
+    summary: Get overview of orders and sold products
+    tags: [Dashboard]
+    security:
+      - adminBearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+    responses:
+      '200':
+        description: Successful response
+      '400':
+        description: Bad request
 # Components
 components:
   schemas:
