@@ -1,12 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { IFood, IController, ICategory, IOrder } from '../models/models';
-import {
-	categoryModel,
-	foodModel,
-	materialModel,
-	orderModel,
-	userModel,
-} from '../models/mongooseSchema';
+import { foodModel, orderModel, userModel } from '../models/mongooseSchema';
 import { authAdminToken, authToken } from '../services/tokenService';
 import defaultAnswers from '../helpers/statusCodeHelper';
 
@@ -19,6 +13,7 @@ export default class statisticController implements IController {
 	public endPoint = '/dashboard';
 	private user = userModel;
 	private order = orderModel;
+	private food = foodModel;
 	constructor() {
 		this.router.get(
 			'/registeredUsers',
@@ -46,6 +41,7 @@ export default class statisticController implements IController {
 			authAdminToken,
 			this.getCookingTimeEachDayOfTheWeek
 		);
+		this.router.get('/overview', authAdminToken, this.getOverview);
 	}
 
 	private getRegisteredUsers = async (req: Request, res: Response) => {
@@ -504,6 +500,83 @@ export default class statisticController implements IController {
 
 			orders.sort((a, b) => (a._id > b._id ? 1 : -1));
 			res.status(200).send({ orders: orders });
+		} catch (error: any) {
+			defaultAnswers.badRequest(
+				res,
+				languageBasedMessage.getError(req, error.message)
+			);
+		}
+	};
+	private getOverview = async (req: Request, res: Response) => {
+		try {
+			const today = new Date();
+			const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+			const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+			// Get first and last day of current month
+			const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+			const endOfMonth = new Date(
+				today.getFullYear(),
+				today.getMonth() + 1,
+				0,
+				23,
+				59,
+				59,
+				999
+			);
+
+			const todayOrderCount = await this.order.countDocuments({
+				orderedTime: { $gte: startOfToday, $lte: endOfToday },
+			});
+
+			const todayRevenue = await this.order.aggregate([
+				{
+					$match: {
+						orderedTime: { $gte: startOfToday, $lte: endOfToday },
+					},
+				},
+				{ $group: { _id: null, total: { $sum: '$totalPrice' } } },
+			]);
+
+			const monthlyOrderCount = await this.order.countDocuments({
+				orderedTime: { $gte: startOfMonth, $lte: endOfMonth },
+			});
+
+			const activeCategoriesCount =
+				(
+					await this.food.aggregate([
+						{
+							$match: {
+								isEnabled: true,
+
+								isDeleted: false,
+							},
+						},
+						{
+							$unwind: '$subCategoryId',
+						},
+						{
+							$group: {
+								_id: '$subCategoryId',
+							},
+						},
+						{
+							$count: 'activeCategoriesCount',
+						},
+					])
+				)[0]?.activeCategoriesCount || 0;
+			const availableFoodsCount = await this.food.countDocuments({
+				isEnabled: true,
+				isDeleted: false,
+			});
+
+			defaultAnswers.ok(res, {
+				todayOrderCount,
+				todayRevenue: todayRevenue[0]?.total || 0,
+				monthlyOrderCount,
+				activeCategoriesCount,
+				availableFoodsCount,
+			});
 		} catch (error: any) {
 			defaultAnswers.badRequest(
 				res,
