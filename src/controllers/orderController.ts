@@ -255,7 +255,7 @@ export default class orderController implements IController {
 					},
 				},
 				{
-					$sort: { orderedTime: -1 },
+					$sort: { orderedTime: 1 },
 				},
 			]);
 			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
@@ -317,7 +317,7 @@ export default class orderController implements IController {
 					},
 				},
 				{
-					$sort: { orderedTime: -1 },
+					$sort: { orderedTime: 1 },
 				},
 			]);
 
