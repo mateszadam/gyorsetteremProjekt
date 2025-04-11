@@ -31,7 +31,6 @@ export default class userController implements IController {
 	bcrypt = require('bcrypt');
 	private usersWaitingForAuth = new Map();
 	constructor() {
-		// TODO: Validáció a user name létezésére
 		this.router.post('/register/customer', this.registerUser);
 		this.router.post('/register/admin', authAdminToken, this.registerAdmin);
 
@@ -55,7 +54,6 @@ export default class userController implements IController {
 		this.router.get('/google', this.googleLogin);
 		this.router.get('/google/auth/:token', this.sendGoogleAuthToken);
 	}
-	// https://www.svgrepo.com/collection/people-gestures-and-signs-icons/
 
 	private changeProfilePicture = async (req: Request, res: Response) => {
 		try {
@@ -170,23 +168,25 @@ export default class userController implements IController {
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
-				// Turn off for testing
-				// if (databaseUser.role === 'admin' && process.env.MODE !== 'test') {
-				// 	const token = await emailManager.twoFactorAuth(databaseUser);
-				// 	defaultAnswers.ok(res, { token: token });
-				// } else {
-				const token: string = await generateToken(databaseUser);
+				if (databaseUser.role != 'customer' && process.env.MODE !== 'test') {
+					const token = await emailManager.twoFactorAuth(databaseUser);
+					if (token == 'Email not sent') {
+						throw Error('104');
+					}
+					defaultAnswers.ok(res, { token: token });
+				} else {
+					const token: string = await generateToken(databaseUser);
 
-				console.log(
-					`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
-				);
-				res.send({
-					token: token,
-					role: databaseUser.role,
-					profilePicture: databaseUser.profilePicture,
-					userId: databaseUser._id,
-				});
-				// }
+					console.log(
+						`User ${databaseUser.name} logged in (${new Date().toLocaleString()})`
+					);
+					res.send({
+						token: token,
+						role: databaseUser.role,
+						profilePicture: databaseUser.profilePicture,
+						userId: databaseUser._id,
+					});
+				}
 			} else {
 				throw Error('14');
 			}

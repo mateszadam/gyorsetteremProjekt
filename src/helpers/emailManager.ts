@@ -128,18 +128,14 @@ export default class emailManager {
 				</div>`,
 			};
 			log('Sending email');
-			await this.transporter.sendMail(
-				mailOptions,
-				function (error: any, info: any) {
-					if (error) {
-						console.log(error);
-					} else {
-						console.log('Email sent: ' + info.response);
-					}
-				}
-			);
-			log(this.adminsWaitingToAuth);
-			return WebSocketToken;
+			if (
+				(await this.transporter.sendMail(mailOptions)).response.includes(
+					'250 2.0.0 OK'
+				)
+			) {
+				return WebSocketToken;
+			}
+			return 'Email not sent';
 		} catch (err) {
 			console.log(err);
 			return 'Internal Server Error';

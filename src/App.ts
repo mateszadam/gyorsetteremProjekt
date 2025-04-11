@@ -51,7 +51,6 @@ class App {
 				res.send('Database dropped');
 			});
 		} else {
-			console.log(mongoUri);
 			console.log('\x1b[42m%s\x1b[0m', 'Production mode');
 			this.connectToTheDatabase(mongoUri);
 			GoogleDriveManager.init();

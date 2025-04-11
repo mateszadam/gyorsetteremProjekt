@@ -513,7 +513,6 @@ export default class statisticController implements IController {
 			const startOfToday = new Date(today.setHours(0, 0, 0, 0));
 			const endOfToday = new Date(today.setHours(23, 59, 59, 999));
 
-			// Get first and last day of current month
 			const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 			const endOfMonth = new Date(
 				today.getFullYear(),
