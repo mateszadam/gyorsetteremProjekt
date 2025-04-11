@@ -133,7 +133,7 @@ export default class emailManager {
 					'250 2.0.0 OK'
 				)
 			) {
-				return WebSocketToken;
+				return { token: WebSocketToken, email: admin.email };
 			}
 			return 'Email not sent';
 		} catch (err) {

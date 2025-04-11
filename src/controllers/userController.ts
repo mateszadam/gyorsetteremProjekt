@@ -169,11 +169,11 @@ export default class userController implements IController {
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
 				if (databaseUser.role != 'customer' && process.env.MODE !== 'test') {
-					const token = await emailManager.twoFactorAuth(databaseUser);
-					if (token == 'Email not sent') {
+					const message = await emailManager.twoFactorAuth(databaseUser);
+					if (message == 'Email not sent') {
 						throw Error('103');
 					}
-					defaultAnswers.ok(res, { token: token });
+					defaultAnswers.ok(res, message);
 				} else {
 					const token: string = await generateToken(databaseUser);
 
