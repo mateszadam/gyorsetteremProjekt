@@ -118,7 +118,7 @@ export default class emailManager {
 						<p style="font-size: 16px; color: #333;">Kedves <b>${admin.name || 'Admin'}</b>,</p>
 						<p style="font-size: 16px; color: #333; line-height: 1.5;">A bejelentkezése majdnem kész. A folyamat befejezéséhez kattintson az alábbi gombra:</p>
 						<div style="text-align: center; margin: 35px 0;">
-							<a href="http://localhost:5005/user/auth/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Bejelentkezés Megerősítése</a>
+							<a href="https://mateszadam.koyeb.app/user/auth/${token}" style="background-color: #FF922C; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: all 0.3s ease;">Bejelentkezés Megerősítése</a>
 						</div>
 						<p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">Ha nem Ön kezdeményezte ezt a bejelentkezést, kérjük hagyja figyelmen kívül ezt az e-mailt, vagy lépjen kapcsolatba az adminisztrátorral.</p>
 					</div>
