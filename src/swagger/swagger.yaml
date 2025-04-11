@@ -47,7 +47,6 @@ apis: [./src/swagger/swagger.yaml]
 
 paths:
   # Category Paths
-
   /category:
     post:
       summary: Add a new category
@@ -70,8 +69,7 @@ paths:
     get:
       summary: Filter categories
       tags: [Category]
-      security:
-        - adminBearerAuth: []
+      security: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - in: query
@@ -216,6 +214,9 @@ paths:
       tags: [Food]
       security:
         - adminBearerAuth: []
+        - customerBearerAuth: []
+        - kitchenBearerAuth: []
+        - salesmanBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - in: query
@@ -349,9 +350,7 @@ paths:
   get:
     summary: Retrieve an image
     tags: [Images]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
+    security: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -376,7 +375,6 @@ paths:
     tags: [Images]
     security:
       - adminBearerAuth: []
-      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     requestBody:
@@ -398,9 +396,6 @@ paths:
   get:
     summary: List all images
     tags: [Images]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     responses:
@@ -411,9 +406,7 @@ paths:
 /images/profile:
   get:
     summary: List all profile pictures
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
+    security: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
     tags: [Images]
@@ -426,9 +419,7 @@ paths:
   get:
     summary: Get profile picture by name
     tags: [Images]
-    security:
-      - adminBearerAuth: []
-      - customerBearerAuth: []
+    security: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -475,6 +466,7 @@ paths:
       - Inventory
     security:
       - adminBearerAuth: []
+      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - name: page
@@ -887,7 +879,6 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
     security:
       - adminBearerAuth: []
-      - customerBearerAuth: []
     requestBody:
       required: true
       content:
@@ -998,10 +989,8 @@ paths:
   put:
     summary: Update a material by ID
     tags: [Material]
-
     security:
       - adminBearerAuth: []
-      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path
@@ -1023,10 +1012,8 @@ paths:
   delete:
     summary: Delete a material by ID
     tags: [Material]
-
     security:
       - adminBearerAuth: []
-      - customerBearerAuth: []
     parameters:
       - $ref: '#/components/parameters/AcceptLanguage'
       - in: path

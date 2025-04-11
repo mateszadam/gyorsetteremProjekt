@@ -86,7 +86,6 @@ export default class orderController implements IController {
 		}
 	};
 
-	// https://javascripttricks.com/implementing-transactional-queries-in-mongoose-70c431dd47e9
 	private newOrder = async (req: Request, res: Response) => {
 		let newOrderId: ObjectId | null = null;
 		const newOrder = req.body as IOrder;
@@ -255,7 +254,7 @@ export default class orderController implements IController {
 					},
 				},
 				{
-					$sort: { orderedTime: -1 },
+					$sort: { orderedTime: 1 },
 				},
 			]);
 			res.json(languageBasedMessage.getLangageBasedNameFormOrder(req, orders));
@@ -317,7 +316,7 @@ export default class orderController implements IController {
 					},
 				},
 				{
-					$sort: { orderedTime: -1 },
+					$sort: { orderedTime: 1 },
 				},
 			]);
 

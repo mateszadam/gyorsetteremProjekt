@@ -251,7 +251,7 @@ const orderSchema = new Schema<SchemaDefinition<IOrder>>(
 			type: Date,
 			validate: {
 				validator: function (v: Date) {
-					return v <= new Date(0) || v === null;
+					return v <= new Date() || v === null;
 				},
 				message: 'You cannot specify a date later than the current date!',
 			},

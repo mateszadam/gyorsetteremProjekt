@@ -342,5 +342,4 @@ describe('orderController Integration Tests', () => {
 			});
 		});
 	});
-	// Sima get re nincs teszt
 });

@@ -100,17 +100,16 @@ export default class GoogleDriveManager {
 			throw Error(`Error deleting file from Google Drive: ${error.message}`);
 		}
 	}
-	// Function to update a file in Google Drive
 	static async updateFile(fileId: string, filePath: string) {
 		const drive = google.drive({ version: 'v3', auth: this.authClient });
 
 		const fileMetadata = {
-			name: filePath.split('/').pop(), // Extract file name from path
+			name: filePath.split('/').pop(),
 		};
 
 		const media = {
 			mimeType: 'application/octet-stream',
-			body: fs.createReadStream(filePath), // Readable stream for file update
+			body: fs.createReadStream(filePath),
 		};
 
 		try {
@@ -171,10 +170,10 @@ export default class GoogleDriveManager {
 		var night = new Date(
 			now.getFullYear(),
 			now.getMonth(),
-			now.getDate() + 1, // the next day, ...
+			now.getDate() + 1,
 			0,
 			0,
-			0 // ...at 00:00:00 hours
+			0
 		);
 		var msToMidnight = night.getTime() - now.getTime();
 
