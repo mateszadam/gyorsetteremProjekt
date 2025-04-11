@@ -168,7 +168,12 @@ export default class userController implements IController {
 			} else if (
 				await this.bcrypt.compare(userInput.password, databaseUser.password)
 			) {
-				if (databaseUser.role != 'customer' && process.env.MODE !== 'test') {
+				if (
+					databaseUser.role != 'customer' &&
+					process.env.MODE !== 'test' &&
+					databaseUser.name != 'vendeg'
+				) {
+					// vendeg is a test user, who can login without 2FA
 					const message = await emailManager.twoFactorAuth(databaseUser);
 					if (message == 'Email not sent') {
 						throw Error('103');
