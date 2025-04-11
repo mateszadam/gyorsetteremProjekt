@@ -171,7 +171,7 @@ export default class userController implements IController {
 				if (databaseUser.role != 'customer' && process.env.MODE !== 'test') {
 					const token = await emailManager.twoFactorAuth(databaseUser);
 					if (token == 'Email not sent') {
-						throw Error('104');
+						throw Error('103');
 					}
 					defaultAnswers.ok(res, { token: token });
 				} else {
