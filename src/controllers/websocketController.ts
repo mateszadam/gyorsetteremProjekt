@@ -117,4 +117,16 @@ export default class webSocketController {
 			ws.send(message);
 		}
 	}
+	public static async sendStateChangeToAll(changedOrder: IOrderedProductFull) {
+		const message = JSON.stringify(changedOrder);
+		for (const ws of this.kitchen) {
+			ws.send(message);
+		}
+		for (const ws of this.display) {
+			ws.send(message);
+		}
+		for (const ws of this.salesman) {
+			ws.send(message);
+		}
+	}
 }

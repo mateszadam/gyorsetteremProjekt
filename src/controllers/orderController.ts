@@ -370,10 +370,13 @@ export default class orderController implements IController {
 						_id: id,
 					},
 					{
-						$set: { finishedCokingTime: null },
+						$set: { finishedCokingTime: null, finishedTime: null },
 					}
 				);
-				if (order.modifiedCount > 0) {
+				if (order.matchedCount > 0) {
+					webSocketController.sendStateChangeToAll(
+						await this.getOrderDetails(new Types.ObjectId(id))
+					);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('64');
@@ -434,7 +437,10 @@ export default class orderController implements IController {
 						$set: { finishedTime: null },
 					}
 				);
-				if (order.modifiedCount > 0) {
+				if (order.matchedCount > 0) {
+					webSocketController.sendStateChangeToAll(
+						await this.getOrderDetails(new Types.ObjectId(id))
+					);
 					defaultAnswers.ok(res);
 				} else {
 					throw Error('54');
