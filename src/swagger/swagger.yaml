@@ -1048,7 +1048,7 @@ paths:
       - in: query
         name: role
         schema:
-          type: string
+          type: array
         description: Role of the user (admin, customer, kitchen, salesman)
 
     responses:

@@ -95,7 +95,12 @@ export default class userController implements IController {
 
 	private getAll = async (req: Request, res: Response) => {
 		try {
-			const { page = 1, limit = 10, role } = req.query;
+			const { page = 1, limit = 10 } = req.query;
+			const role = req.query.role
+				? Array.isArray(req.query.role)
+					? req.query.role
+					: [req.query.role]
+				: undefined;
 			const query: any = {};
 			const pageNumber = Number(page);
 			const itemsPerPage = Number(limit);
