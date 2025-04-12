@@ -437,7 +437,7 @@ export default class orderController implements IController {
 					}
 				);
 				if (order.matchedCount > 0) {
-					webSocketController.sendStateChangeToAll(
+					webSocketController.sendStateChangeToSalesman(
 						await this.getOrderDetails(new Types.ObjectId(id))
 					);
 					defaultAnswers.ok(res);
