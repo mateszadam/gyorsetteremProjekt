@@ -1188,10 +1188,10 @@ paths:
             properties:
               name:
                 type: string
-                default: admin
+                default: vendeg
               password:
                 type: string
-                default: admin
+                default: Vendeg1!
     responses:
       200:
         description: User logged in successfully
