@@ -23,6 +23,13 @@ export default class fileHandler {
 				jpg: 'image/jpeg',
 				png: 'image/png',
 				svg: 'image/svg+xml',
+				avif: 'image/avif',
+				jpeg: 'image/jpeg',
+				webp: 'image/webp',
+				gif: 'image/gif',
+				tiff: 'image/tiff',
+				bmp: 'image/bmp',
+				ico: 'image/x-icon',
 			};
 			if (imagePath) {
 				if (fs.existsSync(imagePath)) {

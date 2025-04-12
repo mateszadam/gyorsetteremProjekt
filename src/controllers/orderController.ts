@@ -339,7 +339,7 @@ export default class orderController implements IController {
 					},
 					{
 						$set: {
-							finishedCokingTime: new Date(),
+							finishedCokingTime: new Date().toISOString(),
 						},
 					}
 				);
@@ -395,14 +395,13 @@ export default class orderController implements IController {
 	private receivedOrder = async (req: Request, res: Response) => {
 		try {
 			const id = req.params.id;
-			const finistTimeISO = new Date();
 			if (id) {
 				const order = await this.order.updateOne(
 					{
 						_id: id,
 					},
 					{
-						$set: { finishedTime: finistTimeISO },
+						$set: { finishedTime: new Date().toISOString() },
 					}
 				);
 				if (order.modifiedCount > 0) {
@@ -717,7 +716,7 @@ export default class orderController implements IController {
 	private async getOrderDetails(
 		_id: Types.ObjectId
 	): Promise<IOrderedProductFull> {
-		return (
+		const orderDetails = (
 			await this.order.aggregate([
 				{
 					$match: {
@@ -767,5 +766,7 @@ export default class orderController implements IController {
 				},
 			])
 		)[0];
+		log('orderDetails: ', orderDetails);
+		return orderDetails as IOrderedProductFull;
 	}
 }
