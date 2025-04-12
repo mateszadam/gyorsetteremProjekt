@@ -180,6 +180,7 @@ export default class foodController implements IController {
 						},
 					},
 				},
+				{ $sort: { _id: -1 } },
 				{ $skip: skip },
 				{ $limit: itemsPerPage },
 			]);
