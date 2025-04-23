@@ -6,6 +6,7 @@ import {
 	IMaterial,
 	IMaterialChange,
 	IOrderFull,
+	ILanguageHeader,
 } from '../models/models';
 
 export default class languageBasedMessage {
@@ -15,7 +16,7 @@ export default class languageBasedMessage {
 	static getError(req: Request, errorCode: string) {
 		try {
 			let message: string;
-			const lang = req.headers['accept-language'];
+			const lang = this.getEnglishOrHungarian(this.parseLanguageHeader(req));
 
 			let language = lang || 'en-GB';
 
@@ -50,7 +51,7 @@ export default class languageBasedMessage {
 		req: Request,
 		body: ICategory[] | IFood[] | IMaterial[]
 	) {
-		const lang = req.headers['accept-language'];
+		const lang = this.getEnglishOrHungarian(this.parseLanguageHeader(req));
 
 		if (lang === 'hu') {
 			body.forEach((element) => {
@@ -67,7 +68,7 @@ export default class languageBasedMessage {
 		}
 	}
 	static getLangageBasedNameFormOrder(req: Request, body: IOrderFull[]) {
-		const lang = req.headers['accept-language'];
+		const lang = this.getEnglishOrHungarian(this.parseLanguageHeader(req));
 
 		if (lang === 'hu') {
 			body.forEach((element) => {
@@ -88,5 +89,55 @@ export default class languageBasedMessage {
 			});
 			return body;
 		}
+	}
+
+	static parseLanguageHeader(req: Request): ILanguageHeader[] {
+		const acceptLanguage = req.headers['accept-language'];
+		if (!acceptLanguage) {
+			return [];
+		}
+		const languageQualityPairs: string[] = acceptLanguage.split(',');
+		const parsedLanguages: ILanguageHeader[] = [];
+		for (const pair of languageQualityPairs) {
+			const pairSplit: string[] = pair.split(';');
+			const langAndRegion = pairSplit[0].trim().split('-');
+			if (!langAndRegion[0]){
+				// invalid language
+				continue;
+			}
+			if (pairSplit.length < 2) {
+				parsedLanguages.push({
+					language: langAndRegion[0],
+					region: langAndRegion[1] || null,
+					quality: 1 // if q is omitted, q=1
+				});
+				continue;
+			}
+			const qualitySplit = pairSplit[1].split('=');
+			if (qualitySplit.length != 2) {
+				// invalid header
+				continue;
+			}
+			const q = +(qualitySplit[1].trim());
+			if (Number.isNaN(q) || q <= 0){
+				// invalid quality
+				continue;
+			}
+			parsedLanguages.push({
+				language: langAndRegion[0],
+				region: langAndRegion[1] || null,
+				quality: q
+			});
+		}
+
+		return parsedLanguages.sort((a, b) => b.quality - a.quality);
+	}
+
+	static getEnglishOrHungarian(languages: ILanguageHeader[]) {
+		const hungarian = languages.find((lang) => lang.language.toLowerCase() === 'hu');
+		if (hungarian) {
+			return "hu";
+		}
+		return 'en-GB';
 	}
 }

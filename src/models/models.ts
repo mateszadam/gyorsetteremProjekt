@@ -115,6 +115,14 @@ interface IOrderedProduct {
 	details: IFood;
 }
 
+type LanguageCode = string | "*";
+type RegionCode = string | "*" | null;
+interface ILanguageHeader {
+	language: LanguageCode;
+	region: RegionCode;
+	quality: number;
+}
+
 export {
 	IUser,
 	IMaterialChange,
@@ -130,4 +138,5 @@ export {
 	IOrderedProducts,
 	IMaterialChangeInput,
 	IMaterialFull,
+	ILanguageHeader,
 };
