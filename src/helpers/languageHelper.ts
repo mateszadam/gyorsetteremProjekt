@@ -136,6 +136,10 @@ export default class languageBasedMessage {
 	static getEnglishOrHungarian(languages: ILanguageHeader[]) {
 		const hungarian = languages.find((lang) => lang.language.toLowerCase() === 'hu');
 		if (hungarian) {
+			const english = languages.find((lang) => lang.language.toLowerCase() === 'en');
+			if (english && english.quality > hungarian.quality) {
+				return 'en-GB';
+			}
 			return "hu";
 		}
 		return 'en-GB';
