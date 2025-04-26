@@ -31,7 +31,7 @@ export default class GoogleDriveManager {
 
 		try {
 			const response = await drive.files.list({
-				pageSize: 10,
+				pageSize: 1000,
 				fields: 'nextPageToken, files(id, name)',
 			});
 
