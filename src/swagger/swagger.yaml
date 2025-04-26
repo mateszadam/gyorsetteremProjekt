@@ -69,7 +69,11 @@ paths:
     get:
       summary: Filter categories
       tags: [Category]
-      security: []
+      security:
+        - adminBearerAuth: []
+        - customerBearerAuth: []
+        - kitchenBearerAuth: []
+        - salesmanBearerAuth: []
       parameters:
         - $ref: '#/components/parameters/AcceptLanguage'
         - in: query
