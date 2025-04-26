@@ -410,7 +410,7 @@ export default class userController implements IController {
 					email: profile.email,
 				});
 				if (user === null) {
-					userModel.insertMany([
+					await userModel.insertMany([
 						{
 							email: profile.email,
 							name: profile.name,
@@ -424,7 +424,6 @@ export default class userController implements IController {
 				const newUser: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});
-
 				const token = await generateUUID4Token();
 				this.usersWaitingForAuth.set(token, newUser);
 
