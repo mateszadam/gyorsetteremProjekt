@@ -409,9 +409,7 @@ export default class userController implements IController {
 				const user: IUser | null = await userModel.findOne({
 					email: profile.email,
 				});
-				log(`User: ${user}`);
 				if (user === null) {
-					log(`User ${profile.email} not found, creating new user`);
 					await userModel.insertMany([
 						{
 							email: profile.email,
@@ -440,9 +438,7 @@ export default class userController implements IController {
 	private sendGoogleAuthToken = async (req: Request, res: Response) => {
 		try {
 			const token = req.params.token;
-			log(`Token: ${token}`);
 			const user = this.usersWaitingForAuth.get(token);
-			log(`User: ${user}`);
 			if (user) {
 				const token = await generateToken(user);
 				this.usersWaitingForAuth.delete(token);
